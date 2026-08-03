@@ -1,0 +1,56 @@
+name: Update CloudScope
+
+on:
+  schedule:
+    # HRRR posts hourly; every 3 h keeps the map fresh without a large standing download.
+    - cron: "20 */3 * * *"
+  workflow_dispatch:
+
+# One publish at a time. Concurrent runs regenerate the same PNGs with different bytes and
+# collide on push.
+concurrency:
+  group: cloudscope-publish
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install eccodes (pygrib needs the C library)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libeccodes0 libeccodes-dev
+
+      - run: pip install -r requirements.txt
+
+      - name: Classify latest HRRR cycle
+        run: python cloud_classify.py
+
+      - name: Publish
+        run: |
+          git config user.name  "cloudscope-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A docs
+          if git diff --cached --quiet; then
+            echo "No change to publish."
+            exit 0
+          fi
+          git commit -m "CloudScope $(date -u '+%Y-%m-%d %H:%MZ')"
+          # This job is the only writer of docs/, and each run republishes the whole set, so
+          # take ours wholesale rather than rebasing binary PNGs against a concurrent run.
+          git fetch origin "${GITHUB_REF_NAME}"
+          git reset --soft "origin/${GITHUB_REF_NAME}"
+          git add -A docs
+          git commit -m "CloudScope $(date -u '+%Y-%m-%d %H:%MZ')" || true
+          git push origin "HEAD:${GITHUB_REF_NAME}"
