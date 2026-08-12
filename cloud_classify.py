@@ -53,11 +53,13 @@ import numpy as np
 import pygrib
 import requests
 from scipy.ndimage import map_coordinates, maximum_filter, uniform_filter
+from scipy.spatial import cKDTree
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import matplotlib.patheffects as pe
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 
@@ -69,6 +71,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 HRRR_ROOT = "https://noaa-hrrr-bdp-pds.s3.amazonaws.com"
 OUT_DIR = "docs"                     # GitHub Pages serves from /docs
 MAP_DIR = os.path.join(OUT_DIR, "maps")
+DATA_DIR = os.path.join(OUT_DIR, "data")   # packed grids the viewer queries on click
 CACHE_DIR = "_cache"
 
 DOMAIN = {"lat_min": 26.5, "lat_max": 30.5, "lon_min": -82.5, "lon_max": -79.0}
@@ -82,6 +85,7 @@ SITES = {
     "KDAB":   (29.183, -81.048),
 }
 
+BG = "#FFFFFF"                                # map background
 DX_KM = 3.0                                   # HRRR CONUS grid spacing
 
 # 50 mb resolves deck depth to ~1.5 kft, which is finer than any threshold here.
@@ -101,8 +105,25 @@ LEVEL_SETS = {
     "GRLE":   [L for L in LEVELS_HPA if 200 <= L <= 900],
 }
 
-FORECAST_HOURS = list(range(1, 19))
+# The PNG carries colour, not data, so a queryable copy of each hour is written alongside it.
+# It is resampled onto a regular lat/lon mesh because HRRR is Lambert Conformal: at 80 W the
+# grid is rotated ~10 deg off north, so a click could not be turned into an index by arithmetic
+# on the native grid. 0.03 deg is ~3.2 km, near enough to HRRR's own spacing to lose nothing.
+QUERY_DEG = 0.03
+IWP_MAX = 3000.0        # ceiling of the logarithmic ice-path packing, g/m^2
+
+# HRRR runs out to 48 h on the synoptic cycles and 18 h on the rest. Asking for f19+ on an
+# off-hour cycle just 404s, so the length is derived from the cycle rather than fixed.
+EXTENDED_CYCLES = {0, 6, 12, 18}
+SHORT_RUN_H, EXTENDED_RUN_H = 18, 48
+
 MAX_CYCLE_LOOKBACK_H = 6
+
+# dprog/dt: how many cycles stay on disk. Each run only ever processes the NEWEST cycle -
+# the older ones are already here from the runs that made them, so run-to-run comparison
+# costs nothing extra in bandwidth. Recomputing them hourly would be 4x the downloads for
+# an identical answer.
+KEEP_CYCLES = 4
 
 # ---- classification thresholds (all tunable; see README) ----
 LAYER_PATH_MIN = 0.20   # g/m^2 of condensate in one layer to call it cloudy
@@ -123,16 +144,18 @@ CU_TEX_KFT     = 1.2    # or lumpiness: sigma of cloud-top height over ~15 km
  ANVIL_ATT, ANVIL_DET, DEBRIS, CIRRUS) = range(9)
 
 CLASSES = [
-    {"id": CLEAR,      "key": "clear",      "name": "Clear",           "color": "#0D1117"},
+    {"id": CLEAR,      "key": "clear",      "name": "Clear",           "color": "#FFFFFF"},
     {"id": STRATIFORM, "key": "stratiform", "name": "Stratiform",      "color": "#5C7A99"},
-    {"id": CUMULUS,    "key": "cumulus",    "name": "Cumulus",         "color": "#E3C36A"},
-    {"id": TCU,        "key": "tcu",        "name": "Towering cumulus","color": "#C08A21"},
+    {"id": CUMULUS,    "key": "cumulus",    "name": "Cumulus",         "color": "#E0A83C"},
+    {"id": TCU,        "key": "tcu",        "name": "Towering cumulus","color": "#B0700F"},
     {"id": CONVECTIVE, "key": "convective", "name": "Convective",      "color": "#A11D33"},
     {"id": ANVIL_ATT,  "key": "anvil_att",  "name": "Anvil, attached", "color": "#E2703A"},
-    {"id": ANVIL_DET,  "key": "anvil_det",  "name": "Anvil, detached", "color": "#F2A278"},
-    {"id": DEBRIS,     "key": "debris",     "name": "Debris",          "color": "#9AA7B4"},
-    {"id": CIRRUS,     "key": "cirrus",     "name": "Cirrus",          "color": "#BFD3E6"},
+    {"id": ANVIL_DET,  "key": "anvil_det",  "name": "Anvil, detached", "color": "#F0A87E"},
+    {"id": DEBRIS,     "key": "debris",     "name": "Debris",          "color": "#C7B49E"},
+    {"id": CIRRUS,     "key": "cirrus",     "name": "Cirrus",          "color": "#9EC0DC"},
 ]
+# Tuned for a WHITE map. The pale ice colours darkened to survive on paper, and debris moved
+# off blue-grey to a faded tan so it reads as aged anvil, not a third variety of cirrus.
 PALETTE = [c["color"] for c in sorted(CLASSES, key=lambda c: c["id"])]
 KEY_BY_ID = {c["id"]: c["key"] for c in CLASSES}
 
@@ -181,6 +204,12 @@ def _merge(entries, gap=8192):
 
 def _url(kind, date_str, cycle, fh):
     return f"{HRRR_ROOT}/hrrr.{date_str}/conus/hrrr.t{cycle}z.{kind}f{fh:02d}.grib2"
+
+
+def run_hours(cycle):
+    """Forecast hours to attempt for this cycle."""
+    n = EXTENDED_RUN_H if int(cycle) in EXTENDED_CYCLES else SHORT_RUN_H
+    return list(range(1, n + 1))
 
 
 def find_cycle(sess):
@@ -443,7 +472,11 @@ def classify(f):
     liq_base = has_cloud & (liq_frac_lo > 0.5)
     tcu = liq_base & (lo_top_c <= TCU_TOP_C)
     cu = liq_base & ~tcu & ((depth_lo >= CU_DEPTH_KFT) | (tex >= CU_TEX_KFT))
-    st = liq_base & ~tcu & ~cu
+    # Anything cloudy that matched nothing above - typically a mid-level glaciated deck
+    # topping warmer than -38 C, ice-dominated so not liquid-based either - was silently
+    # falling through to CLEAR. Layered cloud is the honest default for it.
+    unclaimed = has_cloud & ~ice_aloft & ~liq_base
+    st = (liq_base & ~tcu & ~cu) | unclaimed
 
     out = np.full((ny, nx), CLEAR, dtype=np.uint8)
     for mask, cid in ((cirrus, CIRRUS), (st, STRATIFORM), (cu, CUMULUS), (debris, DEBRIS),
@@ -474,27 +507,76 @@ def render(cls, f, valid, cycle, path):
     cmap = mcolors.ListedColormap(PALETTE)
     norm = mcolors.BoundaryNorm(np.arange(-0.5, len(PALETTE) + 0.5, 1), len(PALETTE))
     pc = ccrs.PlateCarree()
-    fig = plt.figure(figsize=size, dpi=140, facecolor="#0D1117")
+    fig = plt.figure(figsize=size, dpi=140, facecolor=BG)
     ax = fig.add_axes([0, 0, 1, 1], projection=proj)
     ax.set_extent([DOMAIN["lon_min"], DOMAIN["lon_max"],
                    DOMAIN["lat_min"], DOMAIN["lat_max"]], crs=pc)
-    ax.set_facecolor("#0D1117")
+    ax.set_facecolor(BG)
     ax.pcolormesh(f["lons"], f["lats"], cls, cmap=cmap, norm=norm,
                   shading="nearest", transform=pc, zorder=2)
-    ax.add_feature(cfeature.COASTLINE.with_scale("10m"), edgecolor="#5A6B7D",
-                   linewidth=0.8, zorder=4)
+    # On white, clear sky and clear water are the same colour, so the coastline is the only
+    # thing carrying geography - it gets the weight it used to borrow from the dark panel.
+    ax.add_feature(cfeature.COASTLINE.with_scale("10m"), edgecolor="#46525C",
+                   linewidth=0.9, zorder=4)
     ax.add_feature(cfeature.NaturalEarthFeature("cultural", "admin_1_states_provinces_lines",
                                                 "10m", facecolor="none"),
-                   edgecolor="#3C4A59", linewidth=0.5, zorder=4)
+                   edgecolor="#AEB6BD", linewidth=0.6, zorder=4)
     for name, (la, lo) in SITES.items():
-        ax.plot(lo, la, marker="+", markersize=6, markeredgewidth=1.2,
-                color="#F2F4F0", transform=pc, zorder=6)
-        ax.text(lo + 0.05, la + 0.03, name, fontsize=6.0, color="#F2F4F0",
-                family="monospace", transform=pc, zorder=6)
+        ax.plot(lo, la, marker="+", markersize=6, markeredgewidth=1.3,
+                color="#14181B", transform=pc, zorder=6)
+        # A halo keeps the pad labels readable where they land on a convective core.
+        ax.text(lo + 0.05, la + 0.03, name, fontsize=6.0, color="#14181B",
+                family="monospace", transform=pc, zorder=6,
+                path_effects=[pe.withStroke(linewidth=1.8, foreground=BG)])
     ax.text(0.015, 0.014, f"HRRR {cycle}Z  valid {valid:%d %b %H%MZ}", transform=ax.transAxes,
-            fontsize=6.4, color="#7C8C9C", family="monospace", zorder=7)
-    fig.savefig(path, facecolor="#0D1117")
+            fontsize=6.4, color="#7A858E", family="monospace", zorder=7)
+    try:
+        ax.spines["geo"].set_edgecolor("#C3C8BC")
+    except Exception:
+        pass
+    fig.savefig(path, facecolor=BG)
     plt.close(fig)
+
+
+# --------------------------------------------------------------------------------------
+# Queryable export
+# --------------------------------------------------------------------------------------
+_QGRID = {}   # the crop is identical every hour, so the resampling is solved once per run
+
+PLANES = ["class", "top_kft_x4", "top_c_p100", "iwp_log", "depth_kft_x4", "dbz"]
+
+
+def query_grid(f):
+    """Nearest-neighbour map from the model's Lambert crop onto a regular lat/lon mesh."""
+    key = (f["lats"].shape, round(float(f["lats"][0, 0]), 4), round(float(f["lons"][0, 0]), 4))
+    if key in _QGRID:
+        return _QGRID[key]
+    qlat = np.arange(DOMAIN["lat_min"], DOMAIN["lat_max"] + 1e-9, QUERY_DEG)
+    qlon = np.arange(DOMAIN["lon_min"], DOMAIN["lon_max"] + 1e-9, QUERY_DEG)
+    LA, LO = np.meshgrid(qlat, qlon, indexing="ij")          # row 0 = south edge
+    cos0 = np.cos(np.radians(0.5 * (DOMAIN["lat_min"] + DOMAIN["lat_max"])))
+    tree = cKDTree(np.column_stack([f["lats"].ravel(), f["lons"].ravel() * cos0]))
+    _, idx = tree.query(np.column_stack([LA.ravel(), LO.ravel() * cos0]))
+    _QGRID[key] = (idx.reshape(LA.shape), qlat, qlon)
+    return _QGRID[key]
+
+
+def pack_query(cls, diag, f):
+    """Six uint8 planes, concatenated. Quantisation is chosen so the decode error is under
+    the precision anyone would act on: 0.25 kft of height, 1 C, ~2% of ice path, 1 dBZ."""
+    idx, qlat, qlon = query_grid(f)
+    take = lambda a: np.asarray(a).ravel()[idx.ravel()]
+    q = lambda a, lo=0, hi=255: np.clip(np.round(a), lo, hi).astype(np.uint8)
+    iwp = np.maximum(take(diag["iwp"]), 0.0)
+    planes = [
+        take(cls).astype(np.uint8),
+        q(np.nan_to_num(take(diag["top_kft"]), nan=0.0) * 4.0),
+        q(np.nan_to_num(take(diag["top_c"]), nan=-100.0) + 100.0),
+        q(255.0 * np.log10(1.0 + iwp) / np.log10(1.0 + IWP_MAX)),
+        q(np.nan_to_num(take(diag["depth_lo"]), nan=0.0) * 4.0),
+        q(take(diag["refc"]), 0, 80),
+    ]
+    return b"".join(p.tobytes() for p in planes), len(qlon), len(qlat), qlat[0], qlon[0]
 
 
 # --------------------------------------------------------------------------------------
@@ -506,21 +588,41 @@ def site_indices(f):
     return idx
 
 
+def load_manifest():
+    try:
+        with open(os.path.join(OUT_DIR, "manifest.json")) as fp:
+            return json.load(fp)
+    except Exception:
+        return {}
+
+
 def main():
     os.makedirs(MAP_DIR, exist_ok=True)
+    os.makedirs(DATA_DIR, exist_ok=True)
     sess = _session()
     date_str, cycle, cyc_dt = find_cycle(sess)
     if not cycle:
         logging.error("No HRRR cycle available; leaving the previous run in place.")
         return
-    logging.info(f"HRRR cycle {date_str} {cycle}z")
+    prev = load_manifest()
+    cid = f"{date_str}{cycle}"
+    if any(c.get("id") == cid for c in prev.get("cycles", [])):
+        logging.info(f"{cid}Z is already published; nothing new to build.")
+        return
 
-    frames, bytes_total = [], 0
-    for fh in FORECAST_HOURS:
+    hours = run_hours(cycle)
+    logging.info(f"HRRR cycle {date_str} {cycle}z, {len(hours)} h "
+                 f"({'extended' if int(cycle) in EXTENDED_CYCLES else 'short'} run)")
+
+    frames, bytes_total, qmeta = [], 0, None
+    for fh in hours:
         path, n = fetch_hour(sess, date_str, cycle, fh)
         bytes_total += n
         if not path or n == 0:
-            logging.warning(f"f{fh:02d}: no data")
+            # Past ~f18 on a short cycle this is simply the end of the run, not a failure.
+            logging.info(f"f{fh:02d}: no data (end of run?)")
+            if fh > SHORT_RUN_H and not frames[-1:]:
+                break
             continue
         try:
             f = read_fields(path)
@@ -529,8 +631,15 @@ def main():
                 continue
             cls, diag = classify(f)
             valid = cyc_dt + datetime.timedelta(hours=fh)
-            png = f"maps/cloudtype_{cycle}z_f{fh:02d}.png"
+            png = f"maps/cloudtype_{cid}z_f{fh:02d}.png"
             render(cls, f, valid, cycle, os.path.join(OUT_DIR, png))
+            blob, qnx, qny, qlat0, qlon0 = pack_query(cls, diag, f)
+            qmeta = {"nx": qnx, "ny": qny, "lat0": round(float(qlat0), 6),
+                     "lon0": round(float(qlon0), 6), "dlat": QUERY_DEG, "dlon": QUERY_DEG,
+                     "iwp_max": IWP_MAX, "planes": PLANES}
+            binrel = f"data/cols_{cid}z_f{fh:02d}.bin"
+            with open(os.path.join(OUT_DIR, binrel), "wb") as bf:
+                bf.write(blob)
 
             sites = {}
             for name, (jy, jx) in site_indices(f).items():
@@ -546,7 +655,7 @@ def main():
             counts = {c["key"]: int((cls == c["id"]).sum()) for c in CLASSES}
             frames.append({"fh": fh, "valid": valid.strftime("%Y-%m-%dT%H:%MZ"),
                            "valid_short": valid.strftime("%d/%HZ"), "image": png,
-                           "counts": counts, "sites": sites})
+                           "data": binrel, "counts": counts, "sites": sites})
             logging.info(f"f{fh:02d} valid {valid:%d/%HZ}: " +
                          " ".join(f"{k}={v}" for k, v in counts.items() if v and k != "clear"))
         finally:
@@ -557,16 +666,34 @@ def main():
         logging.error("No frames rendered; manifest not rewritten.")
         return
 
-    keep = {os.path.basename(fr["image"]) for fr in frames}
-    for fn in os.listdir(MAP_DIR):
-        if fn.endswith(".png") and fn not in keep:
-            os.remove(os.path.join(MAP_DIR, fn))
+    # --- dprog/dt bookkeeping ----------------------------------------------------------
+    # The new cycle goes on the front and the tail is trimmed. Prior cycles are carried over
+    # verbatim: their PNGs and .bin files are still on disk from the runs that built them.
+    entry = {"id": cid, "label": f"{cycle}Z", "date": date_str, "hour": cycle,
+             "init": cyc_dt.strftime("%Y-%m-%dT%H:%MZ"),
+             "run_h": len(hours), "frames": frames}
+    cycles = [entry] + [c for c in prev.get("cycles", []) if c.get("id") != cid]
+    cycles = cycles[:KEEP_CYCLES]
+
+    live = set()
+    for c in cycles:
+        for fr in c["frames"]:
+            live.add(os.path.basename(fr["image"]))
+            live.add(os.path.basename(fr["data"]))
+    dropped = 0
+    for d, ext in ((MAP_DIR, ".png"), (DATA_DIR, ".bin")):
+        for fn in os.listdir(d):
+            if fn.endswith(ext) and fn not in live:
+                os.remove(os.path.join(d, fn))
+                dropped += 1
 
     manifest = {
         "generated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
         "model": "HRRR", "cycle": f"{date_str} {cycle}Z",
         "domain": DOMAIN, "classes": CLASSES, "sites": list(SITES),
-        "frames": frames,
+        "query": qmeta or prev.get("query"),
+        "cycles": cycles,
+        "frames": frames,          # the newest run, so an older viewer still works
         "thresholds": {"layer_path_min_gm2": LAYER_PATH_MIN, "glaciated_c": GLACIATED_C,
                        "ice_fraction": ICE_FRAC, "anvil_iwp_gm2": ANVIL_IWP,
                        "debris_iwp_gm2": DEBRIS_IWP, "convective_dbz": CONV_DBZ,
@@ -574,9 +701,11 @@ def main():
                        "anvil_tau_h": ANVIL_TAU_H, "anvil_max_nm": ANVIL_MAX_NM,
                        "tcu_top_c": TCU_TOP_C, "cu_depth_kft": CU_DEPTH_KFT},
     }
-    with open(os.path.join(OUT_DIR, "manifest.json"), "w") as fh_:
-        json.dump(manifest, fh_, indent=1)
-    logging.info(f"{len(frames)} frames, {bytes_total/1024/1024:.0f} MB transferred.")
+    with open(os.path.join(OUT_DIR, "manifest.json"), "w") as fp:
+        json.dump(manifest, fp, indent=1)
+    logging.info(f"{len(frames)} frames, {bytes_total/1024/1024:.0f} MB transferred; "
+                 f"holding {len(cycles)} cycles ({', '.join(c['id'] for c in cycles)}), "
+                 f"pruned {dropped} files.")
 
 
 if __name__ == "__main__":
