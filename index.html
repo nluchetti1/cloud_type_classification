@@ -17,8 +17,10 @@
     --panel:#FFFFFF;
     --panel-edge:#C3C8BC;
     --accent:#A11D33;
-    --shell:1180px;
-    --rail:264px;
+    --shell:1320px;
+    --rail:320px;
+    /* Everything above the map, so the map can be told how much room is left. */
+    --chrome:186px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -26,7 +28,7 @@
     background:var(--paper); color:var(--ink);
     font-family:"IBM Plex Mono",ui-monospace,monospace;
     font-size:13px; line-height:1.5;
-    padding:clamp(14px,3vw,30px);
+    padding:clamp(12px,2.2vw,24px);
   }
   .shell{max-width:var(--shell); margin:0 auto}
 
@@ -34,91 +36,90 @@
   header{
     display:flex; align-items:flex-end; justify-content:space-between;
     gap:18px; flex-wrap:wrap;
-    border-bottom:1.5px solid var(--ink); padding-bottom:10px; margin-bottom:16px;
+    border-bottom:1.5px solid var(--ink); padding-bottom:8px; margin-bottom:10px;
   }
   h1{
     font-family:"Bricolage Grotesque",system-ui,sans-serif;
-    font-weight:800; font-size:clamp(26px,4.4vw,44px); line-height:.92;
+    font-weight:800; font-size:clamp(22px,3.2vw,34px); line-height:.92;
     margin:0; letter-spacing:-.025em; font-variation-settings:"opsz" 72;
   }
   h1 em{font-style:normal; color:var(--ink-3)}
-  .sub{font-size:11.5px; color:var(--ink-3); margin-top:5px; letter-spacing:.02em}
-  .stamp{text-align:right; font-size:11.5px; color:var(--ink-3); white-space:nowrap}
-  .stamp b{display:block; color:var(--ink); font-size:14px; letter-spacing:.03em}
+  .sub{font-size:11px; color:var(--ink-3); margin-top:4px; letter-spacing:.02em}
+  .stamp{text-align:right; font-size:11px; color:var(--ink-3); white-space:nowrap}
+  .stamp b{display:block; color:var(--ink); font-size:13.5px; letter-spacing:.03em}
 
   /* ---- run selector -------------------------------------------------------- */
-  .runs{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px}
-  .runs-label{font-size:10px; letter-spacing:.14em; text-transform:uppercase;
-              color:var(--ink-3)}
+  .runs{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px}
+  .runs-label{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3)}
   .run{font:inherit; font-size:11.5px; font-weight:600; letter-spacing:.03em; cursor:pointer;
        background:transparent; color:var(--ink-3); border:1px solid var(--rule);
-       border-radius:2px; padding:4px 10px; display:flex; align-items:baseline; gap:6px}
+       border-radius:2px; padding:3px 9px; display:flex; align-items:baseline; gap:6px}
   .run:hover{border-color:var(--ink-3); color:var(--ink)}
   .run[aria-pressed=true]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
   .run small{font-size:9.5px; opacity:.72; font-weight:400}
-  .run.stale{opacity:.62}
+  /* A run still being posted gets a dashed edge - the loop ending early is expected, not a
+     failure, and it fills in on the next pass. */
+  .run.partial{border-style:dashed}
 
   /* ---- layout -------------------------------------------------------------- */
-  .grid{display:grid; grid-template-columns:minmax(0,1fr) var(--rail); gap:22px; align-items:start}
-  .stage{min-width:0}
+  .grid{display:grid; grid-template-columns:minmax(0,1fr) var(--rail); gap:18px;
+        align-items:start}
+  .stage{min-width:0; display:flex; flex-direction:column; align-items:center}
 
+  /* The figure shrink-wraps the PNG. Letting it stretch left a wide white slab beside a
+     white map, which read as empty domain with a border down the middle of it. */
   figure{
     margin:0; background:var(--panel); border:1px solid var(--panel-edge); border-radius:2px;
-    display:flex; align-items:center; justify-content:center; position:relative;
-    min-height:260px; overflow:hidden;
+    position:relative; width:max-content; max-width:100%; line-height:0;
   }
-  figure img{display:block; max-width:100%; max-height:min(70vh,660px); width:auto; height:auto;
-             cursor:crosshair}
+  figure img{display:block; width:auto; max-width:100%;
+             max-height:max(360px, calc(100vh - var(--chrome))); cursor:crosshair}
   .loading{position:absolute; inset:0; display:grid; place-items:center;
-           color:var(--ink-3); font-size:11.5px; letter-spacing:.08em}
+           color:var(--ink-3); font-size:11.5px; letter-spacing:.08em; line-height:1.5}
 
   /* ---- transport ----------------------------------------------------------- */
-  .transport{display:flex; align-items:center; gap:12px; margin-top:12px; flex-wrap:wrap}
+  .transport{display:flex; align-items:center; gap:12px; margin-top:10px; flex-wrap:wrap;
+             width:100%}
   button{font:inherit; font-weight:600; letter-spacing:.05em; cursor:pointer;
          background:var(--ink); color:var(--paper); border:none; border-radius:2px;
-         padding:7px 15px}
+         padding:6px 14px}
   button:hover{background:#2C3438}
   button:focus-visible, input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
-  input[type=range]{flex:1; min-width:150px; accent-color:var(--accent)}
+  input[type=range]{flex:1; min-width:140px; accent-color:var(--accent)}
   .valid{font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap}
   .fh{color:var(--ink-3); font-size:11.5px}
 
-  /* ---- pads ---------------------------------------------------------------- */
-  .pads{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:1px;
-        margin-top:16px; background:var(--rule); border:1px solid var(--rule)}
-  .pad{background:var(--paper); padding:8px 10px}
-  .pad-name{font-size:10px; letter-spacing:.12em; color:var(--ink-3)}
-  .pad-cls{display:flex; align-items:center; gap:6px; margin-top:4px; font-weight:600;
-           font-size:12px; line-height:1.25}
-  .pad-cls .chip{width:10px; height:10px; flex:none}
-  .pad-num{font-size:10.5px; color:var(--ink-3); margin-top:3px;
-           font-variant-numeric:tabular-nums}
+  /* ---- pin overlay --------------------------------------------------------- */
+  .pin{position:absolute; pointer-events:none; transform:translate(-50%,-50%)}
+  .pin .ring{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+             border:1.5px solid var(--ink); border-radius:50%; opacity:.62}
+  .pin .cross::before,.pin .cross::after{content:""; position:absolute; background:var(--ink)}
+  .pin .cross::before{left:-1px; top:-9px; width:2px; height:18px}
+  .pin .cross::after{top:-1px; left:-9px; height:2px; width:18px}
 
-  /* ---- point query --------------------------------------------------------- */
-  .xhair{position:absolute; width:15px; height:15px; margin:-8px 0 0 -8px; pointer-events:none}
-  .xhair::before,.xhair::after{content:""; position:absolute; background:var(--ink)}
-  .xhair::before{left:7px; top:0; width:1.5px; height:15px}
-  .xhair::after{top:7px; left:0; height:1.5px; width:15px}
-  .xhair i{position:absolute; inset:-4px; border:1.5px solid var(--ink); border-radius:50%;
-           opacity:.55}
+  /* ---- rail ---------------------------------------------------------------- */
+  /* Sticky: the readout has to stay level with the map, or answering "what did I click"
+     means scrolling away from the thing you clicked. */
+  .rail{position:sticky; top:12px; max-height:calc(100vh - 24px); overflow:auto;
+        padding-left:13px; border-left:1.5px solid var(--ink)}
+  .rail h2{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+           color:var(--ink-3); margin:0 0 2px; font-weight:500}
+  .alt{font-size:10px; color:var(--ink-3); letter-spacing:.04em; margin-bottom:8px}
 
-  .query{margin-top:16px; border:1.5px solid var(--ink); background:var(--paper)}
-  .q-head{display:flex; align-items:baseline; gap:10px; padding:8px 12px;
-          border-bottom:1px solid var(--rule)}
-  .q-where{font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:.02em}
-  .q-hint{font-size:10px; color:var(--ink-3)}
-  .q-head button{margin-left:auto; padding:4px 10px; font-size:11px}
-  .q-body{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)}
-  .q-body > div{padding:10px 12px}
-  .q-body > div + div{border-left:1px solid var(--rule)}
+  .query{margin-bottom:14px; padding-bottom:12px; border-bottom:1.5px solid var(--ink)}
+  .q-head{display:flex; align-items:baseline; gap:8px; margin-bottom:7px}
+  .q-where{font-weight:600; font-size:12px; font-variant-numeric:tabular-nums}
+  .q-head button{margin-left:auto; padding:2px 8px; font-size:10px}
   .q-cls{display:flex; align-items:center; gap:7px; font-weight:600; font-size:14px}
   .q-cls .chip{width:13px; height:13px}
-  .q-facts{margin:8px 0 0; display:grid; grid-template-columns:auto 1fr; gap:2px 12px;
+  .q-hint{font-size:10px; color:var(--ink-3); margin-top:2px}
+  .q-facts{margin:8px 0 0; display:grid; grid-template-columns:auto 1fr; gap:2px 10px;
            font-size:11.5px}
   .q-facts dt{color:var(--ink-3)}
   .q-facts dd{margin:0; font-variant-numeric:tabular-nums}
-  .q-sub{font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3)}
-  .q-stack{display:flex; height:9px; margin:7px 0 8px; background:var(--paper-2)}
+  .q-sub{font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3);
+         margin-top:12px}
+  .q-stack{display:flex; height:9px; margin:6px 0 7px; background:var(--paper-2)}
   .q-stack span{height:100%}
   .q-mix{display:grid; grid-template-columns:auto 1fr auto; gap:2px 8px; font-size:11.5px;
          align-items:center}
@@ -126,55 +127,55 @@
   .q-mix b{font-weight:600}
   .q-mix i{font-style:normal; text-align:right; font-variant-numeric:tabular-nums;
            color:var(--ink-3)}
-
-  /* ---- dprog/dt ------------------------------------------------------------ */
-  .dpdt{border-top:1px solid var(--rule); padding:10px 12px}
-  .dpdt-rows{margin-top:7px; display:grid; grid-template-columns:auto auto 1fr auto;
-             gap:3px 10px; align-items:center; font-size:11.5px}
+  .dpdt-rows{margin-top:6px; display:grid; grid-template-columns:auto auto 1fr;
+             gap:3px 8px; align-items:center; font-size:11.5px}
   .dpdt-rows .cyc{color:var(--ink-3); font-variant-numeric:tabular-nums}
-  .dpdt-rows .chip{width:11px; height:11px}
-  .dpdt-rows .nm{font-weight:600}
-  .dpdt-rows .nums{text-align:right; color:var(--ink-3); font-variant-numeric:tabular-nums;
-                   font-size:10.5px}
   .dpdt-rows .cyc.now{color:var(--ink); font-weight:600}
+  .dpdt-rows .chip{width:11px; height:11px}
+  .dpdt-rows .nm{font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .dpdt-rows .miss{grid-column:2/-1; color:var(--ink-3); font-size:10.5px}
-  .dpdt-note{font-size:10px; color:var(--ink-3); margin-top:8px; line-height:1.45}
+  .dpdt-note{font-size:10px; color:var(--ink-3); margin-top:7px; line-height:1.45}
+  .hint{font-size:10.5px; color:var(--ink-3); line-height:1.5}
 
-  /* ---- coverage over time -------------------------------------------------- */
-  .rail{border-left:1.5px solid var(--ink); padding-left:13px}
-  .rail h2, .trend h2{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
-                      color:var(--ink-3); margin:0 0 2px; font-weight:500}
-  .alt{font-size:10px; color:var(--ink-3); letter-spacing:.04em; margin-bottom:10px}
-  .band{padding:7px 0; border-bottom:1px dotted var(--rule)}
+  .band{padding:6px 0; border-bottom:1px dotted var(--rule)}
   .band-top{display:flex; align-items:center; gap:8px}
   .chip{width:12px; height:12px; border-radius:2px; flex:none;
         box-shadow:0 0 0 1px rgba(20,24,27,.22) inset}
-  .band-name{font-weight:600; font-size:12px; letter-spacing:.01em}
+  .band-name{font-weight:600; font-size:12px}
   .band-pct{margin-left:auto; font-variant-numeric:tabular-nums; color:var(--ink-3);
             font-size:11.5px}
   .bar{height:3px; background:var(--paper-2); margin-top:5px; overflow:hidden}
   .bar span{display:block; height:100%; width:0; transition:width .28s ease}
   .band-note{font-size:10px; color:var(--ink-3); margin-top:4px; line-height:1.4}
-  .total{display:flex; align-items:baseline; gap:8px; margin-top:10px; padding-top:9px;
+  .total{display:flex; align-items:baseline; gap:8px; margin-top:9px; padding-top:8px;
          border-top:1.5px solid var(--ink); font-size:11.5px}
   .total b{font-size:15px; font-variant-numeric:tabular-nums}
   .total span{color:var(--ink-3)}
-  .scale-note{font-size:9.5px; color:var(--ink-3); margin-top:8px; line-height:1.45}
+  .scale-note{font-size:9.5px; color:var(--ink-3); margin-top:7px; line-height:1.45}
 
-  .trend{margin-top:18px; border-top:1px solid var(--rule); padding-top:12px}
-  .trend svg{width:100%; height:96px; display:block; margin-top:4px}
+  /* ---- pads ---------------------------------------------------------------- */
+  .pads{display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:1px;
+        margin-top:14px; background:var(--rule); border:1px solid var(--rule); width:100%}
+  .pad{background:var(--paper); padding:6px 9px}
+  .pad-name{font-size:9.5px; letter-spacing:.1em; color:var(--ink-3)}
+  .pad-cls{display:flex; align-items:center; gap:5px; margin-top:3px; font-weight:600;
+           font-size:11.5px; line-height:1.2}
+  .pad-cls .chip{width:9px; height:9px}
+  .pad-num{font-size:10px; color:var(--ink-3); margin-top:2px; font-variant-numeric:tabular-nums}
 
-  footer{margin-top:20px; border-top:1px solid var(--rule); padding-top:10px;
-         font-size:10.5px; color:var(--ink-3); max-width:76ch}
+  .trend{margin-top:16px; border-top:1px solid var(--rule); padding-top:10px; width:100%}
+  .trend h2{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+            color:var(--ink-3); margin:0; font-weight:500}
+  .trend svg{width:100%; height:92px; display:block; margin-top:4px}
 
-  @media (max-width:840px){
+  footer{margin-top:18px; border-top:1px solid var(--rule); padding-top:9px;
+         font-size:10.5px; color:var(--ink-3); max-width:78ch}
+
+  @media (max-width:900px){
     .grid{grid-template-columns:1fr}
-    .rail{border-left:none; border-top:1.5px solid var(--ink); padding-left:0; padding-top:12px}
-    figure img{max-height:56vh}
-  }
-  @media (max-width:640px){
-    .q-body{grid-template-columns:1fr}
-    .q-body > div + div{border-left:none; border-top:1px solid var(--rule)}
+    .rail{position:static; max-height:none; border-left:none; padding-left:0;
+          border-top:1.5px solid var(--ink); padding-top:12px}
+    figure img{max-height:60vh}
   }
   @media (prefers-reduced-motion:reduce){ *{transition:none !important} }
 </style>
@@ -202,42 +203,20 @@
   <div class="stage">
     <figure>
       <img id="frame" alt="Classified cloud type map. Click a point for a readout.">
-      <div class="xhair" id="xhair" hidden aria-hidden="true"><i></i></div>
+      <div class="pin" id="pin" hidden aria-hidden="true">
+        <div class="ring" id="ring"></div><div class="cross"></div>
+      </div>
       <div class="loading" id="loading">LOADING</div>
     </figure>
 
     <div class="transport">
       <button id="play" aria-label="Play or pause the forecast loop">PLAY</button>
       <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Forecast hour">
-      <span class="valid" id="valid">—</span><span class="fh" id="fh"></span>
+      <span class="fh">VALID</span><span class="valid" id="valid">—</span>
+      <span class="fh" id="fh"></span>
     </div>
 
     <div class="pads" id="pads"></div>
-
-    <section class="query" id="query" hidden>
-      <div class="q-head">
-        <span class="q-where" id="q-where">—</span>
-        <span class="q-hint" id="q-hint"></span>
-        <button id="q-clear">CLEAR</button>
-      </div>
-      <div class="q-body">
-        <div>
-          <div class="q-sub">At the point</div>
-          <div class="q-cls" id="q-cls"></div>
-          <dl class="q-facts" id="q-facts"></dl>
-        </div>
-        <div>
-          <div class="q-sub">Within 10 nm</div>
-          <div class="q-stack" id="q-stack"></div>
-          <div class="q-mix" id="q-mix"></div>
-        </div>
-      </div>
-      <div class="dpdt">
-        <div class="q-sub">dprog/dt — same point, same valid time</div>
-        <div class="dpdt-rows" id="dpdt"></div>
-        <div class="dpdt-note" id="dpdt-note"></div>
-      </div>
-    </section>
 
     <div class="trend">
       <h2>Share of the domain, by forecast hour</h2>
@@ -246,6 +225,28 @@
   </div>
 
   <aside class="rail">
+    <section class="query" id="query">
+      <div class="q-head">
+        <span class="q-where" id="q-where">No point selected</span>
+        <button id="q-clear" hidden>CLEAR</button>
+      </div>
+      <div id="q-empty" class="hint">
+        Click anywhere on the map for the column beneath that point, the class mix within
+        10&nbsp;nm of it, and how the last few runs have handled it.
+      </div>
+      <div id="q-full" hidden>
+        <div class="q-cls" id="q-cls"></div>
+        <div class="q-hint" id="q-hint"></div>
+        <dl class="q-facts" id="q-facts"></dl>
+        <div class="q-sub">Within 10 nm of the pin</div>
+        <div class="q-stack" id="q-stack"></div>
+        <div class="q-mix" id="q-mix"></div>
+        <div class="q-sub">dprog/dt — same point, same valid time</div>
+        <div class="dpdt-rows" id="dpdt"></div>
+        <div class="dpdt-note" id="dpdt-note"></div>
+      </div>
+    </section>
+
     <h2>Cloud type</h2>
     <div class="alt">share of the domain — highest cloud first</div>
     <div id="bands"></div>
@@ -273,13 +274,13 @@ const NOTES = {
   stratiform: "Flat, shallow liquid layer.",
   clear:      "No condensate in the column."
 };
-// top of the atmosphere -> surface
 const ORDER = ["cirrus","debris","anvil_det","anvil_att","convective","tcu","cumulus","stratiform"];
 const RADIUS_NM = 10;
 
 let M=null, CYC=[], ci=0, i=0, timer=null, byKey={}, byId={};
-let BUF={}, QP=null;      // packed grids keyed "cid:fh", and the pinned point
+let BUF={}, QP=null;
 const $ = id => document.getElementById(id);
+const T = s => Date.parse(s || "");
 const cur = () => CYC[ci];
 const frames = () => cur().frames;
 
@@ -294,9 +295,8 @@ fetch("manifest.json?" + Date.now())
 function boot(){
   byKey = Object.fromEntries(M.classes.map(c => [c.key, c]));
   byId  = Object.fromEntries(M.classes.map(c => [c.id, c]));
-  // A manifest written before multi-cycle retention has no `cycles`; treat it as one run.
   CYC = M.cycles && M.cycles.length ? M.cycles
-      : [{id: "current", label: M.cycle || "current", frames: M.frames, run_h: (M.frames||[]).length}];
+      : [{id:"current", label:M.cycle||"current", frames:M.frames, run_h:(M.frames||[]).length}];
   $("generated").textContent = "built " + M.generated;
 
   const t = M.thresholds;
@@ -338,39 +338,43 @@ function boot(){
   $("scrub").addEventListener("input", e => { stop(); show(+e.target.value); });
   $("play").addEventListener("click", () => timer ? stop() : start());
   $("frame").addEventListener("click", onMapClick);
-  $("frame").addEventListener("load", placeXhair);
+  $("frame").addEventListener("load", placePin);
   $("q-clear").addEventListener("click", clearPoint);
   addEventListener("keydown", e => {
+    if (e.target.tagName === "INPUT") return;
     if (e.key === "ArrowRight"){ stop(); show(Math.min(i+1, frames().length-1)); }
     if (e.key === "ArrowLeft"){  stop(); show(Math.max(i-1, 0)); }
-    if (e.key === "ArrowUp"){   e.preventDefault(); stop(); stepCycle(+1); }  // older
-    if (e.key === "ArrowDown"){ e.preventDefault(); stop(); stepCycle(-1); }  // newer
+    if (e.key === "ArrowUp"){   e.preventDefault(); stop(); stepCycle(+1); }
+    if (e.key === "ArrowDown"){ e.preventDefault(); stop(); stepCycle(-1); }
     if (e.key === " "){ e.preventDefault(); timer ? stop() : start(); }
     if (e.key === "Escape") clearPoint();
   });
   let rt; addEventListener("resize", () => { clearTimeout(rt);
-    rt = setTimeout(() => { drawTrend(); moveCursor(i); placeXhair(); }, 150); });
+    rt = setTimeout(() => { drawTrend(); moveCursor(i); placePin(); }, 150); });
 }
 
 /* ---- runs ------------------------------------------------------------------ */
 function drawRuns(){
   $("runs").innerHTML = CYC.map((c, n) => {
     const age = n === 0 ? "latest" : "−" + hoursBetween(CYC[0], c) + " h";
-    return `<button class="run${n?" stale":""}" data-n="${n}" aria-pressed="${n===ci}">
-      ${c.label}<small>${age} · ${c.run_h||c.frames.length} h</small></button>`;
+    // Show x/y while a run is still being posted. HRRR trickles a run out over ~50-90 min,
+    // so the newest cycle is normally short a few hours and fills in on later passes.
+    const want = c.run_h_expected, have = c.run_h || c.frames.length;
+    const len = (want && have < want) ? have + "/" + want + " h" : have + " h";
+    return `<button class="run${(want&&have<want)?" partial":""}" data-n="${n}"
+      aria-pressed="${n===ci}">${c.label}<small>${age} · ${len}</small></button>`;
   }).join("");
   $("runs").querySelectorAll(".run").forEach(b =>
     b.addEventListener("click", () => { stop(); selectCycle(+b.dataset.n, validNow()); }));
 }
-const T = s => Date.parse(s || "");     // manifest times are plain ISO-8601 minutes
 function hoursBetween(a, b){
   const ta = T(a.init), tb = T(b.init);
   return (isFinite(ta) && isFinite(tb)) ? Math.round((ta - tb) / 3.6e6) : "?";
 }
 function validNow(){ const f = (frames()||[])[i]; return f ? f.valid : null; }
 
-// Switching runs holds the VALID TIME, not the forecast hour - that is the whole point of
-// a dprog/dt view. Falls back to the nearest available hour when a run doesn't reach it.
+// Switching runs holds the VALID TIME, not the forecast hour - that is the whole point of a
+// dprog/dt view. Falls back to the nearest hour when a run doesn't reach it.
 function selectCycle(n, keepValid){
   ci = Math.max(0, Math.min(CYC.length-1, n));
   const fr = frames();
@@ -381,7 +385,7 @@ function selectCycle(n, keepValid){
     const hit = fr.findIndex(f => f.valid === keepValid);
     idx = hit >= 0 ? hit : nearestValid(fr, keepValid);
   }
-  fr.forEach(f => { const im = new Image(); im.src = f.image; });   // warm the cache
+  fr.forEach(f => { const im = new Image(); im.src = f.image; });
   loadGrids(cur());
   $("runs").querySelectorAll(".run").forEach(b =>
     b.setAttribute("aria-pressed", (+b.dataset.n === ci) ? "true" : "false"));
@@ -391,13 +395,11 @@ function selectCycle(n, keepValid){
 function stepCycle(d){ selectCycle(ci + d, validNow()); }
 function nearestValid(fr, v){
   let best = 0, gap = Infinity;
-  fr.forEach((f,n) => { const g = Math.abs(T(f.valid) - T(v));
-    if (g < gap){ gap = g; best = n; } });
+  fr.forEach((f,n) => { const g = Math.abs(T(f.valid) - T(v)); if (g < gap){ gap = g; best = n; } });
   return best;
 }
 
 /* ---- packed grids ---------------------------------------------------------- */
-// The maps paint first; these land behind them and only gate the click readout.
 function loadGrids(c){
   if (!M.query) return;
   c.frames.forEach(f => {
@@ -428,33 +430,39 @@ function onMapClick(ev){
   const jj = Math.round((lat - q.lat0) / q.dlat), ii = Math.round((lon - q.lon0) / q.dlon);
   if (jj < 0 || ii < 0 || jj >= q.ny || ii >= q.nx) return;
   QP = {lat, lon, j: jj, i: ii};
-  placeXhair(); drawQuery();
+  placePin(); drawQuery();
 }
-function clearPoint(){ QP = null; $("query").hidden = true; $("xhair").hidden = true; }
-function placeXhair(){
-  if (!QP){ $("xhair").hidden = true; return; }
+function clearPoint(){
+  QP = null; $("pin").hidden = true; $("q-clear").hidden = true;
+  $("q-full").hidden = true; $("q-empty").hidden = false;
+  $("q-where").textContent = "No point selected";
+}
+// The ring is the actual 10 nm radius, drawn so the circle the numbers describe is visible
+// rather than implied. Mercator is conformal, so at this scale it is a true circle.
+function placePin(){
+  if (!QP){ $("pin").hidden = true; return; }
   const img = $("frame"), ir = img.getBoundingClientRect();
   const fr = img.parentElement.getBoundingClientRect();
   const d = M.domain, p0 = psi(d.lat_min), p1 = psi(d.lat_max);
-  const x = $("xhair");
-  x.style.left = (ir.left - fr.left + ((QP.lon-d.lon_min)/(d.lon_max-d.lon_min)) * ir.width) + "px";
-  x.style.top  = (ir.top  - fr.top  + ((p1-psi(QP.lat))/(p1-p0)) * ir.height) + "px";
-  x.hidden = false;
+  const p = $("pin");
+  p.style.left = (ir.left - fr.left + ((QP.lon-d.lon_min)/(d.lon_max-d.lon_min)) * ir.width) + "px";
+  p.style.top  = (ir.top  - fr.top  + ((p1-psi(QP.lat))/(p1-p0)) * ir.height) + "px";
+  const degLon = (RADIUS_NM * 1.852) / (111.32 * Math.cos(QP.lat * Math.PI/180));
+  const px = ir.width * degLon / (d.lon_max - d.lon_min);
+  const ring = $("ring");
+  ring.style.width = ring.style.height = (2*px) + "px";
+  p.hidden = false;
 }
 
 function drawQuery(){
   const q = M.query, f = frames()[i], buf = BUF[cur().id + ":" + f.fh];
-  $("query").hidden = false;
+  $("q-empty").hidden = true; $("q-full").hidden = false; $("q-clear").hidden = false;
   $("q-where").textContent =
-    Math.abs(QP.lat).toFixed(3) + (QP.lat<0?" S, ":" N, ") +
-    Math.abs(QP.lon).toFixed(3) + (QP.lon<0?" W":" E");
-  if (!buf){
-    $("q-hint").textContent = "loading this hour…";
-    ["q-cls","q-facts","q-mix","q-stack"].forEach(id => $(id).innerHTML = "");
-    drawDpdt(); return;
-  }
-  $("q-hint").textContent = cur().label + " F" + String(f.fh).padStart(2,"0")
-                          + " · valid " + f.valid_short;
+    Math.abs(QP.lat).toFixed(3) + (QP.lat<0?"S ":"N ") +
+    Math.abs(QP.lon).toFixed(3) + (QP.lon<0?"W":"E");
+  if (!buf){ $("q-hint").textContent = "loading this hour…"; drawDpdt(); return; }
+  $("q-hint").textContent = cur().label + " run, F" + String(f.fh).padStart(2,"0")
+                          + " · valid " + (f.valid_label || f.valid_short);
 
   const cell = QP.j * q.nx + QP.i;
   const c = byId[plane(buf, PLANE.CLASS, cell)] || byKey.clear;
@@ -472,8 +480,8 @@ function drawQuery(){
   ];
   $("q-facts").innerHTML = rows.map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
 
-  // Class mix inside the radius - the LLCC rules are written as distances from a hazard,
-  // so the useful question at a point is what share of the circle around it is what.
+  // The circle is centred on the pin, not on any pad - the LLCC rules are written as
+  // distances from a hazard, so the question at a point is what surrounds that point.
   const t = tally(buf, QP.j, QP.i);
   const seen = ORDER.filter(k => t.n[k]).sort((a,b) => t.n[b] - t.n[a]);
   $("q-stack").innerHTML = seen.map(k =>
@@ -505,43 +513,34 @@ function tally(buf, j0, i0){
 }
 
 /* ---- dprog/dt -------------------------------------------------------------- */
-// Every run held on disk, at the SAME valid time and the same point. Successive runs
-// agreeing is the signal worth having; a class that appears only in the newest run is one
-// the model has not committed to yet.
+// Every run on disk, at the SAME valid time and the same point. Successive runs agreeing is
+// the signal worth having; a class that appears only in the newest run is one the model has
+// not committed to yet.
 function drawDpdt(){
   const target = validNow(); if (!target){ $("dpdt").innerHTML = ""; return; }
-  const q = M.query;
-  const rows = CYC.map((c, n) => {
+  const q = M.query, seen = [];
+  $("dpdt").innerHTML = CYC.map((c, n) => {
+    const cyc = `<div class="cyc${n===ci?" now":""}">${c.label}</div>`;
     const f = c.frames.find(f => f.valid === target);
-    if (!f) return `<div class="cyc">${c.label}</div>
-      <div class="miss">run ends before this valid time</div>`;
+    if (!f) return cyc + `<div class="miss">run ends before this</div>`;
     const buf = BUF[c.id + ":" + f.fh];
     if (!buf){ if (!(c.id+":"+f.fh in BUF)) loadGrids(c);
-      return `<div class="cyc${n===ci?" now":""}">${c.label}</div>
-        <div class="miss">loading…</div>`; }
+               return cyc + `<div class="miss">loading…</div>`; }
     const cell = QP.j*q.nx + QP.i;
-    const cl = byId[plane(buf, PLANE.CLASS, cell)] || byKey.clear;
-    const iwp = decIwp(plane(buf, PLANE.IWP, cell));
-    const topK = plane(buf, PLANE.TOP_KFT, cell)/4;
+    const id = plane(buf, PLANE.CLASS, cell);
+    seen.push(id);
+    const cl = byId[id] || byKey.clear;
     const t = tally(buf, QP.j, QP.i);
-    const covered = 100 * (1 - (t.n.clear||0)/t.tot);
-    return `<div class="cyc${n===ci?" now":""}">${c.label}</div>
-      <div><span class="chip" style="background:${cl.color}"></span></div>
-      <div class="nm">${cl.name}<span style="color:var(--ink-3);font-weight:400">
-        &nbsp;F${String(f.fh).padStart(2,"0")}</span></div>
-      <div class="nums">${cl.key==="clear" ? "—"
-        : topK.toFixed(1)+" kft · "+(iwp<1?"<1":iwp.toFixed(0))+" g/m²"}
-        · ${covered.toFixed(0)}% in 10 nm</div>`;
-  });
-  $("dpdt").innerHTML = rows.join("");
-  const agree = new Set(CYC.map(c => {
-    const f = c.frames.find(f => f.valid === target); if (!f) return null;
-    const buf = BUF[c.id + ":" + f.fh]; if (!buf) return null;
-    return plane(buf, PLANE.CLASS, QP.j*q.nx + QP.i);
-  }).filter(v => v !== null));
-  $("dpdt-note").textContent = agree.size <= 1
-    ? "Runs agree at this point — the forecast has settled."
-    : "Runs disagree at this point; the newest is not automatically the right one.";
+    const cov = 100 * (1 - (t.n.clear||0)/t.tot);
+    return cyc + `<div><span class="chip" style="background:${cl.color}"></span></div>
+      <div class="nm">${cl.name}
+        <span style="color:var(--ink-3);font-weight:400">F${String(f.fh).padStart(2,"0")}
+        · ${cov.toFixed(0)}%</span></div>`;
+  }).join("");
+  $("dpdt-note").textContent = seen.length < 2 ? ""
+    : (new Set(seen).size === 1
+        ? "Runs agree here — the forecast has settled."
+        : "Runs disagree here; the newest is not automatically the right one.");
 }
 
 /* ---- frame ----------------------------------------------------------------- */
@@ -550,12 +549,12 @@ function show(n){
   $("frame").src = f.image;
   $("frame").alt = "Cloud type classification valid " + f.valid;
   $("loading").style.display = "none";
-  $("valid").textContent = f.valid_short;
+  // Spell the valid time out. "12/22Z" beside a run button reading "10Z" looked like a
+  // second cycle label rather than a day-of-month.
+  $("valid").textContent = f.valid_label || f.valid_short;
   $("fh").textContent = "F" + String(f.fh).padStart(2,"0");
   $("scrub").value = n;
 
-  // Denominator is every grid column in the domain, clear ones included - so these read as
-  // "percent of the map", and the covered total below closes the books.
   const total = Object.values(f.counts).reduce((a,b) => a+b, 0) || 1;
   ORDER.forEach(k => {
     if(!$("pct-"+k)) return;
@@ -570,8 +569,8 @@ function show(n){
     $("sc-"+s).style.background = c ? c.color : "transparent";
     $("sn-"+s).textContent = c ? c.name : d.key;
     $("sv-"+s).textContent = d.top_kft == null ? "no cloud"
-      : `top ${d.top_kft.toFixed(1)} kft / ${d.top_c.toFixed(0)} °C`
-        + (d.iwp >= 5 ? ` · ${d.iwp.toFixed(0)} g/m² ice` : "")
+      : `${d.top_kft.toFixed(1)} kft / ${d.top_c.toFixed(0)} °C`
+        + (d.iwp >= 5 ? ` · ${d.iwp.toFixed(0)} g/m²` : "")
         + (d.dbz >= 5 ? ` · ${d.dbz.toFixed(0)} dBZ` : "");
   });
   if (QP) drawQuery();
@@ -593,7 +592,7 @@ function drawTrend(){
   // Drawn in PIXEL space with the default preserveAspectRatio. A 100-unit viewBox stretched
   // across ~1000 px with preserveAspectRatio="none" smears every glyph 10x horizontally.
   const W = Math.max(320, Math.round(svg.clientWidth || svg.getBoundingClientRect().width || 640));
-  const H = 96, PL = 36, PR = 10, PT = 10, PB = 20;
+  const H = 92, PL = 36, PR = 10, PT = 10, PB = 20;
   const share = fr.map(f => {
     const tot = Object.values(f.counts).reduce((a,b)=>a+b,0) || 1;
     return Object.fromEntries(ORDER.map(k => [k, 100*(f.counts[k]||0)/tot]));
@@ -617,12 +616,22 @@ function drawTrend(){
   });
   out += `<rect class="cursor" x="${(x(0)-0.5).toFixed(1)}" y="${PT-4}" width="1"
            height="${H-PB-PT+4}" fill="#14181B" opacity=".5"/>`;
-  // Space labels by available pixels, not by frame count, so they can't collide - a 48 h run
-  // has 48 of them.
-  const step = Math.max(1, Math.ceil(n / Math.max(2, Math.floor((W-PL-PR)/64))));
-  fr.forEach((f,j) => { if (j % step === 0 || j === n-1)
-    out += `<text x="${x(j).toFixed(1)}" y="${H-6}" font-size="9.5" fill="#5D6A6E"
-             font-family="IBM Plex Mono, monospace" text-anchor="middle">${f.valid_short}</text>`; });
+  // Hour-only ticks, spaced by available pixels rather than frame count - a 48 h run has 48
+  // of them. The date appears only where the UTC day rolls over, which is the one place it
+  // is actually needed and cannot be mistaken for a cycle.
+  const step = Math.max(1, Math.ceil(n / Math.max(2, Math.floor((W-PL-PR)/40))));
+  const dayOf = f => (f.valid||"").slice(0,10);
+  fr.forEach((f,j) => {
+    if (j && dayOf(f) !== dayOf(fr[j-1])){
+      out += `<line x1="${x(j).toFixed(1)}" y1="${PT-4}" x2="${x(j).toFixed(1)}" y2="${H-PB}"
+               stroke="#14181B" stroke-width=".5" stroke-dasharray="2 2" opacity=".45"/>`
+          +  `<text x="${(x(j)+3).toFixed(1)}" y="${PT+2}" font-size="8.5" fill="#5D6A6E"
+               font-family="IBM Plex Mono, monospace">${(f.valid_label||"").slice(4)}</text>`;
+    }
+    if (j % step === 0 || j === n-1)
+      out += `<text x="${x(j).toFixed(1)}" y="${H-6}" font-size="9.5" fill="#5D6A6E"
+               font-family="IBM Plex Mono, monospace" text-anchor="middle">${f.valid_short}</text>`;
+  });
   svg.removeAttribute("preserveAspectRatio");
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.innerHTML = out;
