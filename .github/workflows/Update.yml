@@ -2,9 +2,17 @@ name: Update CloudScope
 
 on:
   schedule:
-    # HRRR posts hourly; every 3 h keeps the map fresh without a large standing download.
-    - cron: "20 */3 * * *"
+    # Hourly at :10. The script deliberately takes the N-1 cycle (CYCLE_LAG_H), so this fires
+    # against a run that has had ~70 minutes to post rather than one still being written.
+    # Actions cron is best-effort and often slips 10-25 minutes; the lag is what makes that
+    # slip harmless, so don't remove one without reconsidering the other.
+    - cron: "10 * * * *"
   workflow_dispatch:
+    inputs:
+      force:
+        description: "Rebuild the current cycle even if it is already published"
+        type: boolean
+        default: false
 
 # One publish at a time. Concurrent runs regenerate the same PNGs with different bytes and
 # collide on push.
@@ -35,6 +43,9 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Classify latest HRRR cycle
+        env:
+          # Also forces a rebuild whenever RENDER_VERSION in the script has moved on.
+          CLOUDSCOPE_FORCE: ${{ inputs.force && '1' || '0' }}
         run: python cloud_classify.py
 
       - name: Publish
