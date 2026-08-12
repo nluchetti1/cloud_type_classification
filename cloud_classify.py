@@ -94,7 +94,9 @@ SITES = {
 
 # Every pad above sits inside ~20 km, which is ~30 px on the domain map - an unreadable
 # blob. The inset re-renders that patch at scale so the pads can actually be told apart.
-CAPE_BOX = {"lat_min": 28.43, "lat_max": 28.67, "lon_min": -80.73, "lon_max": -80.49}
+# Extended east past the shoreline on purpose: the empty ocean strip is where the label
+# column goes, so leaders never have to cross a pad marker.
+CAPE_BOX = {"lat_min": 28.43, "lat_max": 28.67, "lon_min": -80.73, "lon_max": -80.44}
 
 BG = "#FFFFFF"                                # map background
 DX_KM = 3.0                                   # HRRR CONUS grid spacing
@@ -135,6 +137,16 @@ MAX_CYCLE_LOOKBACK_H = 6
 # costs nothing extra in bandwidth. Recomputing them hourly would be 4x the downloads for
 # an identical answer.
 KEEP_CYCLES = 4
+
+# How many older, still-incomplete cycles to top up on one pass, on top of the newest. Bounds
+# the runtime when several runs were picked up early.
+MAX_TOPUP_CYCLES = 2
+
+# Bump whenever the rendering or the classification changes. A cycle that is already
+# published is normally skipped, but a version mismatch means the PNGs on disk were made by
+# older code and have to be rebuilt - otherwise pushing a render change appears to do
+# nothing until the next cycle lands. Setting CLOUDSCOPE_FORCE=1 forces the same rebuild.
+RENDER_VERSION = "2026.08.12-inset"
 
 # ---- classification thresholds (all tunable; see README) ----
 LAYER_PATH_MIN = 0.20   # g/m^2 of condensate in one layer to call it cloudy
@@ -540,10 +552,67 @@ def _label_stack(pts, min_gap):
     for n, k in enumerate(order):
         if n and out[k] > out[order[n - 1]] - min_gap:
             out[k] = out[order[n - 1]] - min_gap
-    lo = min(out)
-    if lo < 0.02:                      # the stack ran off the bottom; slide it back up
-        out = [v + (0.02 - lo) for v in out]
+    lo, hi = min(out), max(out)
+    if hi > 0.965:                     # ran off the top; slide the whole stack down
+        out = [v - (hi - 0.965) for v in out]
+        lo = min(out)
+    if lo < 0.035:                     # ran off the bottom; slide it back up
+        out = [v + (0.035 - lo) for v in out]
     return out
+
+
+def _cape_inset(fig, ax, proj, size, cls, f, mesh):
+    """Re-render the pad cluster at scale. Every pad sits inside ~20 km, which is ~30 px on
+    the domain map - a blob. Here they are tens of pixels apart and can be labelled."""
+    pc = ccrs.PlateCarree()
+    hf = 0.30
+    wf = (hf * size[1] * _aspect(proj, CAPE_BOX)) / size[0]
+    m = 0.012
+    iax = fig.add_axes([1 - wf - m, 1 - hf - m, wf, hf], projection=proj, zorder=8)
+    _basemap(iax, CAPE_BOX, coast_lw=1.1)
+    iax.pcolormesh(f["lons"], f["lats"], cls, **mesh)
+    try:
+        iax.spines["geo"].set(edgecolor="#14181B", linewidth=1.2)
+    except Exception:
+        pass
+
+    # Where the inset is looking, drawn on the domain map.
+    ax.plot([CAPE_BOX["lon_min"], CAPE_BOX["lon_max"], CAPE_BOX["lon_max"],
+             CAPE_BOX["lon_min"], CAPE_BOX["lon_min"]],
+            [CAPE_BOX["lat_min"], CAPE_BOX["lat_min"], CAPE_BOX["lat_max"],
+             CAPE_BOX["lat_max"], CAPE_BOX["lat_min"]],
+            color="#14181B", linewidth=0.8, transform=pc, zorder=7)
+
+    # Transforms are only trustworthy once the axes has been through a draw.
+    fig.canvas.draw()
+    inv = iax.transAxes.inverted()
+    fx, fy, names = [], [], []
+    for name, (la, lo) in SITES.items():
+        px, py = proj.transform_point(lo, la, pc)
+        u, v = inv.transform(iax.transData.transform((px, py)))
+        if -0.02 <= u <= 1.02 and -0.02 <= v <= 1.02:
+            fx.append(u); fy.append(v); names.append(name)
+    if not names:
+        logging.warning("Cape inset: no pads fell inside CAPE_BOX.")
+        return
+
+    # One column, not two. Splitting left/right decluttered each side independently and then
+    # let the two sides collide in the middle - KTTS and LC-39A landed on top of each other.
+    LX = 0.985
+    # Keep the column clear of the map content: stack inside the top/bottom margins so the
+    # first and last labels are not clipped by the inset frame.
+    ly = _label_stack(fy, 0.078)
+    for k, name in enumerate(names):
+        iax.plot([fx[k], LX - 0.005], [fy[k], ly[k]], color="#14181B", linewidth=0.5,
+                 alpha=0.55, transform=iax.transAxes, zorder=9)
+        iax.plot(fx[k], fy[k], marker="+", markersize=5, markeredgewidth=1.2,
+                 color="#14181B", transform=iax.transAxes, zorder=10)
+        iax.text(LX, ly[k], name, fontsize=5.6, color="#14181B", family="monospace",
+                 ha="right", va="center", transform=iax.transAxes, zorder=10,
+                 path_effects=[pe.withStroke(linewidth=2.2, foreground=BG)])
+    iax.text(0.02, 0.975, "CAPE DETAIL", fontsize=5.2, color="#7A858E", family="monospace",
+             va="top", transform=iax.transAxes, zorder=10,
+             path_effects=[pe.withStroke(linewidth=2.0, foreground=BG)])
 
 
 def render(cls, f, valid, cycle, path):
@@ -564,57 +633,12 @@ def render(cls, f, valid, cycle, path):
         ax.plot(lo, la, marker=".", markersize=2.0, color="#14181B", transform=pc, zorder=6)
 
     # --- Cape inset ---------------------------------------------------------------------
-    hf = 0.36
-    wf = (hf * size[1] * _aspect(proj, CAPE_BOX)) / size[0]
-    pad_fig = 0.012
-    rect = [1 - wf - pad_fig, 1 - hf - pad_fig, wf, hf]
-    iax = fig.add_axes(rect, projection=proj, zorder=8)
-    _basemap(iax, CAPE_BOX, coast_lw=1.1)
-    iax.pcolormesh(f["lons"], f["lats"], cls, **mesh)
-    for sp in ("geo",):
-        try:
-            iax.spines[sp].set(edgecolor="#14181B", linewidth=1.2)
-        except Exception:
-            pass
-
-    # Where the inset is looking, drawn on the domain map.
-    ax.plot([CAPE_BOX["lon_min"], CAPE_BOX["lon_max"], CAPE_BOX["lon_max"],
-             CAPE_BOX["lon_min"], CAPE_BOX["lon_min"]],
-            [CAPE_BOX["lat_min"], CAPE_BOX["lat_min"], CAPE_BOX["lat_max"],
-             CAPE_BOX["lat_max"], CAPE_BOX["lat_min"]],
-            color="#14181B", linewidth=0.8, transform=pc, zorder=7)
-
-    # Pad labels: markers stay put, labels are stacked and joined by leaders.
-    inv = iax.transAxes.inverted()
-    fx, fy, names = [], [], []
-    for name, (la, lo) in SITES.items():
-        px, py = proj.transform_point(lo, la, pc)
-        u, v = inv.transform(iax.transData.transform((px, py)))
-        if -0.02 <= u <= 1.02 and -0.02 <= v <= 1.02:
-            fx.append(u); fy.append(v); names.append(name)
-    left = [k for k in range(len(names)) if fx[k] >= 0.5]
-    right = [k for k in range(len(names)) if fx[k] < 0.5]
-    ly = [0.0] * len(names)
-    for side in (left, right):
-        if side:
-            stacked = _label_stack([fy[k] for k in side], 0.064)
-            for k, yy in zip(side, stacked):
-                ly[k] = yy
-    for k, name in enumerate(names):
-        on_left = fx[k] >= 0.5
-        lx = (fx[k] - 0.085) if on_left else (fx[k] + 0.085)
-        lx = min(max(lx, 0.02), 0.98)
-        iax.plot([fx[k], lx], [fy[k], ly[k]], color="#14181B", linewidth=0.5,
-                 alpha=0.6, transform=iax.transAxes, zorder=9)
-        iax.plot(fx[k], fy[k], marker="+", markersize=5, markeredgewidth=1.2,
-                 color="#14181B", transform=iax.transAxes, zorder=10)
-        iax.text(lx, ly[k], name, fontsize=5.6, color="#14181B", family="monospace",
-                 ha="right" if on_left else "left", va="center",
-                 transform=iax.transAxes, zorder=10,
-                 path_effects=[pe.withStroke(linewidth=2.0, foreground=BG)])
-    iax.text(0.02, 0.975, "CAPE DETAIL", fontsize=5.2, color="#7A858E", family="monospace",
-             va="top", transform=iax.transAxes, zorder=10,
-             path_effects=[pe.withStroke(linewidth=2.0, foreground=BG)])
+    # Wrapped: a labelling bug in here must not take the whole map down with it. A frame with
+    # no inset is still a usable frame; a frame that raised is a hole in the loop.
+    try:
+        _cape_inset(fig, ax, proj, size, cls, f, mesh)
+    except Exception as e:
+        logging.warning(f"Cape inset skipped: {type(e).__name__}: {e}")
 
     ax.text(0.012, 0.012, f"HRRR {cycle}Z  valid {valid:%d %b %H%MZ}", transform=ax.transAxes,
             fontsize=6.4, color="#7A858E", family="monospace", zorder=7)
@@ -684,33 +708,27 @@ def load_manifest():
         return {}
 
 
-def main():
-    os.makedirs(MAP_DIR, exist_ok=True)
-    os.makedirs(DATA_DIR, exist_ok=True)
-    sess = _session()
-    date_str, cycle, cyc_dt = find_cycle(sess)
-    if not cycle:
-        logging.error("No HRRR cycle available; leaving the previous run in place.")
-        return
-    prev = load_manifest()
-    cid = f"{date_str}{cycle}"
-    if any(c.get("id") == cid for c in prev.get("cycles", [])):
-        logging.info(f"{cid}Z is already published; nothing new to build.")
-        return
+def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
+    """Render whatever hours of this cycle are on S3 and are not already built.
 
+    HRRR posts a run hour by hour over roughly 50-90 minutes, so a cycle picked up shortly
+    after f01 appears is genuinely incomplete - the tail 404s. Rather than waiting for the
+    whole run (which would put the page an hour behind) or accepting the truncation
+    permanently (which is what silently happened before), each pass fills in the hours that
+    have shown up since. Returns (frames, bytes, qmeta, n_new).
+    """
+    have = {int(fr["fh"]): fr for fr in existing}
     hours = run_hours(cycle)
-    logging.info(f"HRRR cycle {date_str} {cycle}z, {len(hours)} h "
-                 f"({'extended' if int(cycle) in EXTENDED_CYCLES else 'short'} run)")
+    todo = [h for h in hours if h not in have]
+    if not todo:
+        return sorted(have.values(), key=lambda fr: fr["fh"]), 0, None, 0
 
-    frames, bytes_total, qmeta = [], 0, None
-    for fh in hours:
+    total, qmeta, made = 0, None, 0
+    for fh in todo:
         path, n = fetch_hour(sess, date_str, cycle, fh)
-        bytes_total += n
+        total += n
         if not path or n == 0:
-            # Past ~f18 on a short cycle this is simply the end of the run, not a failure.
-            logging.info(f"f{fh:02d}: no data (end of run?)")
-            if fh > SHORT_RUN_H and not frames[-1:]:
-                break
+            logging.info(f"f{fh:02d}: not posted yet")
             continue
         try:
             f = read_fields(path)
@@ -741,31 +759,88 @@ def main():
                     "dbz": round(float(diag["refc"][jy, jx]), 1),
                 }
             counts = {c["key"]: int((cls == c["id"]).sum()) for c in CLASSES}
-            # "%d/%HZ" put the day-of-month first, so F12 of the 10Z run rendered as
-            # "12/22Z" and read like a 12Z cycle. Hour-only here; the day is carried by
-            # valid_label and by the day dividers on the trend axis.
-            frames.append({"fh": fh, "valid": valid.strftime("%Y-%m-%dT%H:%MZ"),
-                           "valid_short": valid.strftime("%HZ"),
-                           "valid_label": valid.strftime("%HZ %a %d %b"), "image": png,
-                           "data": binrel, "counts": counts, "sites": sites})
+            # "%d/%HZ" put day-of-month first, so F12 of the 10Z run read as "12/22Z" and
+            # looked like a 12Z cycle. Hour only here; valid_label carries the date.
+            have[fh] = {"fh": fh, "valid": valid.strftime("%Y-%m-%dT%H:%MZ"),
+                        "valid_short": valid.strftime("%HZ"),
+                        "valid_label": valid.strftime("%HZ %a %d %b"),
+                        "image": png, "data": binrel, "counts": counts, "sites": sites}
+            made += 1
             logging.info(f"f{fh:02d} valid {valid:%d %b %HZ}: " +
                          " ".join(f"{k}={v}" for k, v in counts.items() if v and k != "clear"))
         finally:
             if os.path.exists(path):
                 os.remove(path)
 
-    if not frames:
+    return sorted(have.values(), key=lambda fr: fr["fh"]), total, qmeta, made
+
+
+def main():
+    os.makedirs(MAP_DIR, exist_ok=True)
+    os.makedirs(DATA_DIR, exist_ok=True)
+    sess = _session()
+    date_str, cycle, cyc_dt = find_cycle(sess)
+    if not cycle:
+        logging.error("No HRRR cycle available; leaving the previous run in place.")
+        return
+
+    prev = load_manifest()
+    force = os.environ.get("CLOUDSCOPE_FORCE", "").strip().lower() in ("1", "true", "yes")
+    stale = prev.get("render_version") != RENDER_VERSION
+    if stale and prev:
+        logging.info(f"Render version changed ({prev.get('render_version', 'pre-versioning')}"
+                     f" -> {RENDER_VERSION}); rebuilding from scratch.")
+    elif force:
+        logging.info("CLOUDSCOPE_FORCE set; rebuilding from scratch.")
+    # A version bump makes the PNGs on disk inconsistent with the new ones, so the old cycles
+    # are dropped rather than mixed. dprog/dt rebuilds itself over the next few hours.
+    prior = [] if (stale or force) else list(prev.get("cycles", []))
+
+    cid = f"{date_str}{cycle}"
+    cyc_dts = {cid: cyc_dt}
+    entries, bytes_total, qmeta, built = [], 0, None, 0
+
+    # Newest cycle first, then top up any retained cycle still missing hours - a run that was
+    # picked up early is finished on a later pass instead of staying truncated forever.
+    todo = [(cid, date_str, cycle)]
+    for c in prior:
+        if c["id"] != cid and len(c["frames"]) < len(run_hours(c["hour"])):
+            todo.append((c["id"], c["date"], c["hour"]))
+            cyc_dts[c["id"]] = datetime.datetime.strptime(
+                c["init"], "%Y-%m-%dT%H:%MZ").replace(tzinfo=datetime.timezone.utc)
+        if len(todo) >= MAX_TOPUP_CYCLES + 1:
+            break
+
+    for tid, tdate, thour in todo:
+        existing = next((c["frames"] for c in prior if c["id"] == tid), [])
+        frames, nbytes, qm, made = build_cycle(sess, tdate, thour, cyc_dts[tid], tid, existing)
+        bytes_total += nbytes
+        qmeta = qm or qmeta
+        built += made
+        if not frames:
+            continue
+        want = run_hours(thour)
+        entries.append({"id": tid, "label": f"{thour}Z", "date": tdate, "hour": thour,
+                        "init": cyc_dts[tid].strftime("%Y-%m-%dT%H:%MZ"),
+                        "render_version": RENDER_VERSION,
+                        "run_h": len(frames), "run_h_expected": len(want),
+                        "complete": len(frames) >= len(want), "frames": frames})
+        if made:
+            logging.info(f"{tid}Z: {len(frames)}/{len(want)} h "
+                         f"({'complete' if len(frames) >= len(want) else 'partial'}), "
+                         f"+{made} new this pass.")
+
+    if not entries and not prior:
         logging.error("No frames rendered; manifest not rewritten.")
         return
 
-    # --- dprog/dt bookkeeping ----------------------------------------------------------
-    # The new cycle goes on the front and the tail is trimmed. Prior cycles are carried over
-    # verbatim: their PNGs and .bin files are still on disk from the runs that built them.
-    entry = {"id": cid, "label": f"{cycle}Z", "date": date_str, "hour": cycle,
-             "init": cyc_dt.strftime("%Y-%m-%dT%H:%MZ"),
-             "run_h": len(hours), "frames": frames}
-    cycles = [entry] + [c for c in prev.get("cycles", []) if c.get("id") != cid]
+    by_id = {e["id"]: e for e in entries}
+    cycles = [by_id.get(c["id"], c) for c in prior if c["id"] != cid]
+    cycles = ([by_id[cid]] if cid in by_id else []) + cycles
     cycles = cycles[:KEEP_CYCLES]
+    if not cycles:
+        logging.error("Nothing to publish; manifest not rewritten.")
+        return
 
     live = set()
     for c in cycles:
@@ -779,13 +854,15 @@ def main():
                 os.remove(os.path.join(d, fn))
                 dropped += 1
 
+    newest = cycles[0]
     manifest = {
         "generated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
-        "model": "HRRR", "cycle": f"{date_str} {cycle}Z",
+        "render_version": RENDER_VERSION,
+        "model": "HRRR", "cycle": f"{newest['date']} {newest['hour']}Z",
         "domain": DOMAIN, "classes": CLASSES, "sites": list(SITES),
         "query": qmeta or prev.get("query"),
         "cycles": cycles,
-        "frames": frames,          # the newest run, so an older viewer still works
+        "frames": newest["frames"],   # so an older viewer still works
         "thresholds": {"layer_path_min_gm2": LAYER_PATH_MIN, "glaciated_c": GLACIATED_C,
                        "ice_fraction": ICE_FRAC, "anvil_iwp_gm2": ANVIL_IWP,
                        "debris_iwp_gm2": DEBRIS_IWP, "convective_dbz": CONV_DBZ,
@@ -795,9 +872,9 @@ def main():
     }
     with open(os.path.join(OUT_DIR, "manifest.json"), "w") as fp:
         json.dump(manifest, fp, indent=1)
-    logging.info(f"{len(frames)} frames, {bytes_total/1024/1024:.0f} MB transferred; "
-                 f"holding {len(cycles)} cycles ({', '.join(c['id'] for c in cycles)}), "
-                 f"pruned {dropped} files.")
+    logging.info(f"+{built} frames, {bytes_total/1024/1024:.0f} MB transferred; holding "
+                 + ", ".join(f"{c['id']}({c['run_h']}/{c['run_h_expected']}h)" for c in cycles)
+                 + f"; pruned {dropped} files.")
 
 
 if __name__ == "__main__":
