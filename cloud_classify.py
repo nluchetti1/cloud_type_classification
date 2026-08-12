@@ -130,6 +130,11 @@ IWP_MAX = 3000.0        # ceiling of the logarithmic ice-path packing, g/m^2
 EXTENDED_CYCLES = {0, 6, 12, 18}
 SHORT_RUN_H, EXTENDED_RUN_H = 18, 48
 
+# Start one cycle back. A run is adopted as soon as its f01 index is posted, but HRRR takes
+# ~50-60 min to finish an 18 h run (~100 min for a 48 h synoptic cycle), so reaching for the
+# freshest cycle bought a map that was 40 minutes newer and four forecast hours shorter. The
+# N-1 cycle is essentially complete on arrival; the top-up pass then fills the rest.
+CYCLE_LAG_H = 1
 MAX_CYCLE_LOOKBACK_H = 6
 
 # dprog/dt: how many cycles stay on disk. Each run only ever processes the NEWEST cycle -
@@ -236,9 +241,9 @@ def run_hours(cycle):
 
 
 def find_cycle(sess):
-    """Newest cycle whose f01 wrfprs index is posted."""
+    """Newest cycle at least CYCLE_LAG_H old whose f01 wrfprs index is posted."""
     now = datetime.datetime.now(datetime.timezone.utc)
-    for back in range(MAX_CYCLE_LOOKBACK_H + 1):
+    for back in range(CYCLE_LAG_H, MAX_CYCLE_LOOKBACK_H + 1):
         t = now - datetime.timedelta(hours=back)
         d, cc = t.strftime("%Y%m%d"), t.strftime("%H")
         try:
