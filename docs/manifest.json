@@ -1,8 +1,8 @@
 {
- "generated": "2026-08-12T14:33Z",
+ "generated": "2026-08-12T16:08Z",
  "render_version": "2026.08.12-inset",
  "model": "HRRR",
- "cycle": "20260812 13Z",
+ "cycle": "20260812 15Z",
  "domain": {
   "lat_min": 26.5,
   "lat_max": 30.5,
@@ -97,15 +97,714 @@
  },
  "cycles": [
   {
+   "id": "2026081215",
+   "label": "15Z",
+   "date": "20260812",
+   "hour": "15",
+   "init": "2026-08-12T15:00Z",
+   "render_version": "2026.08.12-inset",
+   "run_h": 7,
+   "run_h_expected": 18,
+   "complete": false,
+   "frames": [
+    {
+     "fh": 1,
+     "valid": "2026-08-12T16:00Z",
+     "valid_short": "16Z",
+     "valid_label": "16Z Wed 12 Aug",
+     "image": "maps/cloudtype_2026081215z_f01.png",
+     "data": "data/cols_2026081215z_f01.bin",
+     "counts": {
+      "clear": 23737,
+      "stratiform": 50,
+      "cumulus": 40,
+      "tcu": 0,
+      "convective": 2,
+      "anvil_att": 0,
+      "anvil_det": 0,
+      "debris": 0,
+      "cirrus": 0
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     }
+    },
+    {
+     "fh": 2,
+     "valid": "2026-08-12T17:00Z",
+     "valid_short": "17Z",
+     "valid_label": "17Z Wed 12 Aug",
+     "image": "maps/cloudtype_2026081215z_f02.png",
+     "data": "data/cols_2026081215z_f02.bin",
+     "counts": {
+      "clear": 23512,
+      "stratiform": 83,
+      "cumulus": 68,
+      "tcu": 1,
+      "convective": 80,
+      "anvil_att": 50,
+      "anvil_det": 0,
+      "debris": 22,
+      "cirrus": 13
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     }
+    },
+    {
+     "fh": 3,
+     "valid": "2026-08-12T18:00Z",
+     "valid_short": "18Z",
+     "valid_label": "18Z Wed 12 Aug",
+     "image": "maps/cloudtype_2026081215z_f03.png",
+     "data": "data/cols_2026081215z_f03.bin",
+     "counts": {
+      "clear": 23084,
+      "stratiform": 254,
+      "cumulus": 108,
+      "tcu": 3,
+      "convective": 104,
+      "anvil_att": 125,
+      "anvil_det": 3,
+      "debris": 37,
+      "cirrus": 111
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     }
+    },
+    {
+     "fh": 4,
+     "valid": "2026-08-12T19:00Z",
+     "valid_short": "19Z",
+     "valid_label": "19Z Wed 12 Aug",
+     "image": "maps/cloudtype_2026081215z_f04.png",
+     "data": "data/cols_2026081215z_f04.bin",
+     "counts": {
+      "clear": 22196,
+      "stratiform": 587,
+      "cumulus": 297,
+      "tcu": 0,
+      "convective": 230,
+      "anvil_att": 294,
+      "anvil_det": 0,
+      "debris": 67,
+      "cirrus": 158
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     }
+    },
+    {
+     "fh": 5,
+     "valid": "2026-08-12T20:00Z",
+     "valid_short": "20Z",
+     "valid_label": "20Z Wed 12 Aug",
+     "image": "maps/cloudtype_2026081215z_f05.png",
+     "data": "data/cols_2026081215z_f05.bin",
+     "counts": {
+      "clear": 21126,
+      "stratiform": 588,
+      "cumulus": 310,
+      "tcu": 2,
+      "convective": 448,
+      "anvil_att": 871,
+      "anvil_det": 15,
+      "debris": 171,
+      "cirrus": 298
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     }
+    },
+    {
+     "fh": 6,
+     "valid": "2026-08-12T21:00Z",
+     "valid_short": "21Z",
+     "valid_label": "21Z Wed 12 Aug",
+     "image": "maps/cloudtype_2026081215z_f06.png",
+     "data": "data/cols_2026081215z_f06.bin",
+     "counts": {
+      "clear": 19468,
+      "stratiform": 536,
+      "cumulus": 336,
+      "tcu": 5,
+      "convective": 847,
+      "anvil_att": 1572,
+      "anvil_det": 58,
+      "debris": 292,
+      "cirrus": 715
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     }
+    },
+    {
+     "fh": 7,
+     "valid": "2026-08-12T22:00Z",
+     "valid_short": "22Z",
+     "valid_label": "22Z Wed 12 Aug",
+     "image": "maps/cloudtype_2026081215z_f07.png",
+     "data": "data/cols_2026081215z_f07.bin",
+     "counts": {
+      "clear": 17526,
+      "stratiform": 391,
+      "cumulus": 249,
+      "tcu": 1,
+      "convective": 1049,
+      "anvil_att": 2682,
+      "anvil_det": 315,
+      "debris": 679,
+      "cirrus": 937
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     }
+    }
+   ]
+  },
+  {
    "id": "2026081213",
    "label": "13Z",
    "date": "20260812",
    "hour": "13",
    "init": "2026-08-12T13:00Z",
    "render_version": "2026.08.12-inset",
-   "run_h": 17,
+   "run_h": 18,
    "run_h_expected": 18,
-   "complete": false,
+   "complete": true,
    "frames": [
     {
      "fh": 1,
@@ -1378,6 +2077,104 @@
        "top_c": -66.7,
        "iwp": 2024.1,
        "dbz": 14.8
+      }
+     }
+    },
+    {
+     "fh": 14,
+     "valid": "2026-08-13T03:00Z",
+     "valid_short": "03Z",
+     "valid_label": "03Z Thu 13 Aug",
+     "image": "maps/cloudtype_2026081213z_f14.png",
+     "data": "data/cols_2026081213z_f14.bin",
+     "counts": {
+      "clear": 10400,
+      "stratiform": 1969,
+      "cumulus": 332,
+      "tcu": 6,
+      "convective": 335,
+      "anvil_att": 894,
+      "anvil_det": 111,
+      "debris": 627,
+      "cirrus": 9155
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "anvil_att",
+       "top_kft": 46.8,
+       "top_c": -64.0,
+       "iwp": 2860.3,
+       "dbz": 17.2
+      },
+      "LC-39B": {
+       "key": "cirrus",
+       "top_kft": 46.8,
+       "top_c": -64.0,
+       "iwp": 2274.0,
+       "dbz": 15.6
+      },
+      "SLC-41": {
+       "key": "anvil_att",
+       "top_kft": 46.8,
+       "top_c": -64.1,
+       "iwp": 3620.0,
+       "dbz": 20.1
+      },
+      "SLC-40": {
+       "key": "anvil_att",
+       "top_kft": 46.8,
+       "top_c": -64.2,
+       "iwp": 3920.8,
+       "dbz": 21.8
+      },
+      "SLC-37B": {
+       "key": "anvil_att",
+       "top_kft": 46.8,
+       "top_c": -64.3,
+       "iwp": 4201.2,
+       "dbz": 27.1
+      },
+      "SLC-20": {
+       "key": "anvil_att",
+       "top_kft": 46.8,
+       "top_c": -64.5,
+       "iwp": 2952.1,
+       "dbz": 25.4
+      },
+      "LZ-1": {
+       "key": "anvil_att",
+       "top_kft": 46.8,
+       "top_c": -64.6,
+       "iwp": 2421.8,
+       "dbz": 25.1
+      },
+      "SLC-36": {
+       "key": "anvil_att",
+       "top_kft": 46.8,
+       "top_c": -64.8,
+       "iwp": 1789.6,
+       "dbz": 17.6
+      },
+      "SLC-46": {
+       "key": "anvil_att",
+       "top_kft": 46.8,
+       "top_c": -64.8,
+       "iwp": 1789.6,
+       "dbz": 17.6
+      },
+      "KTTS": {
+       "key": "cirrus",
+       "top_kft": 46.8,
+       "top_c": -63.9,
+       "iwp": 1529.6,
+       "dbz": 11.9
+      },
+      "KXMR": {
+       "key": "anvil_att",
+       "top_kft": 46.8,
+       "top_c": -64.6,
+       "iwp": 1978.2,
+       "dbz": 19.6
       }
      }
     },
@@ -8273,21 +9070,21 @@
  "frames": [
   {
    "fh": 1,
-   "valid": "2026-08-12T14:00Z",
-   "valid_short": "14Z",
-   "valid_label": "14Z Wed 12 Aug",
-   "image": "maps/cloudtype_2026081213z_f01.png",
-   "data": "data/cols_2026081213z_f01.bin",
+   "valid": "2026-08-12T16:00Z",
+   "valid_short": "16Z",
+   "valid_label": "16Z Wed 12 Aug",
+   "image": "maps/cloudtype_2026081215z_f01.png",
+   "data": "data/cols_2026081215z_f01.bin",
    "counts": {
-    "clear": 23794,
-    "stratiform": 27,
-    "cumulus": 0,
+    "clear": 23737,
+    "stratiform": 50,
+    "cumulus": 40,
     "tcu": 0,
-    "convective": 0,
+    "convective": 2,
     "anvil_att": 0,
     "anvil_det": 0,
     "debris": 0,
-    "cirrus": 8
+    "cirrus": 0
    },
    "sites": {
     "LC-39A": {
@@ -8371,21 +9168,21 @@
   },
   {
    "fh": 2,
-   "valid": "2026-08-12T15:00Z",
-   "valid_short": "15Z",
-   "valid_label": "15Z Wed 12 Aug",
-   "image": "maps/cloudtype_2026081213z_f02.png",
-   "data": "data/cols_2026081213z_f02.bin",
+   "valid": "2026-08-12T17:00Z",
+   "valid_short": "17Z",
+   "valid_label": "17Z Wed 12 Aug",
+   "image": "maps/cloudtype_2026081215z_f02.png",
+   "data": "data/cols_2026081215z_f02.bin",
    "counts": {
-    "clear": 23822,
-    "stratiform": 2,
-    "cumulus": 0,
-    "tcu": 0,
-    "convective": 0,
-    "anvil_att": 0,
+    "clear": 23512,
+    "stratiform": 83,
+    "cumulus": 68,
+    "tcu": 1,
+    "convective": 80,
+    "anvil_att": 50,
     "anvil_det": 0,
-    "debris": 0,
-    "cirrus": 5
+    "debris": 22,
+    "cirrus": 13
    },
    "sites": {
     "LC-39A": {
@@ -8469,21 +9266,21 @@
   },
   {
    "fh": 3,
-   "valid": "2026-08-12T16:00Z",
-   "valid_short": "16Z",
-   "valid_label": "16Z Wed 12 Aug",
-   "image": "maps/cloudtype_2026081213z_f03.png",
-   "data": "data/cols_2026081213z_f03.bin",
+   "valid": "2026-08-12T18:00Z",
+   "valid_short": "18Z",
+   "valid_label": "18Z Wed 12 Aug",
+   "image": "maps/cloudtype_2026081215z_f03.png",
+   "data": "data/cols_2026081215z_f03.bin",
    "counts": {
-    "clear": 23722,
-    "stratiform": 19,
-    "cumulus": 9,
-    "tcu": 0,
-    "convective": 4,
-    "anvil_att": 0,
-    "anvil_det": 0,
-    "debris": 0,
-    "cirrus": 75
+    "clear": 23084,
+    "stratiform": 254,
+    "cumulus": 108,
+    "tcu": 3,
+    "convective": 104,
+    "anvil_att": 125,
+    "anvil_det": 3,
+    "debris": 37,
+    "cirrus": 111
    },
    "sites": {
     "LC-39A": {
@@ -8567,21 +9364,21 @@
   },
   {
    "fh": 4,
-   "valid": "2026-08-12T17:00Z",
-   "valid_short": "17Z",
-   "valid_label": "17Z Wed 12 Aug",
-   "image": "maps/cloudtype_2026081213z_f04.png",
-   "data": "data/cols_2026081213z_f04.bin",
+   "valid": "2026-08-12T19:00Z",
+   "valid_short": "19Z",
+   "valid_label": "19Z Wed 12 Aug",
+   "image": "maps/cloudtype_2026081215z_f04.png",
+   "data": "data/cols_2026081215z_f04.bin",
    "counts": {
-    "clear": 23243,
-    "stratiform": 391,
-    "cumulus": 43,
+    "clear": 22196,
+    "stratiform": 587,
+    "cumulus": 297,
     "tcu": 0,
-    "convective": 14,
-    "anvil_att": 0,
+    "convective": 230,
+    "anvil_att": 294,
     "anvil_det": 0,
-    "debris": 0,
-    "cirrus": 138
+    "debris": 67,
+    "cirrus": 158
    },
    "sites": {
     "LC-39A": {
@@ -8665,21 +9462,21 @@
   },
   {
    "fh": 5,
-   "valid": "2026-08-12T18:00Z",
-   "valid_short": "18Z",
-   "valid_label": "18Z Wed 12 Aug",
-   "image": "maps/cloudtype_2026081213z_f05.png",
-   "data": "data/cols_2026081213z_f05.bin",
+   "valid": "2026-08-12T20:00Z",
+   "valid_short": "20Z",
+   "valid_label": "20Z Wed 12 Aug",
+   "image": "maps/cloudtype_2026081215z_f05.png",
+   "data": "data/cols_2026081215z_f05.bin",
    "counts": {
-    "clear": 22421,
-    "stratiform": 681,
-    "cumulus": 251,
-    "tcu": 0,
-    "convective": 79,
-    "anvil_att": 66,
-    "anvil_det": 0,
-    "debris": 25,
-    "cirrus": 306
+    "clear": 21126,
+    "stratiform": 588,
+    "cumulus": 310,
+    "tcu": 2,
+    "convective": 448,
+    "anvil_att": 871,
+    "anvil_det": 15,
+    "debris": 171,
+    "cirrus": 298
    },
    "sites": {
     "LC-39A": {
@@ -8763,21 +9560,21 @@
   },
   {
    "fh": 6,
-   "valid": "2026-08-12T19:00Z",
-   "valid_short": "19Z",
-   "valid_label": "19Z Wed 12 Aug",
-   "image": "maps/cloudtype_2026081213z_f06.png",
-   "data": "data/cols_2026081213z_f06.bin",
+   "valid": "2026-08-12T21:00Z",
+   "valid_short": "21Z",
+   "valid_label": "21Z Wed 12 Aug",
+   "image": "maps/cloudtype_2026081215z_f06.png",
+   "data": "data/cols_2026081215z_f06.bin",
    "counts": {
-    "clear": 21370,
-    "stratiform": 721,
-    "cumulus": 224,
-    "tcu": 3,
-    "convective": 367,
-    "anvil_att": 497,
-    "anvil_det": 0,
-    "debris": 164,
-    "cirrus": 483
+    "clear": 19468,
+    "stratiform": 536,
+    "cumulus": 336,
+    "tcu": 5,
+    "convective": 847,
+    "anvil_att": 1572,
+    "anvil_det": 58,
+    "debris": 292,
+    "cirrus": 715
    },
    "sites": {
     "LC-39A": {
@@ -8861,315 +9658,21 @@
   },
   {
    "fh": 7,
-   "valid": "2026-08-12T20:00Z",
-   "valid_short": "20Z",
-   "valid_label": "20Z Wed 12 Aug",
-   "image": "maps/cloudtype_2026081213z_f07.png",
-   "data": "data/cols_2026081213z_f07.bin",
-   "counts": {
-    "clear": 19925,
-    "stratiform": 297,
-    "cumulus": 179,
-    "tcu": 5,
-    "convective": 1053,
-    "anvil_att": 1668,
-    "anvil_det": 17,
-    "debris": 334,
-    "cirrus": 351
-   },
-   "sites": {
-    "LC-39A": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "LC-39B": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-41": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-40": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-37B": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-20": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "LZ-1": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-36": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-46": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "KTTS": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "KXMR": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    }
-   }
-  },
-  {
-   "fh": 8,
-   "valid": "2026-08-12T21:00Z",
-   "valid_short": "21Z",
-   "valid_label": "21Z Wed 12 Aug",
-   "image": "maps/cloudtype_2026081213z_f08.png",
-   "data": "data/cols_2026081213z_f08.bin",
-   "counts": {
-    "clear": 17744,
-    "stratiform": 248,
-    "cumulus": 209,
-    "tcu": 2,
-    "convective": 1445,
-    "anvil_att": 2073,
-    "anvil_det": 590,
-    "debris": 557,
-    "cirrus": 961
-   },
-   "sites": {
-    "LC-39A": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "LC-39B": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-41": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-40": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-37B": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-20": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "LZ-1": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-36": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-46": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "KTTS": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "KXMR": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    }
-   }
-  },
-  {
-   "fh": 9,
    "valid": "2026-08-12T22:00Z",
    "valid_short": "22Z",
    "valid_label": "22Z Wed 12 Aug",
-   "image": "maps/cloudtype_2026081213z_f09.png",
-   "data": "data/cols_2026081213z_f09.bin",
+   "image": "maps/cloudtype_2026081215z_f07.png",
+   "data": "data/cols_2026081215z_f07.bin",
    "counts": {
-    "clear": 15470,
-    "stratiform": 378,
-    "cumulus": 263,
-    "tcu": 3,
-    "convective": 1909,
-    "anvil_att": 2767,
-    "anvil_det": 624,
-    "debris": 645,
-    "cirrus": 1770
-   },
-   "sites": {
-    "LC-39A": {
-     "key": "cirrus",
-     "top_kft": 40.9,
-     "top_c": -53.2,
-     "iwp": 5.1,
-     "dbz": -8.7
-    },
-    "LC-39B": {
-     "key": "cirrus",
-     "top_kft": 46.8,
-     "top_c": -66.0,
-     "iwp": 10.2,
-     "dbz": -10.0
-    },
-    "SLC-41": {
-     "key": "cirrus",
-     "top_kft": 40.9,
-     "top_c": -53.3,
-     "iwp": 10.2,
-     "dbz": -10.0
-    },
-    "SLC-40": {
-     "key": "cirrus",
-     "top_kft": 46.8,
-     "top_c": -65.9,
-     "iwp": 15.3,
-     "dbz": -10.0
-    },
-    "SLC-37B": {
-     "key": "cirrus",
-     "top_kft": 46.8,
-     "top_c": -66.0,
-     "iwp": 15.3,
-     "dbz": -10.0
-    },
-    "SLC-20": {
-     "key": "cirrus",
-     "top_kft": 46.8,
-     "top_c": -66.0,
-     "iwp": 10.2,
-     "dbz": -10.0
-    },
-    "LZ-1": {
-     "key": "cirrus",
-     "top_kft": 46.8,
-     "top_c": -66.1,
-     "iwp": 10.2,
-     "dbz": -10.0
-    },
-    "SLC-36": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-46": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "KTTS": {
-     "key": "cirrus",
-     "top_kft": 46.8,
-     "top_c": -65.9,
-     "iwp": 5.1,
-     "dbz": -10.0
-    },
-    "KXMR": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    }
-   }
-  },
-  {
-   "fh": 10,
-   "valid": "2026-08-12T23:00Z",
-   "valid_short": "23Z",
-   "valid_label": "23Z Wed 12 Aug",
-   "image": "maps/cloudtype_2026081213z_f10.png",
-   "data": "data/cols_2026081213z_f10.bin",
-   "counts": {
-    "clear": 13495,
-    "stratiform": 454,
-    "cumulus": 227,
-    "tcu": 0,
-    "convective": 1888,
-    "anvil_att": 3048,
-    "anvil_det": 750,
-    "debris": 902,
-    "cirrus": 3065
+    "clear": 17526,
+    "stratiform": 391,
+    "cumulus": 249,
+    "tcu": 1,
+    "convective": 1049,
+    "anvil_att": 2682,
+    "anvil_det": 315,
+    "debris": 679,
+    "cirrus": 937
    },
    "sites": {
     "LC-39A": {
@@ -9240,692 +9743,6 @@
      "top_kft": null,
      "top_c": null,
      "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "KXMR": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    }
-   }
-  },
-  {
-   "fh": 11,
-   "valid": "2026-08-13T00:00Z",
-   "valid_short": "00Z",
-   "valid_label": "00Z Thu 13 Aug",
-   "image": "maps/cloudtype_2026081213z_f11.png",
-   "data": "data/cols_2026081213z_f11.bin",
-   "counts": {
-    "clear": 11760,
-    "stratiform": 891,
-    "cumulus": 274,
-    "tcu": 35,
-    "convective": 1673,
-    "anvil_att": 3056,
-    "anvil_det": 859,
-    "debris": 757,
-    "cirrus": 4524
-   },
-   "sites": {
-    "LC-39A": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "LC-39B": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-41": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-40": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-37B": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-20": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "LZ-1": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-36": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-46": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "KTTS": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "KXMR": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    }
-   }
-  },
-  {
-   "fh": 12,
-   "valid": "2026-08-13T01:00Z",
-   "valid_short": "01Z",
-   "valid_label": "01Z Thu 13 Aug",
-   "image": "maps/cloudtype_2026081213z_f12.png",
-   "data": "data/cols_2026081213z_f12.bin",
-   "counts": {
-    "clear": 10799,
-    "stratiform": 965,
-    "cumulus": 604,
-    "tcu": 7,
-    "convective": 1122,
-    "anvil_att": 3041,
-    "anvil_det": 454,
-    "debris": 345,
-    "cirrus": 6492
-   },
-   "sites": {
-    "LC-39A": {
-     "key": "anvil_att",
-     "top_kft": 46.7,
-     "top_c": -67.5,
-     "iwp": 193.7,
-     "dbz": -6.2
-    },
-    "LC-39B": {
-     "key": "anvil_att",
-     "top_kft": 46.7,
-     "top_c": -67.4,
-     "iwp": 173.4,
-     "dbz": -5.8
-    },
-    "SLC-41": {
-     "key": "anvil_det",
-     "top_kft": 46.7,
-     "top_c": -67.7,
-     "iwp": 153.0,
-     "dbz": -8.1
-    },
-    "SLC-40": {
-     "key": "anvil_det",
-     "top_kft": 46.7,
-     "top_c": -67.9,
-     "iwp": 102.0,
-     "dbz": -10.0
-    },
-    "SLC-37B": {
-     "key": "debris",
-     "top_kft": 46.7,
-     "top_c": -67.9,
-     "iwp": 25.5,
-     "dbz": -10.0
-    },
-    "SLC-20": {
-     "key": "debris",
-     "top_kft": 46.7,
-     "top_c": -67.9,
-     "iwp": 10.2,
-     "dbz": -10.0
-    },
-    "LZ-1": {
-     "key": "debris",
-     "top_kft": 46.7,
-     "top_c": -67.9,
-     "iwp": 5.1,
-     "dbz": -10.0
-    },
-    "SLC-36": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-46": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "KTTS": {
-     "key": "anvil_att",
-     "top_kft": 46.8,
-     "top_c": -67.5,
-     "iwp": 142.8,
-     "dbz": -6.4
-    },
-    "KXMR": {
-     "key": "debris",
-     "top_kft": 46.7,
-     "top_c": -67.9,
-     "iwp": 5.1,
-     "dbz": -10.0
-    }
-   }
-  },
-  {
-   "fh": 13,
-   "valid": "2026-08-13T02:00Z",
-   "valid_short": "02Z",
-   "valid_label": "02Z Thu 13 Aug",
-   "image": "maps/cloudtype_2026081213z_f13.png",
-   "data": "data/cols_2026081213z_f13.bin",
-   "counts": {
-    "clear": 10314,
-    "stratiform": 1457,
-    "cumulus": 362,
-    "tcu": 10,
-    "convective": 484,
-    "anvil_att": 1265,
-    "anvil_det": 283,
-    "debris": 647,
-    "cirrus": 9007
-   },
-   "sites": {
-    "LC-39A": {
-     "key": "convective",
-     "top_kft": 46.8,
-     "top_c": -66.7,
-     "iwp": 4252.2,
-     "dbz": 53.8
-    },
-    "LC-39B": {
-     "key": "convective",
-     "top_kft": 46.8,
-     "top_c": -66.5,
-     "iwp": 5246.4,
-     "dbz": 45.5
-    },
-    "SLC-41": {
-     "key": "convective",
-     "top_kft": 46.8,
-     "top_c": -66.7,
-     "iwp": 3411.0,
-     "dbz": 64.9
-    },
-    "SLC-40": {
-     "key": "convective",
-     "top_kft": 46.8,
-     "top_c": -66.7,
-     "iwp": 4216.5,
-     "dbz": 48.7
-    },
-    "SLC-37B": {
-     "key": "convective",
-     "top_kft": 46.8,
-     "top_c": -66.7,
-     "iwp": 3354.9,
-     "dbz": 36.9
-    },
-    "SLC-20": {
-     "key": "anvil_att",
-     "top_kft": 46.8,
-     "top_c": -66.7,
-     "iwp": 2748.1,
-     "dbz": 23.9
-    },
-    "LZ-1": {
-     "key": "anvil_att",
-     "top_kft": 46.8,
-     "top_c": -66.7,
-     "iwp": 1978.2,
-     "dbz": 14.4
-    },
-    "SLC-36": {
-     "key": "anvil_att",
-     "top_kft": 46.8,
-     "top_c": -66.8,
-     "iwp": 1417.4,
-     "dbz": 16.1
-    },
-    "SLC-46": {
-     "key": "anvil_att",
-     "top_kft": 46.8,
-     "top_c": -66.8,
-     "iwp": 1417.4,
-     "dbz": 16.1
-    },
-    "KTTS": {
-     "key": "convective",
-     "top_kft": 46.8,
-     "top_c": -66.4,
-     "iwp": 5292.3,
-     "dbz": 57.5
-    },
-    "KXMR": {
-     "key": "anvil_att",
-     "top_kft": 46.8,
-     "top_c": -66.7,
-     "iwp": 2024.1,
-     "dbz": 14.8
-    }
-   }
-  },
-  {
-   "fh": 15,
-   "valid": "2026-08-13T04:00Z",
-   "valid_short": "04Z",
-   "valid_label": "04Z Thu 13 Aug",
-   "image": "maps/cloudtype_2026081213z_f15.png",
-   "data": "data/cols_2026081213z_f15.bin",
-   "counts": {
-    "clear": 10083,
-    "stratiform": 3969,
-    "cumulus": 427,
-    "tcu": 42,
-    "convective": 123,
-    "anvil_att": 614,
-    "anvil_det": 2,
-    "debris": 259,
-    "cirrus": 8310
-   },
-   "sites": {
-    "LC-39A": {
-     "key": "cirrus",
-     "top_kft": 40.9,
-     "top_c": -54.2,
-     "iwp": 377.3,
-     "dbz": 3.6
-    },
-    "LC-39B": {
-     "key": "cirrus",
-     "top_kft": 40.9,
-     "top_c": -54.2,
-     "iwp": 316.1,
-     "dbz": 2.1
-    },
-    "SLC-41": {
-     "key": "cirrus",
-     "top_kft": 40.9,
-     "top_c": -54.2,
-     "iwp": 413.0,
-     "dbz": 4.8
-    },
-    "SLC-40": {
-     "key": "cirrus",
-     "top_kft": 40.9,
-     "top_c": -54.3,
-     "iwp": 397.7,
-     "dbz": 4.4
-    },
-    "SLC-37B": {
-     "key": "cirrus",
-     "top_kft": 40.9,
-     "top_c": -54.3,
-     "iwp": 474.2,
-     "dbz": 5.7
-    },
-    "SLC-20": {
-     "key": "cirrus",
-     "top_kft": 40.9,
-     "top_c": -54.3,
-     "iwp": 535.4,
-     "dbz": 5.9
-    },
-    "LZ-1": {
-     "key": "cirrus",
-     "top_kft": 40.9,
-     "top_c": -54.3,
-     "iwp": 601.6,
-     "dbz": 6.5
-    },
-    "SLC-36": {
-     "key": "cirrus",
-     "top_kft": 40.9,
-     "top_c": -54.3,
-     "iwp": 657.7,
-     "dbz": 6.8
-    },
-    "SLC-46": {
-     "key": "cirrus",
-     "top_kft": 40.9,
-     "top_c": -54.3,
-     "iwp": 657.7,
-     "dbz": 6.8
-    },
-    "KTTS": {
-     "key": "cirrus",
-     "top_kft": 40.9,
-     "top_c": -54.2,
-     "iwp": 239.6,
-     "dbz": -0.1
-    },
-    "KXMR": {
-     "key": "cirrus",
-     "top_kft": 40.9,
-     "top_c": -54.4,
-     "iwp": 596.5,
-     "dbz": 6.1
-    }
-   }
-  },
-  {
-   "fh": 16,
-   "valid": "2026-08-13T05:00Z",
-   "valid_short": "05Z",
-   "valid_label": "05Z Thu 13 Aug",
-   "image": "maps/cloudtype_2026081213z_f16.png",
-   "data": "data/cols_2026081213z_f16.bin",
-   "counts": {
-    "clear": 10567,
-    "stratiform": 5388,
-    "cumulus": 332,
-    "tcu": 19,
-    "convective": 12,
-    "anvil_att": 0,
-    "anvil_det": 0,
-    "debris": 12,
-    "cirrus": 7499
-   },
-   "sites": {
-    "LC-39A": {
-     "key": "cirrus",
-     "top_kft": 36.0,
-     "top_c": -41.4,
-     "iwp": 66.3,
-     "dbz": -3.2
-    },
-    "LC-39B": {
-     "key": "cirrus",
-     "top_kft": 36.0,
-     "top_c": -41.4,
-     "iwp": 45.9,
-     "dbz": -5.1
-    },
-    "SLC-41": {
-     "key": "cirrus",
-     "top_kft": 36.0,
-     "top_c": -41.5,
-     "iwp": 76.5,
-     "dbz": -2.8
-    },
-    "SLC-40": {
-     "key": "cirrus",
-     "top_kft": 36.0,
-     "top_c": -41.5,
-     "iwp": 91.8,
-     "dbz": -3.3
-    },
-    "SLC-37B": {
-     "key": "cirrus",
-     "top_kft": 36.0,
-     "top_c": -41.6,
-     "iwp": 137.7,
-     "dbz": -0.7
-    },
-    "SLC-20": {
-     "key": "cirrus",
-     "top_kft": 36.0,
-     "top_c": -41.6,
-     "iwp": 147.9,
-     "dbz": 0.1
-    },
-    "LZ-1": {
-     "key": "cirrus",
-     "top_kft": 36.0,
-     "top_c": -41.7,
-     "iwp": 127.5,
-     "dbz": -0.5
-    },
-    "SLC-36": {
-     "key": "cirrus",
-     "top_kft": 36.0,
-     "top_c": -41.7,
-     "iwp": 102.0,
-     "dbz": -2.4
-    },
-    "SLC-46": {
-     "key": "cirrus",
-     "top_kft": 36.0,
-     "top_c": -41.7,
-     "iwp": 102.0,
-     "dbz": -2.4
-    },
-    "KTTS": {
-     "key": "cirrus",
-     "top_kft": 36.0,
-     "top_c": -41.3,
-     "iwp": 5.1,
-     "dbz": -9.7
-    },
-    "KXMR": {
-     "key": "cirrus",
-     "top_kft": 36.0,
-     "top_c": -41.6,
-     "iwp": 137.7,
-     "dbz": -0.2
-    }
-   }
-  },
-  {
-   "fh": 17,
-   "valid": "2026-08-13T06:00Z",
-   "valid_short": "06Z",
-   "valid_label": "06Z Thu 13 Aug",
-   "image": "maps/cloudtype_2026081213z_f17.png",
-   "data": "data/cols_2026081213z_f17.bin",
-   "counts": {
-    "clear": 12057,
-    "stratiform": 5869,
-    "cumulus": 120,
-    "tcu": 11,
-    "convective": 0,
-    "anvil_att": 0,
-    "anvil_det": 0,
-    "debris": 0,
-    "cirrus": 5772
-   },
-   "sites": {
-    "LC-39A": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "LC-39B": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-41": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-40": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-37B": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-20": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "LZ-1": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-36": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-46": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "KTTS": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "KXMR": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    }
-   }
-  },
-  {
-   "fh": 18,
-   "valid": "2026-08-13T07:00Z",
-   "valid_short": "07Z",
-   "valid_label": "07Z Thu 13 Aug",
-   "image": "maps/cloudtype_2026081213z_f18.png",
-   "data": "data/cols_2026081213z_f18.bin",
-   "counts": {
-    "clear": 15123,
-    "stratiform": 4852,
-    "cumulus": 50,
-    "tcu": 0,
-    "convective": 0,
-    "anvil_att": 0,
-    "anvil_det": 0,
-    "debris": 0,
-    "cirrus": 3804
-   },
-   "sites": {
-    "LC-39A": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "LC-39B": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-41": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-40": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-37B": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-20": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "LZ-1": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-36": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "SLC-46": {
-     "key": "clear",
-     "top_kft": null,
-     "top_c": null,
-     "iwp": 0.0,
-     "dbz": -10.0
-    },
-    "KTTS": {
-     "key": "stratiform",
-     "top_kft": 31.9,
-     "top_c": -32.2,
-     "iwp": 5.1,
      "dbz": -10.0
     },
     "KXMR": {
