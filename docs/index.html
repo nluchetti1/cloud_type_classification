@@ -57,6 +57,9 @@
   .run:hover{border-color:var(--ink-3); color:var(--ink)}
   .run[aria-pressed=true]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
   .run small{font-size:9.5px; opacity:.72; font-weight:400}
+  /* A run still being posted gets a dashed edge - the loop ending early is expected, not a
+     failure, and it fills in on the next pass. */
+  .run.partial{border-style:dashed}
 
   /* ---- layout -------------------------------------------------------------- */
   .grid{display:grid; grid-template-columns:minmax(0,1fr) var(--rail); gap:18px;
@@ -354,8 +357,12 @@ function boot(){
 function drawRuns(){
   $("runs").innerHTML = CYC.map((c, n) => {
     const age = n === 0 ? "latest" : "−" + hoursBetween(CYC[0], c) + " h";
-    return `<button class="run" data-n="${n}" aria-pressed="${n===ci}">
-      ${c.label}<small>${age} · ${c.run_h||c.frames.length} h</small></button>`;
+    // Show x/y while a run is still being posted. HRRR trickles a run out over ~50-90 min,
+    // so the newest cycle is normally short a few hours and fills in on later passes.
+    const want = c.run_h_expected, have = c.run_h || c.frames.length;
+    const len = (want && have < want) ? have + "/" + want + " h" : have + " h";
+    return `<button class="run${(want&&have<want)?" partial":""}" data-n="${n}"
+      aria-pressed="${n===ci}">${c.label}<small>${age} · ${len}</small></button>`;
   }).join("");
   $("runs").querySelectorAll(".run").forEach(b =>
     b.addEventListener("click", () => { stop(); selectCycle(+b.dataset.n, validNow()); }));
