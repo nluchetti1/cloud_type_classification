@@ -76,14 +76,25 @@ CACHE_DIR = "_cache"
 
 DOMAIN = {"lat_min": 26.5, "lat_max": 30.5, "lon_min": -82.5, "lon_max": -79.0}
 
+# Active pads plus the two reference sites. KXMR is the LLCC observing site and the anchor
+# of the XMR climatology; KTTS is the SLF. KMLB/KDAB are gone - they are not launch sites.
 SITES = {
-    "LC-39A": (28.608, -80.604),
-    "SLC-40": (28.562, -80.577),
-    "SLC-41": (28.583, -80.583),
-    "KXMR":   (28.468, -80.556),
-    "KMLB":   (28.103, -80.645),
-    "KDAB":   (29.183, -81.048),
+    "LC-39A":  (28.6084, -80.6043),   # Falcon 9 / Falcon Heavy / Starship (planned)
+    "LC-39B":  (28.6272, -80.6208),   # SLS
+    "SLC-41":  (28.5833, -80.5834),   # Vulcan / Atlas V
+    "SLC-40":  (28.5619, -80.5772),   # Falcon 9
+    "SLC-37B": (28.5317, -80.5657),   # New Glenn
+    "SLC-20":  (28.5085, -80.5546),
+    "LZ-1":    (28.4857, -80.5444),   # booster landing zone
+    "SLC-36":  (28.4707, -80.5379),   # New Glenn
+    "SLC-46":  (28.4584, -80.5271),
+    "KTTS":    (28.6150, -80.6944),   # Shuttle Landing Facility
+    "KXMR":    (28.4675, -80.5664),   # Cape Canaveral SFS, LLCC observing site
 }
+
+# Every pad above sits inside ~20 km, which is ~30 px on the domain map - an unreadable
+# blob. The inset re-renders that patch at scale so the pads can actually be told apart.
+CAPE_BOX = {"lat_min": 28.43, "lat_max": 28.67, "lon_min": -80.73, "lon_max": -80.49}
 
 BG = "#FFFFFF"                                # map background
 DX_KM = 3.0                                   # HRRR CONUS grid spacing
@@ -492,43 +503,120 @@ def classify(f):
 # --------------------------------------------------------------------------------------
 # Render
 # --------------------------------------------------------------------------------------
+def _mproj():
+    return ccrs.Mercator(central_longitude=0.5 * (DOMAIN["lon_min"] + DOMAIN["lon_max"]))
+
+
+def _aspect(proj, box):
+    """Width/height of a lat-lon box in projected units."""
+    pc = ccrs.PlateCarree()
+    x0, y0 = proj.transform_point(box["lon_min"], box["lat_min"], pc)
+    x1, y1 = proj.transform_point(box["lon_max"], box["lat_max"], pc)
+    return (x1 - x0) / (y1 - y0)
+
+
 def _figsize(height_in=6.8):
     """Match the figure's aspect to true ground distance so the PNG needs no letterboxing
-    in the page - the old square figure was the reason the layout blew up."""
+    in the page - a square figure was the reason the layout blew up."""
+    proj = _mproj()
+    return proj, (height_in * _aspect(proj, DOMAIN), height_in)
+
+
+def _basemap(ax, box, coast_lw=0.9):
     pc = ccrs.PlateCarree()
-    proj = ccrs.Mercator(central_longitude=0.5 * (DOMAIN["lon_min"] + DOMAIN["lon_max"]))
-    x0, y0 = proj.transform_point(DOMAIN["lon_min"], DOMAIN["lat_min"], pc)
-    x1, y1 = proj.transform_point(DOMAIN["lon_max"], DOMAIN["lat_max"], pc)
-    return proj, (height_in * (x1 - x0) / (y1 - y0), height_in)
+    ax.set_extent([box["lon_min"], box["lon_max"], box["lat_min"], box["lat_max"]], crs=pc)
+    ax.set_facecolor(BG)
+    # On white, clear sky and clear water are the same colour, so the coastline is the only
+    # thing carrying geography - it gets the weight it used to borrow from the dark panel.
+    ax.add_feature(cfeature.COASTLINE.with_scale("10m"), edgecolor="#46525C",
+                   linewidth=coast_lw, zorder=4)
+
+
+def _label_stack(pts, min_gap):
+    """Push overlapping label positions apart along y, keeping their order. Without this the
+    pad labels inside the inset land on top of each other - SLC-40 and SLC-41 are 2 km apart."""
+    order = sorted(range(len(pts)), key=lambda k: -pts[k])
+    out = list(pts)
+    for n, k in enumerate(order):
+        if n and out[k] > out[order[n - 1]] - min_gap:
+            out[k] = out[order[n - 1]] - min_gap
+    lo = min(out)
+    if lo < 0.02:                      # the stack ran off the bottom; slide it back up
+        out = [v + (0.02 - lo) for v in out]
+    return out
 
 
 def render(cls, f, valid, cycle, path):
     proj, size = _figsize()
+    pc = ccrs.PlateCarree()
     cmap = mcolors.ListedColormap(PALETTE)
     norm = mcolors.BoundaryNorm(np.arange(-0.5, len(PALETTE) + 0.5, 1), len(PALETTE))
-    pc = ccrs.PlateCarree()
+    mesh = dict(cmap=cmap, norm=norm, shading="nearest", transform=pc, zorder=2)
+
     fig = plt.figure(figsize=size, dpi=140, facecolor=BG)
     ax = fig.add_axes([0, 0, 1, 1], projection=proj)
-    ax.set_extent([DOMAIN["lon_min"], DOMAIN["lon_max"],
-                   DOMAIN["lat_min"], DOMAIN["lat_max"]], crs=pc)
-    ax.set_facecolor(BG)
-    ax.pcolormesh(f["lons"], f["lats"], cls, cmap=cmap, norm=norm,
-                  shading="nearest", transform=pc, zorder=2)
-    # On white, clear sky and clear water are the same colour, so the coastline is the only
-    # thing carrying geography - it gets the weight it used to borrow from the dark panel.
-    ax.add_feature(cfeature.COASTLINE.with_scale("10m"), edgecolor="#46525C",
-                   linewidth=0.9, zorder=4)
+    _basemap(ax, DOMAIN)
+    ax.pcolormesh(f["lons"], f["lats"], cls, **mesh)
     ax.add_feature(cfeature.NaturalEarthFeature("cultural", "admin_1_states_provinces_lines",
                                                 "10m", facecolor="none"),
                    edgecolor="#AEB6BD", linewidth=0.6, zorder=4)
+    for la, lo in SITES.values():
+        ax.plot(lo, la, marker=".", markersize=2.0, color="#14181B", transform=pc, zorder=6)
+
+    # --- Cape inset ---------------------------------------------------------------------
+    hf = 0.36
+    wf = (hf * size[1] * _aspect(proj, CAPE_BOX)) / size[0]
+    pad_fig = 0.012
+    rect = [1 - wf - pad_fig, 1 - hf - pad_fig, wf, hf]
+    iax = fig.add_axes(rect, projection=proj, zorder=8)
+    _basemap(iax, CAPE_BOX, coast_lw=1.1)
+    iax.pcolormesh(f["lons"], f["lats"], cls, **mesh)
+    for sp in ("geo",):
+        try:
+            iax.spines[sp].set(edgecolor="#14181B", linewidth=1.2)
+        except Exception:
+            pass
+
+    # Where the inset is looking, drawn on the domain map.
+    ax.plot([CAPE_BOX["lon_min"], CAPE_BOX["lon_max"], CAPE_BOX["lon_max"],
+             CAPE_BOX["lon_min"], CAPE_BOX["lon_min"]],
+            [CAPE_BOX["lat_min"], CAPE_BOX["lat_min"], CAPE_BOX["lat_max"],
+             CAPE_BOX["lat_max"], CAPE_BOX["lat_min"]],
+            color="#14181B", linewidth=0.8, transform=pc, zorder=7)
+
+    # Pad labels: markers stay put, labels are stacked and joined by leaders.
+    inv = iax.transAxes.inverted()
+    fx, fy, names = [], [], []
     for name, (la, lo) in SITES.items():
-        ax.plot(lo, la, marker="+", markersize=6, markeredgewidth=1.3,
-                color="#14181B", transform=pc, zorder=6)
-        # A halo keeps the pad labels readable where they land on a convective core.
-        ax.text(lo + 0.05, la + 0.03, name, fontsize=6.0, color="#14181B",
-                family="monospace", transform=pc, zorder=6,
-                path_effects=[pe.withStroke(linewidth=1.8, foreground=BG)])
-    ax.text(0.015, 0.014, f"HRRR {cycle}Z  valid {valid:%d %b %H%MZ}", transform=ax.transAxes,
+        px, py = proj.transform_point(lo, la, pc)
+        u, v = inv.transform(iax.transData.transform((px, py)))
+        if -0.02 <= u <= 1.02 and -0.02 <= v <= 1.02:
+            fx.append(u); fy.append(v); names.append(name)
+    left = [k for k in range(len(names)) if fx[k] >= 0.5]
+    right = [k for k in range(len(names)) if fx[k] < 0.5]
+    ly = [0.0] * len(names)
+    for side in (left, right):
+        if side:
+            stacked = _label_stack([fy[k] for k in side], 0.064)
+            for k, yy in zip(side, stacked):
+                ly[k] = yy
+    for k, name in enumerate(names):
+        on_left = fx[k] >= 0.5
+        lx = (fx[k] - 0.085) if on_left else (fx[k] + 0.085)
+        lx = min(max(lx, 0.02), 0.98)
+        iax.plot([fx[k], lx], [fy[k], ly[k]], color="#14181B", linewidth=0.5,
+                 alpha=0.6, transform=iax.transAxes, zorder=9)
+        iax.plot(fx[k], fy[k], marker="+", markersize=5, markeredgewidth=1.2,
+                 color="#14181B", transform=iax.transAxes, zorder=10)
+        iax.text(lx, ly[k], name, fontsize=5.6, color="#14181B", family="monospace",
+                 ha="right" if on_left else "left", va="center",
+                 transform=iax.transAxes, zorder=10,
+                 path_effects=[pe.withStroke(linewidth=2.0, foreground=BG)])
+    iax.text(0.02, 0.975, "CAPE DETAIL", fontsize=5.2, color="#7A858E", family="monospace",
+             va="top", transform=iax.transAxes, zorder=10,
+             path_effects=[pe.withStroke(linewidth=2.0, foreground=BG)])
+
+    ax.text(0.012, 0.012, f"HRRR {cycle}Z  valid {valid:%d %b %H%MZ}", transform=ax.transAxes,
             fontsize=6.4, color="#7A858E", family="monospace", zorder=7)
     try:
         ax.spines["geo"].set_edgecolor("#C3C8BC")
@@ -653,10 +741,14 @@ def main():
                     "dbz": round(float(diag["refc"][jy, jx]), 1),
                 }
             counts = {c["key"]: int((cls == c["id"]).sum()) for c in CLASSES}
+            # "%d/%HZ" put the day-of-month first, so F12 of the 10Z run rendered as
+            # "12/22Z" and read like a 12Z cycle. Hour-only here; the day is carried by
+            # valid_label and by the day dividers on the trend axis.
             frames.append({"fh": fh, "valid": valid.strftime("%Y-%m-%dT%H:%MZ"),
-                           "valid_short": valid.strftime("%d/%HZ"), "image": png,
+                           "valid_short": valid.strftime("%HZ"),
+                           "valid_label": valid.strftime("%HZ %a %d %b"), "image": png,
                            "data": binrel, "counts": counts, "sites": sites})
-            logging.info(f"f{fh:02d} valid {valid:%d/%HZ}: " +
+            logging.info(f"f{fh:02d} valid {valid:%d %b %HZ}: " +
                          " ".join(f"{k}={v}" for k, v in counts.items() if v and k != "clear"))
         finally:
             if os.path.exists(path):
