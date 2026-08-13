@@ -264,9 +264,9 @@
 
 <script>
 const NOTES = {
-  cirrus:     "Glaciated layer topping colder than −38 °C with no convective source upwind.",
+  cirrus:     "Glaciated layer topping colder than −38 °C, with no core upwind and not joined to one.",
   debris:     "Same trajectory as an anvil, but the ice has thinned below 50 g/m².",
-  anvil_det:  "Optically thick ice traced back along its own layer wind to a core.",
+  anvil_det:  "Thick ice joined to a core through continuous shield, or off one within 3 h.",
   anvil_att:  "Same, with a core inside 10 nm — still fed by its parent.",
   convective: "40 dBZ composite, or enough graupel aloft to imply an updraft.",
   tcu:        "Liquid-based layer glaciating at its top, colder than −10 °C.",
@@ -416,7 +416,7 @@ function loadGrids(c){
       .catch(() => { delete BUF[k]; });
   });
 }
-const PLANE = {CLASS:0, TOP_KFT:1, TOP_C:2, IWP:3, DEPTH:4, DBZ:5};
+const PLANE = {CLASS:0, TOP_KFT:1, TOP_C:2, IWP:3, DEPTH:4, DBZ:5, AGE:6};
 function plane(buf, p, cell){ return buf[p * M.query.nx * M.query.ny + cell]; }
 function decIwp(v){ return Math.pow(10, v * Math.log10(1 + M.query.iwp_max) / 255) - 1; }
 
@@ -476,12 +476,16 @@ function drawQuery(){
   const topK = plane(buf, PLANE.TOP_KFT, cell)/4, topC = plane(buf, PLANE.TOP_C, cell)-100;
   const iwp = decIwp(plane(buf, PLANE.IWP, cell)), dep = plane(buf, PLANE.DEPTH, cell)/4;
   const dbz = plane(buf, PLANE.DBZ, cell);
+  const ageRaw = plane(buf, PLANE.AGE, cell);
   const rows = c.key === "clear" ? [["Column","no condensate"]] : [
     ["Cloud top", topK.toFixed(1) + " kft"],
     ["Top temp", topC.toFixed(0) + " °C"],
     ["Ice path", iwp < 1 ? "<1 g/m²" : iwp.toFixed(0) + " g/m²"],
     ["Low layer", dep < 0.3 ? "—" : dep.toFixed(1) + " kft deep"],
     ["Composite", dbz < 1 ? "<1 dBZ" : dbz + " dBZ"],
+    // Time since this ice left a convective core, followed along the flow and carried
+    // forward between forecast hours. "no source" is what separates cirrus from anvil.
+    ["Outflow age", ageRaw >= 255 ? "no source" : (ageRaw/10).toFixed(1) + " h"],
   ];
   $("q-facts").innerHTML = rows.map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
 
