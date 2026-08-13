@@ -333,7 +333,11 @@ function boot(){
     </div>`).join("");
 
   drawRuns();
-  selectCycle(0, null);
+  // Open on the newest COMPLETE run. HRRR posts a 48 h cycle over ~100 minutes, so the
+  // freshest cycle is often a 10-hour stub; landing on it shows less of the forecast than
+  // the run before it. The stub is still one click away.
+  const firstFull = CYC.findIndex(c => c.complete !== false);
+  selectCycle(firstFull >= 0 ? firstFull : 0, null);
 
   $("scrub").addEventListener("input", e => { stop(); show(+e.target.value); });
   $("play").addEventListener("click", () => timer ? stop() : start());
@@ -361,7 +365,8 @@ function drawRuns(){
     // so the newest cycle is normally short a few hours and fills in on later passes.
     const want = c.run_h_expected, have = c.run_h || c.frames.length;
     const len = (want && have < want) ? have + "/" + want + " h" : have + " h";
-    return `<button class="run${(want&&have<want)?" partial":""}" data-n="${n}"
+    const note = (want && have < want) ? " title=\"still being posted by NCEP\"" : "";
+    return `<button class="run${(want&&have<want)?" partial":""}" data-n="${n}"${note}
       aria-pressed="${n===ci}">${c.label}<small>${age} · ${len}</small></button>`;
   }).join("");
   $("runs").querySelectorAll(".run").forEach(b =>
