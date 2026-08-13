@@ -151,7 +151,7 @@ MAX_TOPUP_CYCLES = 2
 # published is normally skipped, but a version mismatch means the PNGs on disk were made by
 # older code and have to be rebuilt - otherwise pushing a render change appears to do
 # nothing until the next cycle lands. Setting CLOUDSCOPE_FORCE=1 forces the same rebuild.
-RENDER_VERSION = "2026.08.12-inset"
+RENDER_VERSION = "2026.08.12-shieldtrace"
 
 # ---- classification thresholds (all tunable; see README) ----
 LAYER_PATH_MIN = 0.20   # g/m^2 of condensate in one layer to call it cloudy
@@ -453,18 +453,19 @@ def classify(f):
     mu2 = uniform_filter(zt ** 2, n_tex) / den
     tex = np.where(uniform_filter(m, n_tex) > 0.15, np.sqrt(np.maximum(mu2 - mu ** 2, 0)), 0.0)
 
+    # A glaciated layer whose TOP reached homogeneous freezing came out of the top of
+    # something. Base temperature is deliberately not used: an attached or thick anvil
+    # commonly has a base warmer than -20 C, and v1 discarded exactly those.
+    ice_aloft = has_cloud & (ice_frac_hi >= ICE_FRAC) & (top_c <= GLACIATED_C)
+
     # --- convective cores ---------------------------------------------------------------
     core = (f["refc"] >= CONV_DBZ) | (gcol >= GRAUPEL_CONV)
-    # Widen by one cell before tracing: a core can be a single grid column, and a trajectory
-    # sampled with linear interpolation will otherwise walk straight through it.
-    core_f = maximum_filter(core.astype(float), size=3)
     r_px = max(1, int(round(ATTACH_NM * 1.852 / DX_KM)))
     near_core = maximum_filter(core.astype(float), size=2 * r_px + 1) > 0.5
 
-    # --- trace the ice layer back along ITS OWN wind ------------------------------------
-    # v1 steered everything with a fixed 300-150 mb mean and searched a fixed 100 nm. The
-    # outflow level varies with the EL, and how far debris can get is speed x lifetime, so
-    # both are derived per column instead.
+    # --- outflow wind -------------------------------------------------------------------
+    # Ice-mass-weighted mean through the top layer, not a fixed 300-150 mb mean: the
+    # detrainment level moves with the EL, so the shield is steered by where its own ice is.
     wt = ice * hi_lay
     wsum = wt.sum(axis=0)
     fallback = hi_lay.sum(axis=0)
@@ -472,27 +473,61 @@ def classify(f):
                      (f["u"] * hi_lay).sum(axis=0) / np.maximum(fallback, 1))
     v_lay = np.where(wsum > 0, (f["v"] * wt).sum(axis=0) / np.maximum(wsum, 1e-9),
                      (f["v"] * hi_lay).sum(axis=0) / np.maximum(fallback, 1))
+    # Columns with no ice layer - the clear gaps a detached shield has drifted across - would
+    # otherwise carry zero steering wind and stop the trace dead at the first clear cell.
+    # Fall back to the mean wind through the outflow layer, which exists everywhere.
+    out_lv = np.asarray(f["levels"]) <= 300.0
+    if out_lv.any():
+        u_out, v_out = f["u"][out_lv].mean(axis=0), f["v"][out_lv].mean(axis=0)
+    else:
+        u_out = v_out = np.zeros_like(u_lay)
+    got_ice = wsum > 0
+    u_lay = np.where(got_ice, u_lay, u_out)
+    v_lay = np.where(got_ice, v_lay, v_out)
     spd = np.hypot(u_lay, v_lay)
     ux = np.where(spd > 0.5, u_lay / np.maximum(spd, 1e-6), 0.0)
     uy = np.where(spd > 0.5, v_lay / np.maximum(spd, 1e-6), 0.0)
 
+    # Spread outflow age DOWNWIND through the ice shield instead of firing a straight ray
+    # upwind from every column. The ray version asked "is there a core exactly this many km
+    # up-flow of me, in a straight line, using my local wind" - which fails for a wide shield
+    # whose flow curves, and for the leading edge of a shield whose core sits 200+ km back.
+    # Those columns fell through to CIRRUS even though the ice plainly came out of a tower.
+    #
+    # Here the source label is seeded at the cores and walked forward one grid cell at a
+    # time along the local wind, but only through glaciated cloud. Anvil is a physically
+    # continuous ice shield, so connectivity is the right constraint; the flow can bend as
+    # much as it likes and the label follows it. Each step adds dx/speed hours, so the age
+    # carried is the along-path travel time rather than a straight-line distance cap.
     yy, xx = np.mgrid[0:ny, 0:nx]
-    upwind = np.zeros((ny, nx))
-    reach_km = np.minimum(spd * 3.6 * ANVIL_TAU_H, ANVIL_MAX_NM * 1.852)
-    # Step in GRID units, not fractions of each column's reach: a core is often one or two
-    # cells wide, and a fractional walk long enough to be useful strides right past it.
-    max_px = int(np.ceil(reach_km.max() / DX_KM)) if reach_km.size else 0
-    for s_px in np.arange(1.0, max_px + 1.0, 1.0):
-        samp = map_coordinates(core_f, [yy - uy * s_px, xx - ux * s_px],
-                               order=1, mode="nearest")
-        upwind = np.maximum(upwind, np.where(s_px * DX_KM <= reach_km, samp, 0.0))
-    sourced = upwind > 0.3
+    NEVER = 99.0                      # stands in for "unreachable" and keeps the array finite
+
+    # Exact 8-neighbour steps, taken with nearest-neighbour sampling. Interpolating the age
+    # field blends labelled cells against the NEVER sentinel at the frontier, so the age
+    # creeps up with every iteration and a shield 60 km long reports 38 hours old.
+    m = np.maximum(np.abs(ux), np.abs(uy))
+    sx = np.where(m > 0, np.round(ux / np.maximum(m, 1e-9)), 0.0)
+    sy = np.where(m > 0, np.round(uy / np.maximum(m, 1e-9)), 0.0)
+    step_km = np.hypot(sx, sy) * DX_KM                 # dx or dx*sqrt(2) on the diagonals
+    dt_h = np.where((spd > 0.5) & (step_km > 0), step_km / np.maximum(spd * 3.6, 1e-6), NEVER)
+
+    age = np.where(core, 0.0, NEVER)
+    n_steps = int(min(np.ceil(ANVIL_MAX_NM * 1.852 / DX_KM), 120))
+    for _ in range(n_steps):
+        upstream = map_coordinates(age, [yy - sy, xx - sx], order=0, mode="nearest")
+        # Deliberately not restricted to cloudy cells. Requiring a continuous ice path makes
+        # an attached shield work and throws away detached anvil and debris - clouds whose
+        # defining property is that they HAVE separated from the parent, which is the case
+        # the LLCC cares about most. Propagating through clear air makes this a trajectory
+        # reachability field that happens to follow the flow's curvature.
+        cand = upstream + dt_h
+        nxt = np.minimum(age, np.minimum(cand, NEVER))
+        if np.array_equal(nxt, age):                   # shield fully labelled; stop early
+            break
+        age = nxt
+    sourced = age <= ANVIL_TAU_H
 
     # --- decision -----------------------------------------------------------------------
-    # A glaciated layer whose TOP reached homogeneous freezing came out of the top of
-    # something. Base temperature is deliberately not used: an attached or thick anvil
-    # commonly has a base warmer than -20 C, and v1 discarded exactly those.
-    ice_aloft = has_cloud & (ice_frac_hi >= ICE_FRAC) & (top_c <= GLACIATED_C)
     anvil = ice_aloft & (iwp_hi >= ANVIL_IWP) & (near_core | sourced)
     debris = ice_aloft & ~anvil & (iwp_hi >= DEBRIS_IWP) & sourced
     cirrus = ice_aloft & ~anvil & ~debris
@@ -513,7 +548,8 @@ def classify(f):
         out[mask] = cid                                    # ascending operational significance
 
     diag = {"top_kft": top_kft, "top_c": top_c, "iwp": iwp_hi, "lwp": lwp_lo,
-            "depth_lo": depth_lo, "graupel": gcol, "refc": f["refc"]}
+            "depth_lo": depth_lo, "graupel": gcol, "refc": f["refc"],
+            "age_h": np.where(age >= NEVER, np.nan, age)}
     return out, diag
 
 
