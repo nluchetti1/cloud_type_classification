@@ -72,6 +72,7 @@ HRRR_ROOT = "https://noaa-hrrr-bdp-pds.s3.amazonaws.com"
 OUT_DIR = "docs"                     # GitHub Pages serves from /docs
 MAP_DIR = os.path.join(OUT_DIR, "maps")
 DATA_DIR = os.path.join(OUT_DIR, "data")   # packed grids the viewer queries on click
+STATE_DIR = os.path.join(OUT_DIR, "state") # outflow age carried hour to hour
 CACHE_DIR = "_cache"
 
 DOMAIN = {"lat_min": 26.5, "lat_max": 30.5, "lon_min": -82.5, "lon_max": -79.0}
@@ -151,7 +152,7 @@ MAX_TOPUP_CYCLES = 2
 # published is normally skipped, but a version mismatch means the PNGs on disk were made by
 # older code and have to be rebuilt - otherwise pushing a render change appears to do
 # nothing until the next cycle lands. Setting CLOUDSCOPE_FORCE=1 forces the same rebuild.
-RENDER_VERSION = "2026.08.12-shieldtrace"
+RENDER_VERSION = "2026.08.13-attached-persist"
 
 # ---- classification thresholds (all tunable; see README) ----
 LAYER_PATH_MIN = 0.20   # g/m^2 of condensate in one layer to call it cloudy
@@ -162,7 +163,14 @@ DEBRIS_IWP     = 5.0    # g/m^2 - aged, thinning ice still worth flagging
 CONV_DBZ       = 40.0   # composite reflectivity marking a convective core
 GRAUPEL_CONV   = 200.0  # g/m^2 of graupel: riming implies an updraft holding supercooled water
 ATTACH_NM      = 10.0   # core this close and the anvil is attached, not advected
-ANVIL_TAU_H    = 3.0    # ice lifetime; trajectory reach = layer wind x this, not a fixed nm
+# Two different clocks, because the LLCC uses two. A shield still joined to its parent is an
+# attached anvil no matter how long the ice has been streaming - the rule is written about
+# distance from it, not its age. The 3-hour clock belongs to anvil that has SEPARATED and to
+# debris cloud. Applying the 3 h cap to everything aged a live, connected shield into cirrus
+# while its cores were still firing.
+ANVIL_TAU_H    = 3.0    # detached anvil / debris: hours since it left the core
+CONN_MAX_H     = 6.0    # sanity cap on tracing a continuous shield, not an age limit
+AGE_MAX_H      = 25.0   # ceiling of the stored age field, hours
 ANVIL_MAX_NM   = 150.0  # cap, so a 90 kt jet doesn't sweep the whole domain
 TCU_TOP_C      = -10.0  # liquid-based layer glaciating at its top
 CU_DEPTH_KFT   = 3.0    # depth separating cumuliform from a layered deck
@@ -397,8 +405,16 @@ def _grow(cloud, start, direction):
     return cur
 
 
-def classify(f):
-    """One cloud type per grid column. Returns (class_grid, diagnostics)."""
+def classify(f, prior_age=None):
+    """One cloud type per grid column. Returns (class_grid, diagnostics).
+
+    `prior_age` is the previous forecast hour's outflow age on this same grid, which makes
+    the anvil label survive its parent: classified hour by hour with no memory, a shield
+    goes from anvil to cirrus the instant its last 40 dBZ core drops below threshold, even
+    though the ice is plainly the same ice. Carrying the age forward starts the LLCC clock
+    at the core's death instead, so the shield ages out over three hours the way a real one
+    does.
+    """
     p = np.asarray(f["levels"], dtype=float)
     nlev = len(p)
     ny, nx = f["refc"].shape
@@ -510,22 +526,46 @@ def classify(f):
     sy = np.where(m > 0, np.round(uy / np.maximum(m, 1e-9)), 0.0)
     step_km = np.hypot(sx, sy) * DX_KM                 # dx or dx*sqrt(2) on the diagonals
     dt_h = np.where((spd > 0.5) & (step_km > 0), step_km / np.maximum(spd * 3.6, 1e-6), NEVER)
-
-    age = np.where(core, 0.0, NEVER)
     n_steps = int(min(np.ceil(ANVIL_MAX_NM * 1.852 / DX_KM), 120))
-    for _ in range(n_steps):
-        upstream = map_coordinates(age, [yy - sy, xx - sx], order=0, mode="nearest")
-        # Deliberately not restricted to cloudy cells. Requiring a continuous ice path makes
-        # an attached shield work and throws away detached anvil and debris - clouds whose
-        # defining property is that they HAVE separated from the parent, which is the case
-        # the LLCC cares about most. Propagating through clear air makes this a trajectory
-        # reachability field that happens to follow the flow's curvature.
-        cand = upstream + dt_h
-        nxt = np.minimum(age, np.minimum(cand, NEVER))
-        if np.array_equal(nxt, age):                   # shield fully labelled; stop early
-            break
-        age = nxt
-    sourced = age <= ANVIL_TAU_H
+
+    # Advect last hour's age one hour downwind and add an hour to it. Where a core is firing
+    # the clock resets to zero regardless.
+    seed = np.where(core, 0.0, NEVER)
+    if prior_age is not None and prior_age.shape == seed.shape:
+        shift = np.where(spd > 0.5, spd * 3.6 / DX_KM, 0.0)     # cells travelled in 1 h
+        carried = map_coordinates(np.nan_to_num(prior_age, nan=NEVER, posinf=NEVER),
+                                  [yy - uy * shift, xx - ux * shift], order=0, mode="nearest")
+        seed = np.minimum(seed, np.where(carried < AGE_MAX_H, carried + 1.0, NEVER))
+
+    def _spread(gate):
+        """Walk outflow age downwind from the seeds, one grid cell per step, following the
+        local wind. `gate` is where the label may travel."""
+        age = seed.copy()
+        for _ in range(n_steps):
+            upstream = map_coordinates(age, [yy - sy, xx - sx], order=0, mode="nearest")
+            cand = np.where(gate, upstream + dt_h, NEVER)
+            nxt = np.minimum(age, np.minimum(cand, NEVER))
+            if np.array_equal(nxt, age):
+                break
+            age = nxt
+        return age
+
+    # CONNECTED: only through glaciated cloud, one cell of slack for a ragged edge. This is
+    # "is this column part of an ice shield that reaches back to a core", which is what makes
+    # an anvil attached rather than merely downwind of something. No age limit - the LLCC
+    # writes the attached-anvil rule about distance, not age.
+    passable = maximum_filter(ice_aloft.astype(np.uint8), size=3) > 0
+    age_conn = _spread(passable)
+
+    # FREE: through clear air as well, so a shield that has genuinely separated from its
+    # parent still gets found. This one is on the 3-hour clock.
+    age_free = _spread(np.ones_like(passable))
+
+    live_core = core.any()
+    joined = (age_conn <= CONN_MAX_H) & live_core   # continuous ice back to a LIVE core
+    recent = age_free <= ANVIL_TAU_H                # left a core within 3 h, detached or not
+    sourced = joined | recent
+    age_h = np.minimum(age_conn, age_free)
 
     # --- decision -----------------------------------------------------------------------
     anvil = ice_aloft & (iwp_hi >= ANVIL_IWP) & (near_core | sourced)
@@ -549,7 +589,7 @@ def classify(f):
 
     diag = {"top_kft": top_kft, "top_c": top_c, "iwp": iwp_hi, "lwp": lwp_lo,
             "depth_lo": depth_lo, "graupel": gcol, "refc": f["refc"],
-            "age_h": np.where(age >= NEVER, np.nan, age)}
+            "age_h": np.where(age_h >= NEVER, np.nan, age_h), "joined": joined}
     return out, diag
 
 
@@ -696,7 +736,8 @@ def render(cls, f, valid, cycle, path):
 # --------------------------------------------------------------------------------------
 _QGRID = {}   # the crop is identical every hour, so the resampling is solved once per run
 
-PLANES = ["class", "top_kft_x4", "top_c_p100", "iwp_log", "depth_kft_x4", "dbz"]
+PLANES = ["class", "top_kft_x4", "top_c_p100", "iwp_log", "depth_kft_x4", "dbz",
+          "age_h_x10"]   # 255 = no outflow source found
 
 
 def query_grid(f):
@@ -728,6 +769,8 @@ def pack_query(cls, diag, f):
         q(255.0 * np.log10(1.0 + iwp) / np.log10(1.0 + IWP_MAX)),
         q(np.nan_to_num(take(diag["depth_lo"]), nan=0.0) * 4.0),
         q(take(diag["refc"]), 0, 80),
+        np.where(np.isfinite(take(diag["age_h"])),
+                 np.clip(np.round(take(diag["age_h"]) * 10.0), 0, 254), 255).astype(np.uint8),
     ]
     return b"".join(p.tobytes() for p in planes), len(qlon), len(qlat), qlat[0], qlon[0]
 
@@ -747,6 +790,25 @@ def load_manifest():
             return json.load(fp)
     except Exception:
         return {}
+
+
+def _state_path(cid, fh):
+    return os.path.join(STATE_DIR, f"age_{cid}z_f{fh:02d}.npy")
+
+
+def save_age(cid, fh, age_h):
+    """Persist the outflow age so a later top-up pass can pick the clock back up. Stored on
+    the model grid as uint8 tenths of an hour; 255 means unreached."""
+    q = np.where(np.isfinite(age_h), np.clip(age_h * 10.0, 0, 254), 255).astype(np.uint8)
+    np.save(_state_path(cid, fh), q)
+
+
+def load_age(cid, fh):
+    try:
+        q = np.load(_state_path(cid, fh))
+    except Exception:
+        return None
+    return np.where(q >= 255, np.nan, q.astype(float) / 10.0)
 
 
 def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
@@ -776,7 +838,10 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
             if f is None:
                 logging.warning(f"f{fh:02d}: fields missing")
                 continue
-            cls, diag = classify(f)
+            # Hour fh-1's age if we have it - from this pass, or from a file a previous
+            # pass left behind. Its absence is not fatal; the hour just starts a fresh clock.
+            cls, diag = classify(f, prior_age=load_age(cid, fh - 1))
+            save_age(cid, fh, diag["age_h"])
             valid = cyc_dt + datetime.timedelta(hours=fh)
             png = f"maps/cloudtype_{cid}z_f{fh:02d}.png"
             render(cls, f, valid, cycle, os.path.join(OUT_DIR, png))
@@ -819,6 +884,7 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
 def main():
     os.makedirs(MAP_DIR, exist_ok=True)
     os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(STATE_DIR, exist_ok=True)
     sess = _session()
     date_str, cycle, cyc_dt = find_cycle(sess)
     if not cycle:
@@ -889,11 +955,16 @@ def main():
             live.add(os.path.basename(fr["image"]))
             live.add(os.path.basename(fr["data"]))
     dropped = 0
+    keep_cids = {c["id"] for c in cycles}
     for d, ext in ((MAP_DIR, ".png"), (DATA_DIR, ".bin")):
         for fn in os.listdir(d):
             if fn.endswith(ext) and fn not in live:
                 os.remove(os.path.join(d, fn))
                 dropped += 1
+    for fn in os.listdir(STATE_DIR):
+        if fn.endswith(".npy") and not any(f"_{c}z_" in fn for c in keep_cids):
+            os.remove(os.path.join(STATE_DIR, fn))
+            dropped += 1
 
     newest = cycles[0]
     manifest = {
@@ -907,6 +978,7 @@ def main():
         "thresholds": {"layer_path_min_gm2": LAYER_PATH_MIN, "glaciated_c": GLACIATED_C,
                        "ice_fraction": ICE_FRAC, "anvil_iwp_gm2": ANVIL_IWP,
                        "debris_iwp_gm2": DEBRIS_IWP, "convective_dbz": CONV_DBZ,
+                       "conn_max_h": CONN_MAX_H,
                        "graupel_gm2": GRAUPEL_CONV, "attach_nm": ATTACH_NM,
                        "anvil_tau_h": ANVIL_TAU_H, "anvil_max_nm": ANVIL_MAX_NM,
                        "tcu_top_c": TCU_TOP_C, "cu_depth_kft": CU_DEPTH_KFT},
