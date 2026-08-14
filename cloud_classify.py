@@ -209,6 +209,17 @@ POV_MAX_AGE_H = 6
 # published is normally skipped, but a version mismatch means the PNGs on disk were made by
 # older code and have to be rebuilt - otherwise pushing a render change appears to do
 # nothing until the next cycle lands. Setting CLOUDSCOPE_FORCE=1 forces the same rebuild.
+# Two versions, because they have very different costs.
+#
+# DATA_VERSION covers the packed .bin layout and the classification itself. When it moves,
+# older cycles are genuinely unreadable and have to go - which takes the time-lagged ensemble
+# and the dprog/dt strip down with them for several hours.
+#
+# RENDER_VERSION covers only what the PNGs look like. Bumping that used to drop every
+# retained cycle too, so a palette tweak cost six hours of ensemble. Now it just rebuilds the
+# newest cycle's images; older runs keep their old-style PNGs, which is a small visual
+# inconsistency in the run selector and a much better trade than losing the POV.
+DATA_VERSION = "2026.08.14-tle6"
 RENDER_VERSION = "2026.08.14-tle6"
 
 # ---- classification thresholds (all tunable; see README) ----
@@ -1140,17 +1151,26 @@ def main():
 
     prev = load_manifest()
     force = os.environ.get("CLOUDSCOPE_FORCE", "").strip().lower() in ("1", "true", "yes")
-    stale = prev.get("render_version") != RENDER_VERSION
-    if stale and prev:
+    data_stale = prev.get("data_version") != DATA_VERSION
+    render_stale = prev.get("render_version") != RENDER_VERSION
+    stale = data_stale or render_stale
+    if data_stale and prev:
+        logging.info(f"Data version changed ({prev.get('data_version', 'pre-versioning')}"
+                     f" -> {DATA_VERSION}); dropping retained cycles.")
+    elif render_stale and prev:
         logging.info(f"Render version changed ({prev.get('render_version', 'pre-versioning')}"
-                     f" -> {RENDER_VERSION}); rebuilding from scratch.")
+                     f" -> {RENDER_VERSION}); rebuilding images, keeping the ensemble.")
     elif force:
-        logging.info("CLOUDSCOPE_FORCE set; rebuilding from scratch.")
-    # A version bump makes the PNGs on disk inconsistent with the new ones, so the old cycles
-    # are dropped rather than mixed. dprog/dt rebuilds itself over the next few hours.
-    prior = [] if (stale or force) else list(prev.get("cycles", []))
+        logging.info("CLOUDSCOPE_FORCE set; rebuilding the newest cycle.")
+    # Only a DATA change invalidates what is on disk. A render change leaves the packed grids
+    # perfectly readable, so the ensemble and dprog/dt survive it.
+    prior = [] if (data_stale or force) else list(prev.get("cycles", []))
 
     cid = f"{date_str}{cycle}"
+    if render_stale and not data_stale:
+        # Images are stale but the packed grids are fine: throw away this cycle's frames so
+        # they re-render, and leave every older cycle alone.
+        prior = [c for c in prior if c["id"] != cid]
     cyc_dts = {cid: cyc_dt}
     entries, bytes_total, qmeta, built = [], 0, None, 0
 
@@ -1225,7 +1245,7 @@ def main():
 
     manifest = {
         "generated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
-        "render_version": RENDER_VERSION,
+        "render_version": RENDER_VERSION, "data_version": DATA_VERSION,
         "model": MODELS[MODEL]["name"], "model_key": MODEL,
         "cycle": f"{newest['date']} {newest['hour']}Z",
         "domain": DOMAIN, "classes": CLASSES, "sites": list(SITES),
