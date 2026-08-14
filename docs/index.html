@@ -57,6 +57,14 @@
   .run:hover{border-color:var(--ink-3); color:var(--ink)}
   .run[aria-pressed=true]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
   .run small{font-size:9.5px; opacity:.72; font-weight:400}
+  .src{font:inherit; font-size:11.5px; padding:3px 6px; background:var(--paper);
+       color:var(--ink); border:1px solid var(--rule); border-radius:2px}
+  .src:disabled{color:var(--ink-3)}
+  .pov-scale{display:flex; margin:6px 0 4px; height:10px}
+  .pov-scale span{flex:1}
+  .pov-ticks{display:flex; justify-content:space-between; font-size:9.5px; color:var(--ink-3)}
+  .pov-big{font-size:26px; font-weight:600; font-variant-numeric:tabular-nums; line-height:1.1}
+  .pov-rules{font-size:10px; color:var(--ink-3); margin-top:8px; line-height:1.5}
   /* A run still being posted gets a dashed edge - the loop ending early is expected, not a
      failure, and it fills in on the next pass. */
   .run.partial{border-style:dashed}
@@ -197,6 +205,13 @@
 <div class="runs">
   <span class="runs-label">Run</span>
   <div id="runs" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+  <span class="runs-label" style="margin-left:14px">Layer</span>
+  <div id="layers" style="display:flex;gap:8px">
+    <button class="run" id="lay-cloud" aria-pressed="true">Cloud type</button>
+    <button class="run" id="lay-pov" aria-pressed="false">LLCC POV</button>
+  </div>
+  <span class="runs-label" style="margin-left:14px">Source</span>
+  <select id="source" class="src"></select>
 </div>
 
 <div class="grid">
@@ -225,6 +240,15 @@
   </div>
 
   <aside class="rail">
+    <section id="povbox" hidden style="margin-bottom:14px;padding-bottom:12px;
+             border-bottom:1.5px solid var(--ink)">
+      <h2>LLCC violation probability</h2>
+      <div class="alt" id="pov-src">—</div>
+      <div class="pov-scale" id="pov-scale"></div>
+      <div class="pov-ticks"><span>0%</span><span>50%</span><span>100%</span></div>
+      <div class="pov-rules" id="pov-rules"></div>
+    </section>
+
     <section class="query" id="query">
       <div class="q-head">
         <span class="q-where" id="q-where">No point selected</span>
@@ -265,8 +289,7 @@
 <script>
 const NOTES = {
   cirrus:     "Glaciated layer topping colder than −38 °C, with no core upwind and not joined to one.",
-  debris:     "Same trajectory as an anvil, but the ice has thinned below 50 g/m².",
-  anvil_det:  "Thick ice joined to a core through continuous shield, or off one within 3 h.",
+  anvil_det:  "Thick ice joined to a core through a continuous shield, or off one within 3 h.",
   anvil_att:  "Same, with a core inside 10 nm — still fed by its parent.",
   convective: "40 dBZ composite, or enough graupel aloft to imply an updraft.",
   tcu:        "Liquid-based layer glaciating at its top, colder than −10 °C.",
@@ -274,11 +297,11 @@ const NOTES = {
   stratiform: "Flat, shallow liquid layer.",
   clear:      "No condensate in the column."
 };
-const ORDER = ["cirrus","debris","anvil_det","anvil_att","convective","tcu","cumulus","stratiform"];
+const ORDER = ["cirrus","anvil_det","anvil_att","convective","tcu","cumulus","stratiform"];
 const RADIUS_NM = 10;
 
 let M=null, CYC=[], ci=0, i=0, timer=null, byKey={}, byId={};
-let BUF={}, QP=null;
+let BUF={}, POVBUF={}, QP=null, LAYER="cloud", POVBY={};
 const $ = id => document.getElementById(id);
 const T = s => Date.parse(s || "");
 const cur = () => CYC[ci];
@@ -332,6 +355,27 @@ function boot(){
       <div class="pad-num" id="sv-${s}"></div>
     </div>`).join("");
 
+  // POV frames are keyed by valid time so they survive a run switch the same way the maps do.
+  POVBY = {};
+  ((M.pov||{}).frames||[]).forEach(p => { POVBY[p.valid] = p; });
+  const havePov = Object.keys(POVBY).length > 0;
+  $("lay-pov").disabled = !havePov;
+  if (!havePov) $("lay-pov").title = "Needs two runs valid at the same time";
+  $("source").innerHTML = `<option>${(M.pov||{}).source || "HRRR"}</option>`;
+  $("source").disabled = true;
+  $("source").title = "REFS/HREF publish ensemble products only, not members — see README";
+  $("pov-scale").innerHTML = ((M.pov||{}).colors||[]).map(c =>
+    `<span style="background:${c}"></span>`).join("");
+  $("pov-rules").textContent = havePov
+    ? "Every mesh point is treated as a pad and scored against the cumulus, attached and "
+      + "detached anvil, thick cloud layer, and disturbed weather rules. Rules that need "
+      + "observation — lightning, field mills, triboelectrification — cannot be evaluated "
+      + "from a model, so this is a floor, not a verdict."
+    : "";
+  $("lay-cloud").addEventListener("click", () => setLayer("cloud"));
+  $("lay-pov").addEventListener("click", () => setLayer("pov"));
+
+  loadPov();
   drawRuns();
   // Open on the newest COMPLETE run. HRRR posts a 48 h cycle over ~100 minutes, so the
   // freshest cycle is often a 10-hour stub; landing on it shows less of the forecast than
@@ -405,6 +449,17 @@ function nearestValid(fr, v){
 }
 
 /* ---- packed grids ---------------------------------------------------------- */
+function loadPov(){
+  Object.values(POVBY).forEach(p => {
+    if (p.data && !(p.valid in POVBUF)){
+      POVBUF[p.valid] = null;
+      fetch(p.data).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+        .then(b => { POVBUF[p.valid] = new Uint8Array(b); if (QP) drawQuery(); })
+        .catch(() => { delete POVBUF[p.valid]; });
+    }
+  });
+}
+
 function loadGrids(c){
   if (!M.query) return;
   c.frames.forEach(f => {
@@ -416,7 +471,7 @@ function loadGrids(c){
       .catch(() => { delete BUF[k]; });
   });
 }
-const PLANE = {CLASS:0, TOP_KFT:1, TOP_C:2, IWP:3, DEPTH:4, DBZ:5, AGE:6};
+const PLANE = {CLASS:0, TOP_KFT:1, TOP_C:2, IWP:3, DEPTH:4, DBZ:5, AGE:6, THICK:7};
 function plane(buf, p, cell){ return buf[p * M.query.nx * M.query.ny + cell]; }
 function decIwp(v){ return Math.pow(10, v * Math.log10(1 + M.query.iwp_max) / 255) - 1; }
 
@@ -477,7 +532,7 @@ function drawQuery(){
   const iwp = decIwp(plane(buf, PLANE.IWP, cell)), dep = plane(buf, PLANE.DEPTH, cell)/4;
   const dbz = plane(buf, PLANE.DBZ, cell);
   const ageRaw = plane(buf, PLANE.AGE, cell);
-  const rows = c.key === "clear" ? [["Column","no condensate"]] : [
+  let rows = c.key === "clear" ? [["Column","no condensate"]] : [
     ["Cloud top", topK.toFixed(1) + " kft"],
     ["Top temp", topC.toFixed(0) + " °C"],
     ["Ice path", iwp < 1 ? "<1 g/m²" : iwp.toFixed(0) + " g/m²"],
@@ -487,6 +542,13 @@ function drawQuery(){
     // forward between forecast hours. "no source" is what separates cirrus from anvil.
     ["Outflow age", ageRaw >= 255 ? "no source" : (ageRaw/10).toFixed(1) + " h"],
   ];
+  const thick = plane(buf, PLANE.THICK, cell) / 4;
+  if (thick >= 0.3) rows.push(["Thick layer", thick.toFixed(1) + " kft in 0/−20 °C"]);
+  const pv = POVBUF[f.valid];
+  if (pv){
+    const pct = pv[cell];
+    rows.unshift(["LLCC POV", pct + "%  (" + (POVBY[f.valid].members||[]).length + " members)"]);
+  }
   $("q-facts").innerHTML = rows.map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
 
   // The circle is centred on the pin, not on any pad - the LLCC rules are written as
@@ -553,10 +615,25 @@ function drawDpdt(){
 }
 
 /* ---- frame ----------------------------------------------------------------- */
+function setLayer(k){
+  if (k === "pov" && $("lay-pov").disabled) return;
+  LAYER = k;
+  $("lay-cloud").setAttribute("aria-pressed", k === "cloud");
+  $("lay-pov").setAttribute("aria-pressed", k === "pov");
+  $("povbox").hidden = k !== "pov";
+  show(i);
+}
+
 function show(n){
   i = n; const f = frames()[n];
-  $("frame").src = f.image;
-  $("frame").alt = "Cloud type classification valid " + f.valid;
+  const p = POVBY[f.valid];
+  // In POV the frame is matched by VALID TIME, not by index - the POV set is built from the
+  // newest run but stays aligned when an older run is selected.
+  const usePov = LAYER === "pov" && p;
+  if (LAYER === "pov" && !p){ setLayer("cloud"); return; }
+  $("frame").src = usePov ? p.image : f.image;
+  $("frame").alt = (usePov ? "LLCC violation probability valid " : "Cloud type classification valid ") + f.valid;
+  if (usePov) $("pov-src").textContent = p.members.length + " members: " + p.members.join(", ");
   $("loading").style.display = "none";
   // Spell the valid time out. "12/22Z" beside a run button reading "10Z" looked like a
   // second cycle label rather than a day-of-month.
