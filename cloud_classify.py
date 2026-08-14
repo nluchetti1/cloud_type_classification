@@ -14,7 +14,7 @@ WHAT CHANGED (v2) AND WHY
     2. CONDENSATE PATH, NOT MIXING RATIO. A fixed 1e-6 kg/kg threshold is density-blind:
        the same mixing ratio at 200 mb is ~4x less condensate than at 900 mb. v2 integrates
        q * dp / g into g/m^2, which is what actually controls opacity, and lets the anvil /
-       cirrus split fall out of ice water path (anvil 50+, aged debris 5-50, thin cirrus <5).
+       cirrus split fall out of ice water path (anvil 50+, thin cirrus below).
 
     3. ANVIL BY DETRAINMENT PHYSICS, NOT BASE TEMPERATURE. An anvil's base is set by where
        the tower detrains, and a thick or attached anvil routinely has a base warmer than
@@ -24,9 +24,9 @@ WHAT CHANGED (v2) AND WHY
        deck), traced back along its own layer-mean wind to a convective source within a
        physical advection time rather than a fixed distance in nm.
 
-    4. ATTACHED vs DETACHED vs DEBRIS. The LLCC treats those differently, so the classifier
-       does too: attached = core inside 10 nm; detached = core upwind within the trajectory
-       reach; debris = same trajectory but the ice has thinned below anvil opacity.
+    4. ATTACHED vs DETACHED. The LLCC treats those differently, so the classifier does too:
+       attached = core inside 10 nm; detached = joined to a core through continuous shield,
+       or off one within the 3 h clock.
 
     5. GRAUPEL AS AN UPDRAFT PROXY. Riming needs supercooled water and an updraft to hold it,
        so a graupel path aloft flags a convective core that reflectivity may not have caught
@@ -69,6 +69,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 # Configuration
 # --------------------------------------------------------------------------------------
 HRRR_ROOT = "https://noaa-hrrr-bdp-pds.s3.amazonaws.com"
+RRFS_ROOT = "https://noaa-rrfs-pds.s3.amazonaws.com"
 OUT_DIR = "docs"                     # GitHub Pages serves from /docs
 MAP_DIR = os.path.join(OUT_DIR, "maps")
 DATA_DIR = os.path.join(OUT_DIR, "data")   # packed grids the viewer queries on click
@@ -100,7 +101,51 @@ SITES = {
 CAPE_BOX = {"lat_min": 28.43, "lat_max": 28.67, "lon_min": -80.73, "lon_max": -80.44}
 
 BG = "#FFFFFF"                                # map background
-DX_KM = 3.0                                   # HRRR CONUS grid spacing
+# --------------------------------------------------------------------------------------
+# Models
+# --------------------------------------------------------------------------------------
+# Why more than one model, and why these two in particular.
+#
+# REFS publishes ensemble PRODUCTS only - mean, spread, probability-matched mean, prob, eas -
+# and no member files, so there is nothing per-member to classify. But SCN 26-48 spells the
+# membership out: REFS combines the current and 6 h old cycles of the RRFS deterministic and
+# ensemble systems, and over CONUS the HRRR contributes two more members from the current and
+# 6 h old cycles. Four of those - HRRR at t and t-6, RRFS deterministic at t and t-6 - ARE
+# published individually. So instead of reading somebody's precomputed probability of a
+# reflectivity threshold, CloudScope classifies those four itself and gets a REFS-shaped
+# ensemble it can run every LLCC rule against. The five true RRFS ensemble members do not
+# appear in the SCN's output listing and stay out of reach.
+#
+# RRFS is marked unverified until probe_models.py confirms the prslev files carry the
+# hydrometeor fields; the classifier needs condensate, not relative humidity, and an FV3
+# pressure-level product is not guaranteed to carry all four species.
+MODELS = {
+    "hrrr": {
+        "name": "HRRR", "dx_km": 3.0, "hourly": True,
+        "short_run_h": 18, "extended_run_h": 48,
+        "files": lambda d, c, fh: [
+            (f"{HRRR_ROOT}/hrrr.{d}/conus/hrrr.t{c}z.wrfprsf{fh:02d}.grib2", "levels"),
+            (f"{HRRR_ROOT}/hrrr.{d}/conus/hrrr.t{c}z.wrfsfcf{fh:02d}.grib2", "refc"),
+        ],
+        "probe": "CLMR", "verified": True,
+    },
+    "rrfs": {
+        # SCN 26-48: rrfs.YYYYMMDD/CC/rrfs.tCCz.prslev.3km.fFFF.conus.grib2, hourly to 18 h
+        # and to 84 h on 00/06/12/18Z. One file - prslev is expected to carry REFC too.
+        "name": "RRFS", "dx_km": 3.0, "hourly": True,
+        "short_run_h": 18, "extended_run_h": 60,
+        "files": lambda d, c, fh: [
+            (f"{RRFS_ROOT}/rrfs_public/rrfs.{d}/{c}/rrfs.t{c}z.prslev.3km.f{fh:03d}.conus.grib2",
+             "levels+refc"),
+        ],
+        "probe": "CLMR", "verified": False,
+    },
+}
+MODEL = os.environ.get("CLOUDSCOPE_MODEL", "hrrr").strip().lower()
+if MODEL not in MODELS:
+    MODEL = "hrrr"
+
+DX_KM = MODELS[MODEL]["dx_km"]
 
 # 50 mb resolves deck depth to ~1.5 kft, which is finer than any threshold here.
 LEVELS_HPA = [1000, 950, 900, 850, 800, 750, 700, 650, 600, 550,
@@ -126,10 +171,11 @@ LEVEL_SETS = {
 QUERY_DEG = 0.03
 IWP_MAX = 3000.0        # ceiling of the logarithmic ice-path packing, g/m^2
 
-# HRRR runs out to 48 h on the synoptic cycles and 18 h on the rest. Asking for f19+ on an
-# off-hour cycle just 404s, so the length is derived from the cycle rather than fixed.
+# Runs go long on the synoptic cycles and short on the rest. Asking for hours past the end
+# just 404s, so the length comes from the cycle and the model rather than being fixed.
 EXTENDED_CYCLES = {0, 6, 12, 18}
-SHORT_RUN_H, EXTENDED_RUN_H = 18, 48
+SHORT_RUN_H = MODELS[MODEL]["short_run_h"]
+EXTENDED_RUN_H = MODELS[MODEL]["extended_run_h"]
 
 # Start one cycle back. A run is adopted as soon as its f01 index is posted, but HRRR takes
 # ~50-60 min to finish an 18 h run (~100 min for a 48 h synoptic cycle), so reaching for the
@@ -138,37 +184,47 @@ SHORT_RUN_H, EXTENDED_RUN_H = 18, 48
 CYCLE_LAG_H = 1
 MAX_CYCLE_LOOKBACK_H = 6
 
-# dprog/dt: how many cycles stay on disk. Each run only ever processes the NEWEST cycle -
-# the older ones are already here from the runs that made them, so run-to-run comparison
-# costs nothing extra in bandwidth. Recomputing them hourly would be 4x the downloads for
-# an identical answer.
-KEEP_CYCLES = 4
+# How many cycles stay on disk. Each run only ever processes the NEWEST one - the older ones
+# are already here from the runs that built them - so this is the size of the time-lagged
+# ensemble AND the depth of the dprog/dt strip, and it costs nothing extra to download.
+#
+# Six because four members make a coarse probability: the only values a 4-member POV can take
+# are 0, 25, 50, 75, 100. Six gives 17% steps, which is finer than the forecast justifies but
+# at least stops the map looking quantised. Going much beyond that is self-defeating - the
+# oldest member is then six hours stale and is not really voting on the same forecast.
+KEEP_CYCLES = 6
 
 # How many older, still-incomplete cycles to top up on one pass, on top of the newest. Bounds
 # the runtime when several runs were picked up early.
 MAX_TOPUP_CYCLES = 2
 
+# Below this many members a probability is not a probability, it is a deterministic flag.
+POV_MIN_MEMBERS = 2
+
+# Members older than this are dropped from the POV. A run from eight hours ago has seen a
+# genuinely different atmosphere and drags the probability toward its own stale solution.
+POV_MAX_AGE_H = 6
+
 # Bump whenever the rendering or the classification changes. A cycle that is already
 # published is normally skipped, but a version mismatch means the PNGs on disk were made by
 # older code and have to be rebuilt - otherwise pushing a render change appears to do
 # nothing until the next cycle lands. Setting CLOUDSCOPE_FORCE=1 forces the same rebuild.
-RENDER_VERSION = "2026.08.13-attached-persist"
+RENDER_VERSION = "2026.08.14-tle6"
 
 # ---- classification thresholds (all tunable; see README) ----
 LAYER_PATH_MIN = 0.20   # g/m^2 of condensate in one layer to call it cloudy
 GLACIATED_C    = -38.0  # homogeneous freezing: a top this cold is cirriform by construction
 ICE_FRAC       = 0.80   # ice share WITHIN the layer for it to count as glaciated
 ANVIL_IWP      = 50.0   # g/m^2 - optically substantial ice; anvils run 100-1000
-DEBRIS_IWP     = 5.0    # g/m^2 - aged, thinning ice still worth flagging
 CONV_DBZ       = 40.0   # composite reflectivity marking a convective core
 GRAUPEL_CONV   = 200.0  # g/m^2 of graupel: riming implies an updraft holding supercooled water
 ATTACH_NM      = 10.0   # core this close and the anvil is attached, not advected
 # Two different clocks, because the LLCC uses two. A shield still joined to its parent is an
 # attached anvil no matter how long the ice has been streaming - the rule is written about
 # distance from it, not its age. The 3-hour clock belongs to anvil that has SEPARATED and to
-# debris cloud. Applying the 3 h cap to everything aged a live, connected shield into cirrus
+# detached anvil. Applying the 3 h cap to everything aged a live, connected shield to cirrus
 # while its cores were still firing.
-ANVIL_TAU_H    = 3.0    # detached anvil / debris: hours since it left the core
+ANVIL_TAU_H    = 3.0    # detached anvil: hours since it left the core
 CONN_MAX_H     = 6.0    # sanity cap on tracing a continuous shield, not an age limit
 AGE_MAX_H      = 25.0   # ceiling of the stored age field, hours
 ANVIL_MAX_NM   = 150.0  # cap, so a 90 kt jet doesn't sweep the whole domain
@@ -176,8 +232,11 @@ TCU_TOP_C      = -10.0  # liquid-based layer glaciating at its top
 CU_DEPTH_KFT   = 3.0    # depth separating cumuliform from a layered deck
 CU_TEX_KFT     = 1.2    # or lumpiness: sigma of cloud-top height over ~15 km
 
+# Debris is gone. In model land the difference between thinning anvil ice and cirrus is a
+# guess about optical depth that HRRR's microphysics does not really support, so sourced ice
+# is either optically substantial enough to be an anvil or it is cirrus.
 (CLEAR, STRATIFORM, CUMULUS, TCU, CONVECTIVE,
- ANVIL_ATT, ANVIL_DET, DEBRIS, CIRRUS) = range(9)
+ ANVIL_ATT, ANVIL_DET, CIRRUS) = range(8)
 
 CLASSES = [
     {"id": CLEAR,      "key": "clear",      "name": "Clear",           "color": "#FFFFFF"},
@@ -187,11 +246,9 @@ CLASSES = [
     {"id": CONVECTIVE, "key": "convective", "name": "Convective",      "color": "#A11D33"},
     {"id": ANVIL_ATT,  "key": "anvil_att",  "name": "Anvil, attached", "color": "#E2703A"},
     {"id": ANVIL_DET,  "key": "anvil_det",  "name": "Anvil, detached", "color": "#F0A87E"},
-    {"id": DEBRIS,     "key": "debris",     "name": "Debris",          "color": "#C7B49E"},
     {"id": CIRRUS,     "key": "cirrus",     "name": "Cirrus",          "color": "#9EC0DC"},
 ]
-# Tuned for a WHITE map. The pale ice colours darkened to survive on paper, and debris moved
-# off blue-grey to a faded tan so it reads as aged anvil, not a third variety of cirrus.
+# Tuned for a WHITE map: the pale ice colours darkened to survive on paper.
 PALETTE = [c["color"] for c in sorted(CLASSES, key=lambda c: c["id"])]
 KEY_BY_ID = {c["id"]: c["key"] for c in CLASSES}
 
@@ -238,8 +295,9 @@ def _merge(entries, gap=8192):
     return merged
 
 
-def _url(kind, date_str, cycle, fh):
-    return f"{HRRR_ROOT}/hrrr.{date_str}/conus/hrrr.t{cycle}z.{kind}f{fh:02d}.grib2"
+def model_files(date_str, cycle, fh, model=None):
+    """(url, role) for one forecast hour. role says what to pull out of that file."""
+    return MODELS[model or MODEL]["files"](date_str, cycle, fh)
 
 
 def run_hours(cycle):
@@ -249,57 +307,69 @@ def run_hours(cycle):
 
 
 def find_cycle(sess):
-    """Newest cycle at least CYCLE_LAG_H old whose f01 wrfprs index is posted."""
+    """Newest cycle at least CYCLE_LAG_H old whose f01 index is posted."""
     now = datetime.datetime.now(datetime.timezone.utc)
+    probe = MODELS[MODEL]["probe"]
     for back in range(CYCLE_LAG_H, MAX_CYCLE_LOOKBACK_H + 1):
         t = now - datetime.timedelta(hours=back)
         d, cc = t.strftime("%Y%m%d"), t.strftime("%H")
+        if not MODELS[MODEL]["hourly"] and int(cc) not in EXTENDED_CYCLES:
+            continue
         try:
-            r = sess.get(_url("wrfprs", d, cc, 1) + ".idx", timeout=15)
-            if r.status_code == 200 and "CLMR" in r.text and "GRLE" in r.text:
+            url = model_files(d, cc, 1)[0][0]
+            r = sess.get(url + ".idx", timeout=15)
+            if r.status_code == 200 and probe in r.text:
                 return d, cc, t.replace(minute=0, second=0, microsecond=0)
         except Exception:
             pass
     return None, None, None
 
 
+def _pull(sess, out, url, want_levels, want_refc):
+    """Byte-range the wanted messages out of one GRIB file. Returns bytes written."""
+    lvl_re = re.compile(r"^(\d+)\s*mb$")
+    try:
+        r = sess.get(url + ".idx", timeout=20)
+    except Exception:
+        return 0
+    if r.status_code != 200:
+        return 0
+    want = []
+    for e in _parse_idx(r.text):
+        if want_levels:
+            m = lvl_re.match(e["level"].strip())
+            if m:
+                lv = LEVEL_SETS.get(e["short"])
+                if lv and int(m.group(1)) in lv:
+                    want.append(e)
+                    continue
+        if want_refc and e["short"] == "REFC" and "entire atmosphere" in e["level"]:
+            want.append(e)
+    if not want:
+        return 0
+    total = 0
+    for s, e in _merge(want):
+        rng = f"bytes={s}-{'' if e is None else e}"
+        try:
+            rr = sess.get(url, headers={"Range": rng}, timeout=90)
+        except Exception:
+            continue
+        if rr.status_code in (200, 206):
+            out.write(rr.content)
+            total += len(rr.content)
+    return total
+
+
 def fetch_hour(sess, date_str, cycle, fh):
     """Byte-range the fields needed for one forecast hour. Returns a local GRIB path."""
     os.makedirs(CACHE_DIR, exist_ok=True)
-    local = os.path.join(CACHE_DIR, f"h{cycle}z_f{fh:02d}.grib2")
-    lvl_re = re.compile(r"^(\d+)\s*mb$")
+    local = os.path.join(CACHE_DIR, f"{MODEL}_{cycle}z_f{fh:02d}.grib2")
     total = 0
     with open(local, "wb") as out:
-        r = sess.get(_url("wrfprs", date_str, cycle, fh) + ".idx", timeout=20)
-        if r.status_code != 200:
-            return None, 0
-        want = []
-        for e in _parse_idx(r.text):
-            m = lvl_re.match(e["level"].strip())
-            if not m:
-                continue
-            want_lv = LEVEL_SETS.get(e["short"])
-            if want_lv and int(m.group(1)) in want_lv:
-                want.append(e)
-        if not want:
-            return None, 0
-        for s, e in _merge(want):
-            rng = f"bytes={s}-{'' if e is None else e}"
-            rr = sess.get(_url("wrfprs", date_str, cycle, fh), headers={"Range": rng}, timeout=90)
-            if rr.status_code in (200, 206):
-                out.write(rr.content)
-                total += len(rr.content)
-        r2 = sess.get(_url("wrfsfc", date_str, cycle, fh) + ".idx", timeout=20)
-        if r2.status_code == 200:
-            refc = [e for e in _parse_idx(r2.text)
-                    if e["short"] == "REFC" and "entire atmosphere" in e["level"]]
-            for s, e in _merge(refc):
-                rng = f"bytes={s}-{'' if e is None else e}"
-                rr = sess.get(_url("wrfsfc", date_str, cycle, fh), headers={"Range": rng}, timeout=90)
-                if rr.status_code in (200, 206):
-                    out.write(rr.content)
-                    total += len(rr.content)
-    return local, total
+        for url, role in model_files(date_str, cycle, fh):
+            total += _pull(sess, out, url,
+                           want_levels="levels" in role, want_refc="refc" in role)
+    return (local, total) if total else (None, 0)
 
 
 # --------------------------------------------------------------------------------------
@@ -569,8 +639,7 @@ def classify(f, prior_age=None):
 
     # --- decision -----------------------------------------------------------------------
     anvil = ice_aloft & (iwp_hi >= ANVIL_IWP) & (near_core | sourced)
-    debris = ice_aloft & ~anvil & (iwp_hi >= DEBRIS_IWP) & sourced
-    cirrus = ice_aloft & ~anvil & ~debris
+    cirrus = ice_aloft & ~anvil
 
     liq_base = has_cloud & (liq_frac_lo > 0.5)
     tcu = liq_base & (lo_top_c <= TCU_TOP_C)
@@ -582,12 +651,18 @@ def classify(f, prior_age=None):
     st = (liq_base & ~tcu & ~cu) | unclaimed
 
     out = np.full((ny, nx), CLEAR, dtype=np.uint8)
-    for mask, cid in ((cirrus, CIRRUS), (st, STRATIFORM), (cu, CUMULUS), (debris, DEBRIS),
+    for mask, cid in ((cirrus, CIRRUS), (st, STRATIFORM), (cu, CUMULUS),
                       (tcu, TCU), (anvil & ~near_core, ANVIL_DET), (anvil & near_core, ANVIL_ATT),
                       (core, CONVECTIVE)):
         out[mask] = cid                                    # ascending operational significance
 
-    diag = {"top_kft": top_kft, "top_c": top_c, "iwp": iwp_hi, "lwp": lwp_lo,
+    # Depth of cloud sitting in the 0 to -20 C band, which is what the Thick Cloud Layer
+    # rule is written about - the mixed-phase region where a vehicle can trigger a strike.
+    dz = np.abs(np.gradient(z, axis=0))
+    in_band = cloud & (tmpc_band := (f["tmpc"] <= 0.0) & (f["tmpc"] >= -20.0))
+    thick_kft = (dz * in_band).sum(axis=0)
+
+    diag = {"top_kft": top_kft, "top_c": top_c, "thick_kft": thick_kft, "iwp": iwp_hi, "lwp": lwp_lo,
             "depth_lo": depth_lo, "graupel": gcol, "refc": f["refc"],
             "age_h": np.where(age_h >= NEVER, np.nan, age_h), "joined": joined}
     return out, diag
@@ -721,7 +796,7 @@ def render(cls, f, valid, cycle, path):
     except Exception as e:
         logging.warning(f"Cape inset skipped: {type(e).__name__}: {e}")
 
-    ax.text(0.012, 0.012, f"HRRR {cycle}Z  valid {valid:%d %b %H%MZ}", transform=ax.transAxes,
+    ax.text(0.012, 0.012, f"{MODELS[MODEL]['name']} {cycle}Z  valid {valid:%d %b %H%MZ}", transform=ax.transAxes,
             fontsize=6.4, color="#7A858E", family="monospace", zorder=7)
     try:
         ax.spines["geo"].set_edgecolor("#C3C8BC")
@@ -732,12 +807,94 @@ def render(cls, f, valid, cycle, path):
 
 
 # --------------------------------------------------------------------------------------
+# LLCC evaluation and probability of violation
+# --------------------------------------------------------------------------------------
+# EVERY THRESHOLD BELOW IS A PLACEHOLDER TO BE CHECKED AGAINST THE CURRENT LLCC DOCUMENT.
+# These are encoded from the commonly published form of the NASA/USSF Launch Commit Criteria
+# and are almost certainly not exact - verify each against the controlling document before
+# anyone treats the output as decision support. They are gathered here, in one dict, for
+# exactly that reason.
+#
+# What can and cannot be evaluated from a model field is worth stating plainly. Rules that
+# reduce to cloud geometry and distance - cumulus, anvil, thick layer, disturbed weather -
+# are computable. Rules that depend on observation - the lightning rule, surface electric
+# field mill readings, triboelectrification, smoke plumes, the "good visibility" clauses -
+# are not, and no amount of model resolution changes that. A POV computed here is a floor,
+# not a verdict.
+LLCC = {
+    # Cumulus rule: (standoff nm, cloud-top temperature threshold C). A cumulus whose top is
+    # colder than the threshold puts everything inside that radius NO-GO.
+    "cumulus": [(10.0, -20.0), (5.0, -10.0), (3.0, 0.0)],
+    "attached_anvil_nm": 10.0,
+    "detached_anvil_nm": 3.0,
+    # Thick cloud layer: flight path through a layer this deep inside the 0 to -20 C band.
+    "thick_layer_kft": 4.5,
+    # Disturbed weather: moderate-or-greater precipitation within this radius, under cloud
+    # whose top reaches the threshold. Composite reflectivity stands in for the precip.
+    "disturbed_nm": 5.0, "disturbed_dbz": 30.0, "disturbed_top_c": -20.0,
+}
+
+RULE_KEYS = ["cumulus", "attached_anvil", "detached_anvil", "thick_layer", "disturbed"]
+
+
+def _disc(nm, lat_deg, dlat, dlon):
+    """Boolean footprint of a circle of radius `nm` on the regular lat/lon query mesh. The
+    mesh is not square in kilometres, so the disc is an ellipse in index space."""
+    km = nm * 1.852
+    kl = dlat * 111.32
+    ko = dlon * 111.32 * max(np.cos(np.radians(lat_deg)), 0.1)
+    rj, ri = max(1, int(np.ceil(km / kl))), max(1, int(np.ceil(km / ko)))
+    jj, ii = np.mgrid[-rj:rj + 1, -ri:ri + 1]
+    return np.hypot(jj * kl, ii * ko) <= km
+
+
+def llcc_violation(planes, q):
+    """GO / NO-GO at every mesh point, treating that point as the pad. Returns a dict of
+    per-rule boolean grids plus the union."""
+    lat_mid = q["lat0"] + 0.5 * q["ny"] * q["dlat"]
+    near = lambda mask, nm: maximum_filter(
+        mask.astype(np.uint8), footprint=_disc(nm, lat_mid, q["dlat"], q["dlon"])) > 0
+
+    cls = planes["class"]
+    top_c = planes["top_c"]
+    convective_like = np.isin(cls, [CUMULUS, TCU, CONVECTIVE])
+
+    out = {}
+    cum = np.zeros(cls.shape, bool)
+    for nm, tc in LLCC["cumulus"]:
+        cum |= near(convective_like & (top_c <= tc), nm)
+    out["cumulus"] = cum
+    out["attached_anvil"] = near(cls == ANVIL_ATT, LLCC["attached_anvil_nm"])
+    out["detached_anvil"] = near(cls == ANVIL_DET, LLCC["detached_anvil_nm"])
+    # Thick layer is a property of the column being flown through, not of a neighbour.
+    out["thick_layer"] = planes["thick_kft"] >= LLCC["thick_layer_kft"]
+    out["disturbed"] = (near(planes["dbz"] >= LLCC["disturbed_dbz"], LLCC["disturbed_nm"])
+                        & (top_c <= LLCC["disturbed_top_c"]))
+    out["any"] = np.logical_or.reduce([out[k] for k in RULE_KEYS])
+    return out
+
+
+def unpack_planes(blob, q):
+    """Inverse of pack_query, back to physical units on the mesh."""
+    a = np.frombuffer(blob, np.uint8)
+    n = q["nx"] * q["ny"]
+    g = lambda k: a[k * n:(k + 1) * n].reshape(q["ny"], q["nx"]).astype(float)
+    age = g(6)
+    return {"class": g(0).astype(int), "top_kft": g(1) / 4.0, "top_c": g(2) - 100.0,
+            "iwp": 10 ** (g(3) * np.log10(1 + q["iwp_max"]) / 255.0) - 1.0,
+            "depth_kft": g(4) / 4.0, "dbz": g(5),
+            "age_h": np.where(age >= 255, np.nan, age / 10.0),
+            "thick_kft": g(7) / 4.0}
+
+
+# --------------------------------------------------------------------------------------
 # Queryable export
 # --------------------------------------------------------------------------------------
 _QGRID = {}   # the crop is identical every hour, so the resampling is solved once per run
 
 PLANES = ["class", "top_kft_x4", "top_c_p100", "iwp_log", "depth_kft_x4", "dbz",
-          "age_h_x10"]   # 255 = no outflow source found
+          "age_h_x10",      # 255 = no outflow source found
+          "thick_kft_x4"]   # cloud depth inside the 0 to -20 C band
 
 
 def query_grid(f):
@@ -771,6 +928,7 @@ def pack_query(cls, diag, f):
         q(take(diag["refc"]), 0, 80),
         np.where(np.isfinite(take(diag["age_h"])),
                  np.clip(np.round(take(diag["age_h"]) * 10.0), 0, 254), 255).astype(np.uint8),
+        q(np.nan_to_num(take(diag["thick_kft"]), nan=0.0) * 4.0),
     ]
     return b"".join(p.tobytes() for p in planes), len(qlon), len(qlat), qlat[0], qlon[0]
 
@@ -784,6 +942,95 @@ def site_indices(f):
     return idx
 
 
+POV_DIR = os.path.join(OUT_DIR, "pov")
+
+# Sequential, and deliberately not a rainbow: on a white map the eye should read "how dark"
+# without decoding a hue.
+POV_COLORS = ["#FFFFFF", "#FBE3D4", "#F6C3A4", "#EF9C74", "#E2703A", "#C24A2C", "#A11D33"]
+POV_BOUNDS = [0, 5, 20, 40, 60, 80, 95, 100.01]
+
+
+def render_pov(pov, q, valid, label, path):
+    """Probability-of-violation map on the query mesh."""
+    proj, size = _figsize()
+    pc = ccrs.PlateCarree()
+    lats = q["lat0"] + np.arange(q["ny"]) * q["dlat"]
+    lons = q["lon0"] + np.arange(q["nx"]) * q["dlon"]
+    cmap = mcolors.ListedColormap(POV_COLORS)
+    norm = mcolors.BoundaryNorm(POV_BOUNDS, len(POV_COLORS))
+    fig = plt.figure(figsize=size, dpi=140, facecolor=BG)
+    ax = fig.add_axes([0, 0, 1, 1], projection=proj)
+    _basemap(ax, DOMAIN)
+    ax.pcolormesh(lons, lats, pov, cmap=cmap, norm=norm, shading="nearest",
+                  transform=pc, zorder=2)
+    ax.add_feature(cfeature.NaturalEarthFeature("cultural", "admin_1_states_provinces_lines",
+                                                "10m", facecolor="none"),
+                   edgecolor="#AEB6BD", linewidth=0.6, zorder=4)
+    for name, (la, lo) in SITES.items():
+        ax.plot(lo, la, marker="+", markersize=6, markeredgewidth=1.3, color="#14181B",
+                transform=pc, zorder=6)
+    ax.text(0.012, 0.012, f"LLCC violation probability  valid {valid:%d %b %H%MZ}  {label}",
+            transform=ax.transAxes, fontsize=6.4, color="#7A858E", family="monospace", zorder=7)
+    try:
+        ax.spines["geo"].set_edgecolor("#C3C8BC")
+    except Exception:
+        pass
+    fig.savefig(path, facecolor=BG)
+    plt.close(fig)
+
+
+def build_pov(cycles, q, cid):
+    """Probability of LLCC violation from a time-lagged ensemble.
+
+    There is no public per-member feed to draw on: the operational REFS distribution carries
+    only combined ensemble products, the prototype member feed stopped on 11 Aug 2026, and
+    HREF publishes ensprod only and retires in October. So the members here are the retained
+    HRRR cycles valid at the same time - a time-lagged ensemble, which is the same trick HREF
+    itself uses for its NAM and HRRR members. Each cycle is one member; the spread is genuine
+    run-to-run uncertainty, and it costs nothing extra to download.
+    """
+    if not q:
+        return []
+    os.makedirs(os.path.join(OUT_DIR, "pov"), exist_ok=True)
+    newest = cycles[0]
+    by_valid = {}
+    for c in cycles:
+        for fr in c["frames"]:
+            by_valid.setdefault(fr["valid"], []).append((c, fr))
+
+    t0 = datetime.datetime.strptime(newest["init"], "%Y-%m-%dT%H:%MZ")
+    out = []
+    for fr0 in newest["frames"]:
+        members = [(c, fr) for c, fr in by_valid.get(fr0["valid"], [])
+                   if (t0 - datetime.datetime.strptime(c["init"], "%Y-%m-%dT%H:%MZ"))
+                   .total_seconds() / 3600.0 <= POV_MAX_AGE_H]
+        if len(members) < POV_MIN_MEMBERS:
+            continue
+        stack, labels = [], []
+        for c, fr in members:
+            try:
+                with open(os.path.join(OUT_DIR, fr["data"]), "rb") as fp:
+                    p = unpack_planes(fp.read(), q)
+            except Exception:
+                continue
+            stack.append(llcc_violation(p, q)["any"])
+            labels.append(c["label"])
+        if len(stack) < POV_MIN_MEMBERS:
+            continue
+        pov = 100.0 * np.mean(np.stack(stack), axis=0)
+        valid = datetime.datetime.strptime(fr0["valid"], "%Y-%m-%dT%H:%MZ")
+        png = f"pov/pov_{MODEL}_{cid}z_f{fr0['fh']:02d}.png"
+        render_pov(pov, q, valid, f"{len(stack)} members", os.path.join(OUT_DIR, png))
+        binrel = f"pov/pov_{MODEL}_{cid}z_f{fr0['fh']:02d}.bin"
+        with open(os.path.join(OUT_DIR, binrel), "wb") as bf:
+            bf.write(np.clip(np.round(pov), 0, 100).astype(np.uint8).tobytes())
+        out.append({"fh": fr0["fh"], "valid": fr0["valid"],
+                    "valid_short": fr0["valid_short"], "valid_label": fr0["valid_label"],
+                    "image": png, "data": binrel, "members": labels,
+                    "mean_pov": round(float(pov.mean()), 2)})
+    return out
+
+
 def load_manifest():
     try:
         with open(os.path.join(OUT_DIR, "manifest.json")) as fp:
@@ -793,7 +1040,7 @@ def load_manifest():
 
 
 def _state_path(cid, fh):
-    return os.path.join(STATE_DIR, f"age_{cid}z_f{fh:02d}.npy")
+    return os.path.join(STATE_DIR, f"age_{MODEL}_{cid}z_f{fh:02d}.npy")
 
 
 def save_age(cid, fh, age_h):
@@ -843,13 +1090,13 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
             cls, diag = classify(f, prior_age=load_age(cid, fh - 1))
             save_age(cid, fh, diag["age_h"])
             valid = cyc_dt + datetime.timedelta(hours=fh)
-            png = f"maps/cloudtype_{cid}z_f{fh:02d}.png"
+            png = f"maps/cloudtype_{MODEL}_{cid}z_f{fh:02d}.png"
             render(cls, f, valid, cycle, os.path.join(OUT_DIR, png))
             blob, qnx, qny, qlat0, qlon0 = pack_query(cls, diag, f)
             qmeta = {"nx": qnx, "ny": qny, "lat0": round(float(qlat0), 6),
                      "lon0": round(float(qlon0), 6), "dlat": QUERY_DEG, "dlon": QUERY_DEG,
                      "iwp_max": IWP_MAX, "planes": PLANES}
-            binrel = f"data/cols_{cid}z_f{fh:02d}.bin"
+            binrel = f"data/cols_{MODEL}_{cid}z_f{fh:02d}.bin"
             with open(os.path.join(OUT_DIR, binrel), "wb") as bf:
                 bf.write(blob)
 
@@ -888,7 +1135,7 @@ def main():
     sess = _session()
     date_str, cycle, cyc_dt = find_cycle(sess)
     if not cycle:
-        logging.error("No HRRR cycle available; leaving the previous run in place.")
+        logging.error(f"No {MODELS[MODEL]['name']} cycle available; leaving the previous run in place.")
         return
 
     prev = load_manifest()
@@ -967,17 +1214,30 @@ def main():
             dropped += 1
 
     newest = cycles[0]
+    pov = build_pov(cycles, qmeta or prev.get("query"), newest["id"])
+    live_pov = {os.path.basename(p["image"]) for p in pov} | {os.path.basename(p["data"]) for p in pov}
+    povdir = os.path.join(OUT_DIR, "pov")
+    if os.path.isdir(povdir):
+        for fn in os.listdir(povdir):
+            if fn not in live_pov:
+                os.remove(os.path.join(povdir, fn))
+                dropped += 1
+
     manifest = {
         "generated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
         "render_version": RENDER_VERSION,
-        "model": "HRRR", "cycle": f"{newest['date']} {newest['hour']}Z",
+        "model": MODELS[MODEL]["name"], "model_key": MODEL,
+        "cycle": f"{newest['date']} {newest['hour']}Z",
         "domain": DOMAIN, "classes": CLASSES, "sites": list(SITES),
         "query": qmeta or prev.get("query"),
         "cycles": cycles,
+        "pov": {"frames": pov, "rules": RULE_KEYS, "thresholds": LLCC,
+                "colors": POV_COLORS, "bounds": POV_BOUNDS,
+                "source": f"time-lagged {MODELS[MODEL]['name']} cycles"},
         "frames": newest["frames"],   # so an older viewer still works
         "thresholds": {"layer_path_min_gm2": LAYER_PATH_MIN, "glaciated_c": GLACIATED_C,
                        "ice_fraction": ICE_FRAC, "anvil_iwp_gm2": ANVIL_IWP,
-                       "debris_iwp_gm2": DEBRIS_IWP, "convective_dbz": CONV_DBZ,
+                       "convective_dbz": CONV_DBZ,
                        "conn_max_h": CONN_MAX_H,
                        "graupel_gm2": GRAUPEL_CONV, "attach_nm": ATTACH_NM,
                        "anvil_tau_h": ANVIL_TAU_H, "anvil_max_nm": ANVIL_MAX_NM,
