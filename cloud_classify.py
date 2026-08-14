@@ -202,6 +202,14 @@ MAX_TOPUP_CYCLES = 2
 # Below this many members a probability is not a probability, it is a deterministic flag.
 POV_MIN_MEMBERS = 2
 
+# Older cycles to build per pass while the ensemble is short-handed. Normally each pass only
+# builds the newest cycle and the ensemble grows an hour at a time - fine in steady state,
+# useless after a DATA_VERSION bump wipes the retained cycles and leaves two members
+# producing a probability that can only read 0, 50 or 100%. Backfill pulls the older cycles
+# that are still on S3 so the ensemble refills in a couple of passes instead of six. It only
+# runs when short, so steady-state bandwidth is unchanged.
+BACKFILL_PER_PASS = 2
+
 # Members older than this are dropped from the POV. A run from eight hours ago has seen a
 # genuinely different atmosphere and drags the probability toward its own stale solution.
 POV_MAX_AGE_H = 6
@@ -1152,8 +1160,12 @@ def build_pov(cycles, q, cid):
 
     t0 = datetime.datetime.strptime(newest["init"], "%Y-%m-%dT%H:%MZ")
     out = []
-    for fr0 in newest["frames"]:
-        members = [(c, fr) for c, fr in by_valid.get(fr0["valid"], [])
+    # Every valid time on disk with enough members, not just the ones the newest run has
+    # reached. The newest cycle is usually still posting, so keying off its frames meant the
+    # POV existed for four hours out of eighteen and the layer silently fell back to cloud
+    # type everywhere else. Older runs already cover those hours; they are the members.
+    for valid_s in sorted(by_valid):
+        members = [(c, fr) for c, fr in by_valid[valid_s]
                    if (t0 - datetime.datetime.strptime(c["init"], "%Y-%m-%dT%H:%MZ"))
                    .total_seconds() / 3600.0 <= POV_MAX_AGE_H]
         if len(members) < POV_MIN_MEMBERS:
@@ -1170,14 +1182,18 @@ def build_pov(cycles, q, cid):
         if len(stack) < POV_MIN_MEMBERS:
             continue
         pov = 100.0 * np.mean(np.stack(stack), axis=0)
-        valid = datetime.datetime.strptime(fr0["valid"], "%Y-%m-%dT%H:%MZ")
-        png = f"pov/pov_{MODEL}_{cid}z_f{fr0['fh']:02d}.png"
+        valid = datetime.datetime.strptime(valid_s, "%Y-%m-%dT%H:%MZ")
+        # Named by VALID time, not by cycle and forecast hour: a POV frame is a property of
+        # the moment being forecast, and the same file stays correct as cycles roll over.
+        stamp = valid.strftime("%Y%m%dT%H%MZ")
+        png = f"pov/pov_{MODEL}_{stamp}.png"
         render_pov(pov, q, valid, f"{len(stack)} members", os.path.join(OUT_DIR, png))
-        binrel = f"pov/pov_{MODEL}_{cid}z_f{fr0['fh']:02d}.bin"
+        binrel = f"pov/pov_{MODEL}_{stamp}.bin"
         with open(os.path.join(OUT_DIR, binrel), "wb") as bf:
             bf.write(np.clip(np.round(pov), 0, 100).astype(np.uint8).tobytes())
-        out.append({"fh": fr0["fh"], "valid": fr0["valid"],
-                    "valid_short": fr0["valid_short"], "valid_label": fr0["valid_label"],
+        out.append({"valid": valid_s,
+                    "valid_short": valid.strftime("%HZ"),
+                    "valid_label": valid.strftime("%HZ %a %d %b"),
                     "image": png, "data": binrel, "members": labels,
                     "mean_pov": round(float(pov.mean()), 2)})
     return out
@@ -1326,6 +1342,28 @@ def main():
         if len(todo) >= MAX_TOPUP_CYCLES + 1:
             break
 
+    # Backfill: if the ensemble is short, reach back for cycles that were never built. HRRR
+    # keeps a couple of days on S3, so the data is still there - the only reason those cycles
+    # are missing is that this pipeline was not running, or a version bump discarded them.
+    have_ids = {c["id"] for c in prior} | {cid}
+    short = KEEP_CYCLES - len(have_ids)
+    if short > 0:
+        added = 0
+        for back in range(1, KEEP_CYCLES + MAX_CYCLE_LOOKBACK_H):
+            if added >= min(BACKFILL_PER_PASS, short):
+                break
+            t = cyc_dt - datetime.timedelta(hours=back)
+            bid = t.strftime("%Y%m%d%H")
+            if bid in have_ids:
+                continue
+            todo.append((bid, t.strftime("%Y%m%d"), t.strftime("%H")))
+            cyc_dts[bid] = t
+            have_ids.add(bid)
+            added += 1
+        if added:
+            logging.info(f"Ensemble short ({len(prior) + 1}/{KEEP_CYCLES} cycles); "
+                         f"backfilling {added} older cycle(s) this pass.")
+
     for tid, tdate, thour in todo:
         existing = next((c["frames"] for c in prior if c["id"] == tid), [])
         frames, nbytes, qm, made = build_cycle(sess, tdate, thour, cyc_dts[tid], tid, existing)
@@ -1333,6 +1371,8 @@ def main():
         qmeta = qm or qmeta
         built += made
         if not frames:
+            if tid != cid:
+                logging.info(f"{tid}Z: nothing available (aged off S3?); skipping.")
             continue
         want = run_hours(thour)
         entries.append({"id": tid, "label": f"{thour}Z", "date": tdate, "hour": thour,
@@ -1349,10 +1389,12 @@ def main():
         logging.error("No frames rendered; manifest not rewritten.")
         return
 
-    by_id = {e["id"]: e for e in entries}
-    cycles = [by_id.get(c["id"], c) for c in prior if c["id"] != cid]
-    cycles = ([by_id[cid]] if cid in by_id else []) + cycles
-    cycles = cycles[:KEEP_CYCLES]
+    # Merge by id and sort by initialisation time. The earlier version rebuilt this list from
+    # `prior` plus the newest cycle only, which silently threw away every backfilled cycle -
+    # they were downloaded, classified, rendered, and then dropped on the floor.
+    merged = {c["id"]: c for c in prior}
+    merged.update({e["id"]: e for e in entries})
+    cycles = sorted(merged.values(), key=lambda c: c["init"], reverse=True)[:KEEP_CYCLES]
     if not cycles:
         logging.error("Nothing to publish; manifest not rewritten.")
         return
