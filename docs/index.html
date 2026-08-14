@@ -85,7 +85,14 @@
     position:relative; width:max-content; max-width:100%; line-height:0;
   }
   figure img{display:block; width:auto; max-width:100%;
-             max-height:max(360px, calc(100vh - var(--chrome))); cursor:crosshair}
+             max-height:max(360px, calc(100vh - var(--chrome))); cursor:crosshair;
+             /* Nearest-neighbour scaling, deliberately. The browser's default smooth
+                interpolation blends neighbouring class colours, and on a categorical map
+                that manufactures classes that are not there: attached anvil #E2703A mixed
+                with the white of clear sky lands on #ECA27F, which is the detached anvil
+                swatch #F0A87E to the eye. Aliased edges are a fair price for never
+                inventing a category. */
+             image-rendering:pixelated; image-rendering:crisp-edges}
   .loading{position:absolute; inset:0; display:grid; place-items:center;
            color:var(--ink-3); font-size:11.5px; letter-spacing:.08em; line-height:1.5}
 
@@ -304,6 +311,14 @@ const NOTES = {
 const ORDER = ["cirrus","anvil_det","anvil_att","convective","tcu","cumulus","stratiform"];
 const RADIUS_NM = 10;
 
+// Assets are named by cycle and forecast hour, so a NEW run gets new filenames and caches
+// cleanly. A rebuild does not: a version bump rewrites the same filename with new content,
+// and the browser will happily pair a cached PNG with a freshly fetched grid - which is how
+// a map pixel and the readout ended up disagreeing. Stamping the build onto every asset URL
+// makes a rebuild look like new files to the cache, without disabling caching in general.
+let STAMP = "";
+const bust = u => u + (u.includes("?") ? "&" : "?") + "v=" + STAMP;
+
 let M=null, CYC=[], ci=0, i=0, timer=null, byKey={}, byId={};
 let BUF={}, POVBUF={}, QP=null, LAYER="cloud", POVBY={};
 const $ = id => document.getElementById(id);
@@ -320,6 +335,8 @@ fetch("manifest.json?" + Date.now())
   });
 
 function boot(){
+  STAMP = encodeURIComponent((M.generated || "") + "|" + (M.data_version || "")
+                             + "|" + (M.render_version || ""));
   byKey = Object.fromEntries(M.classes.map(c => [c.key, c]));
   byId  = Object.fromEntries(M.classes.map(c => [c.id, c]));
   CYC = M.cycles && M.cycles.length ? M.cycles
@@ -453,7 +470,7 @@ function selectCycle(n, keepValid){
     const hit = fr.findIndex(f => f.valid === keepValid);
     idx = hit >= 0 ? hit : nearestValid(fr, keepValid);
   }
-  fr.forEach(f => { const im = new Image(); im.src = f.image; });
+  fr.forEach(f => { const im = new Image(); im.src = bust(f.image); });
   loadGrids(cur());
   $("runs").querySelectorAll(".run").forEach(b =>
     b.setAttribute("aria-pressed", (+b.dataset.n === ci) ? "true" : "false"));
@@ -472,7 +489,7 @@ function loadPov(){
   Object.values(POVBY).forEach(p => {
     if (p.data && !(p.valid in POVBUF)){
       POVBUF[p.valid] = null;
-      fetch(p.data).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+      fetch(bust(p.data)).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
         .then(b => { POVBUF[p.valid] = new Uint8Array(b); if (QP) drawQuery(); })
         .catch(() => { delete POVBUF[p.valid]; });
     }
@@ -485,7 +502,7 @@ function loadGrids(c){
     const k = c.id + ":" + f.fh;
     if (!f.data || k in BUF) return;
     BUF[k] = null;
-    fetch(f.data).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+    fetch(bust(f.data)).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
       .then(b => { BUF[k] = new Uint8Array(b); if (QP) drawQuery(); })
       .catch(() => { delete BUF[k]; });
   });
@@ -650,7 +667,7 @@ function show(n){
   // newest run but stays aligned when an older run is selected.
   const usePov = LAYER === "pov" && p;
   if (LAYER === "pov" && !p){ setLayer("cloud"); return; }
-  $("frame").src = usePov ? p.image : f.image;
+  $("frame").src = bust(usePov ? p.image : f.image);
   $("frame").alt = (usePov ? "LLCC violation probability valid " : "Cloud type classification valid ") + f.valid;
   if (usePov) $("pov-src").textContent = p.members.length + " members: " + p.members.join(", ");
   $("loading").style.display = "none";
