@@ -664,11 +664,25 @@ function show(n){
   const p = POVBY[f.valid];
   // In POV the frame is matched by VALID TIME, not by index - the POV set is built from the
   // newest run but stays aligned when an older run is selected.
+  // If a valid time has no POV frame, stay on the POV layer and say so. Silently reverting
+  // to cloud type made the button look broken, when the real answer is that this hour is not
+  // yet covered by two runs.
   const usePov = LAYER === "pov" && p;
-  if (LAYER === "pov" && !p){ setLayer("cloud"); return; }
+  if (LAYER === "pov" && !p){
+    $("pov-src").innerHTML = "<b>No POV at " + (f.valid_label || f.valid_short) + "</b> — "
+      + "fewer than two runs reach this hour. Showing cloud type.";
+  }
   $("frame").src = bust(usePov ? p.image : f.image);
   $("frame").alt = (usePov ? "LLCC violation probability valid " : "Cloud type classification valid ") + f.valid;
-  if (usePov) $("pov-src").textContent = p.members.length + " members: " + p.members.join(", ");
+  if (usePov){
+    const n = p.members.length;
+    // A 2-member probability can only read 0, 50 or 100%. Say so rather than letting the
+    // colour scale imply a precision that is not there.
+    $("pov-src").innerHTML = n + " members: " + p.members.join(", ")
+      + (n < 4 ? ` — only ${n} runs on disk, so this can only read `
+                 + Array.from({length: n + 1}, (_, k) => Math.round(100 * k / n)).join("/")
+                 + "%. It refines as the ensemble fills." : "");
+  }
   $("loading").style.display = "none";
   // Spell the valid time out. "12/22Z" beside a run button reading "10Z" looked like a
   // second cycle label rather than a day-of-month.
