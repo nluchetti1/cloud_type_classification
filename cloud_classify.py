@@ -220,8 +220,8 @@ POV_MAX_AGE_H = 6
 # retained cycle too, so a palette tweak cost six hours of ensemble. Now it just rebuilds the
 # newest cycle's images; older runs keep their old-style PNGs, which is a small visual
 # inconsistency in the run selector and a much better trade than losing the POV.
-DATA_VERSION = "2026.08.14-std4010"
-RENDER_VERSION = "2026.08.14-std4010"
+DATA_VERSION = "2026.08.14-nocbclass"
+RENDER_VERSION = "2026.08.14-nocbclass"
 
 # ---- classification thresholds (all tunable; see README) ----
 LAYER_PATH_MIN = 0.20   # g/m^2 of condensate in one layer to call it cloudy
@@ -247,15 +247,18 @@ CU_TEX_KFT     = 1.2    # or lumpiness: sigma of cloud-top height over ~15 km
 # Debris is gone. In model land the difference between thinning anvil ice and cirrus is a
 # guess about optical depth that HRRR's microphysics does not really support, so sourced ice
 # is either optically substantial enough to be an anvil or it is cirrus.
-(CLEAR, STRATIFORM, CUMULUS, TCU, CONVECTIVE,
- ANVIL_ATT, ANVIL_DET, CIRRUS) = range(8)
+# Convective folded into Cumulus. A 40 dBZ core is a cumuliform cloud, and NASA-STD-4010
+# 4.1.3 already treats it as one - the cumulus rules key on cloud-top temperature, not on
+# whether the cell is raining, so a Cb was tripping exactly the same criteria a deep cumulus
+# does. The core mask itself is untouched: it still seeds the anvil trace and still shows up
+# as composite reflectivity in the readout, it just no longer gets a colour of its own.
+(CLEAR, STRATIFORM, CUMULUS, TCU, ANVIL_ATT, ANVIL_DET, CIRRUS) = range(7)
 
 CLASSES = [
     {"id": CLEAR,      "key": "clear",      "name": "Clear",           "color": "#FFFFFF"},
     {"id": STRATIFORM, "key": "stratiform", "name": "Stratiform",      "color": "#5C7A99"},
     {"id": CUMULUS,    "key": "cumulus",    "name": "Cumulus",         "color": "#E0A83C"},
     {"id": TCU,        "key": "tcu",        "name": "Towering cumulus","color": "#B0700F"},
-    {"id": CONVECTIVE, "key": "convective", "name": "Convective",      "color": "#A11D33"},
     {"id": ANVIL_ATT,  "key": "anvil_att",  "name": "Anvil, attached", "color": "#E2703A"},
     {"id": ANVIL_DET,  "key": "anvil_det",  "name": "Anvil, detached", "color": "#F0A87E"},
     {"id": CIRRUS,     "key": "cirrus",     "name": "Cirrus",          "color": "#9EC0DC"},
@@ -672,7 +675,7 @@ def classify(f, prior_age=None):
     out = np.full((ny, nx), CLEAR, dtype=np.uint8)
     for mask, cid in ((cirrus, CIRRUS), (st, STRATIFORM), (cu, CUMULUS),
                       (tcu, TCU), (anvil & ~joined, ANVIL_DET), (anvil & joined, ANVIL_ATT),
-                      (core, CONVECTIVE)):
+                      (core, CUMULUS)):
         out[mask] = cid                                    # ascending operational significance
 
     # 4.1.8 measures a LAYER: base of the bottom to top of the uppermost, where any part of
@@ -970,7 +973,7 @@ def llcc_violation(planes, q):
 
     # --- 4.1.3 Cumulus ------------------------------------------------------------------
     # Section applies to cumuliform cloud only, and explicitly not to attached anvil.
-    cumuliform = np.isin(cls, [CUMULUS, TCU, CONVECTIVE])
+    cumuliform = np.isin(cls, [CUMULUS, TCU])
     # LLCCR 15: through the cloud. Top at or colder than +5 C is NO-GO; the field-mill
     # exception only exists for tops warmer than -5 C and cannot be evaluated here, so
     # anything at or colder than +5 C is taken as NO-GO.
