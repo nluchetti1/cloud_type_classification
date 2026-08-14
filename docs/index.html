@@ -293,8 +293,8 @@
 <script>
 const NOTES = {
   cirrus:     "Glaciated layer topping colder than −38 °C, with no core upwind and not joined to one.",
-  anvil_det:  "Thick ice joined to a core through a continuous shield, or off one within 3 h.",
-  anvil_att:  "Same, with a core inside 10 nm — still fed by its parent.",
+  anvil_det:  "Ice that has separated — no continuous shield back to a parent, but off one within 3 h.",
+  anvil_att:  "Unbroken ice shield running back to a live core, however far downwind.",
   convective: "40 dBZ composite, or enough graupel aloft to imply an updraft.",
   tcu:        "Liquid-based layer glaciating at its top, colder than −10 °C.",
   cumulus:    "Liquid layer 3 kft deep or more, or a lumpy top over 15 km.",
@@ -334,8 +334,10 @@ function boot(){
     + "path is what sets opacity. An anvil is identified by where it came from, not by its base "
     + "temperature: a glaciated layer topping at " + t.glaciated_c + " °C or colder, carrying "
     + t.anvil_iwp_gm2 + " g/m² of ice or more, with a convective core either inside "
-    + t.attach_nm + " nm or upwind along the layer's own mean wind within " + t.anvil_tau_h
-    + " h of advection. Cores are " + t.convective_dbz + " dBZ composite or " + t.graupel_gm2
+    + "either joined to it by unbroken ice or, having separated, reachable along the layer's "
+    + "own mean wind within " + t.anvil_tau_h + " h. Attachment is continuity, not distance: "
+    + "the " + t.attach_nm + " nm in the LLCC is the standoff you keep from an attached anvil, "
+    + "not what makes one attached. Cores are " + t.convective_dbz + " dBZ composite or " + t.graupel_gm2
     + " g/m² of graupel. Each column gets exactly one class — where several apply the more "
     + "operationally significant one is drawn — so the shares and clear sky sum to 100%.";
 
@@ -379,11 +381,15 @@ function boot(){
   $("source").title = "REFS/HREF publish ensemble products only, not members — see README";
   $("pov-scale").innerHTML = ((M.pov||{}).colors||[]).map(c =>
     `<span style="background:${c}"></span>`).join("");
-  $("pov-rules").textContent = havePov
-    ? "Every mesh point is treated as a pad and scored against the cumulus, attached and "
-      + "detached anvil, thick cloud layer, and disturbed weather rules. Rules that need "
-      + "observation — lightning, field mills, triboelectrification — cannot be evaluated "
-      + "from a model, so this is a floor, not a verdict."
+  const P = M.pov || {};
+  $("pov-rules").innerHTML = havePov
+    ? "Every mesh point is treated as the flight path and scored against "
+      + (P.standard || "NASA-STD-4010") + ". Evaluated: "
+      + Object.values(P.rule_names || {}).join("; ") + ". "
+      + "<b>Not evaluated</b>, because no forecast field can decide them: "
+      + (P.not_evaluated || []).join("; ")
+      + ". So this is a floor, not a verdict — and where the standard would let a field mill "
+      + "buy relief, this errs toward NO-GO."
     : "";
   $("lay-cloud").addEventListener("click", () => setLayer("cloud"));
   $("lay-pov").addEventListener("click", () => setLayer("pov"));
