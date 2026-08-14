@@ -302,13 +302,12 @@ const NOTES = {
   cirrus:     "Glaciated layer topping colder than −38 °C, with no core upwind and not joined to one.",
   anvil_det:  "Ice that has separated — no continuous shield back to a parent, but off one within 3 h.",
   anvil_att:  "Unbroken ice shield running back to a live core, however far downwind.",
-  convective: "40 dBZ composite, or enough graupel aloft to imply an updraft.",
   tcu:        "Liquid-based layer glaciating at its top, colder than −10 °C.",
-  cumulus:    "Liquid layer 3 kft deep or more, or a lumpy top over 15 km.",
+  cumulus:    "Liquid layer 3 kft deep or more, a lumpy top, or a 40 dBZ convective core.",
   stratiform: "Flat, shallow liquid layer.",
   clear:      "No condensate in the column."
 };
-const ORDER = ["cirrus","anvil_det","anvil_att","convective","tcu","cumulus","stratiform"];
+const ORDER = ["cirrus","anvil_det","anvil_att","tcu","cumulus","stratiform"];
 const RADIUS_NM = 10;
 
 // Assets are named by cycle and forecast hour, so a NEW run gets new filenames and caches
