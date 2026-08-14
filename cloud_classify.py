@@ -24,9 +24,10 @@ WHAT CHANGED (v2) AND WHY
        deck), traced back along its own layer-mean wind to a convective source within a
        physical advection time rather than a fixed distance in nm.
 
-    4. ATTACHED vs DETACHED. The LLCC treats those differently, so the classifier does too:
-       attached = core inside 10 nm; detached = joined to a core through continuous shield,
-       or off one within the 3 h clock.
+    4. ATTACHED vs DETACHED. The LLCC treats those differently, so the classifier does too,
+       and the test is CONTINUITY, not distance: attached = an unbroken ice shield running
+       back to a live convective core, however far downwind that is; detached = ice the
+       trajectory can reach within 3 h but with no continuous shield back to a parent.
 
     5. GRAUPEL AS AN UPDRAFT PROXY. Riming needs supercooled water and an updraft to hold it,
        so a graupel path aloft flags a convective core that reflectivity may not have caught
@@ -219,8 +220,8 @@ POV_MAX_AGE_H = 6
 # retained cycle too, so a palette tweak cost six hours of ensemble. Now it just rebuilds the
 # newest cycle's images; older runs keep their old-style PNGs, which is a small visual
 # inconsistency in the run selector and a much better trade than losing the POV.
-DATA_VERSION = "2026.08.14-tle6"
-RENDER_VERSION = "2026.08.14-tle6"
+DATA_VERSION = "2026.08.14-std4010"
+RENDER_VERSION = "2026.08.14-std4010"
 
 # ---- classification thresholds (all tunable; see README) ----
 LAYER_PATH_MIN = 0.20   # g/m^2 of condensate in one layer to call it cloudy
@@ -229,7 +230,8 @@ ICE_FRAC       = 0.80   # ice share WITHIN the layer for it to count as glaciate
 ANVIL_IWP      = 50.0   # g/m^2 - optically substantial ice; anvils run 100-1000
 CONV_DBZ       = 40.0   # composite reflectivity marking a convective core
 GRAUPEL_CONV   = 200.0  # g/m^2 of graupel: riming implies an updraft holding supercooled water
-ATTACH_NM      = 10.0   # core this close and the anvil is attached, not advected
+ATTACH_NM      = 10.0   # LLCC standoff from an attached anvil; used by the POV rules, and
+                        # deliberately NOT used to decide whether an anvil is attached
 # Two different clocks, because the LLCC uses two. A shield still joined to its parent is an
 # attached anvil no matter how long the ice has been streaming - the rule is written about
 # distance from it, not its age. The 3-hour clock belongs to anvil that has SEPARATED and to
@@ -238,7 +240,6 @@ ATTACH_NM      = 10.0   # core this close and the anvil is attached, not advecte
 ANVIL_TAU_H    = 3.0    # detached anvil: hours since it left the core
 CONN_MAX_H     = 6.0    # sanity cap on tracing a continuous shield, not an age limit
 AGE_MAX_H      = 25.0   # ceiling of the stored age field, hours
-ANVIL_MAX_NM   = 150.0  # cap, so a 90 kt jet doesn't sweep the whole domain
 TCU_TOP_C      = -10.0  # liquid-based layer glaciating at its top
 CU_DEPTH_KFT   = 3.0    # depth separating cumuliform from a layered deck
 CU_TEX_KFT     = 1.2    # or lumpiness: sigma of cloud-top height over ~15 km
@@ -557,8 +558,6 @@ def classify(f, prior_age=None):
 
     # --- convective cores ---------------------------------------------------------------
     core = (f["refc"] >= CONV_DBZ) | (gcol >= GRAUPEL_CONV)
-    r_px = max(1, int(round(ATTACH_NM * 1.852 / DX_KM)))
-    near_core = maximum_filter(core.astype(float), size=2 * r_px + 1) > 0.5
 
     # --- outflow wind -------------------------------------------------------------------
     # Ice-mass-weighted mean through the top layer, not a fixed 300-150 mb mean: the
@@ -607,7 +606,11 @@ def classify(f, prior_age=None):
     sy = np.where(m > 0, np.round(uy / np.maximum(m, 1e-9)), 0.0)
     step_km = np.hypot(sx, sy) * DX_KM                 # dx or dx*sqrt(2) on the diagonals
     dt_h = np.where((spd > 0.5) & (step_km > 0), step_km / np.maximum(spd * 3.6, 1e-6), NEVER)
-    n_steps = int(min(np.ceil(ANVIL_MAX_NM * 1.852 / DX_KM), 120))
+    # Enough steps to cross the domain, because the AGE caps are what limit the trace now,
+    # not a distance ceiling. Sizing this from a 150 nm reach was a leftover from the old
+    # straight-ray version and silently truncated any shield longer than ~280 km, turning
+    # the far end of a perfectly continuous anvil into cirrus. Converged runs exit early.
+    n_steps = int(min(nx + ny, 400))
 
     # Advect last hour's age one hour downwind and add an hour to it. Where a core is firing
     # the clock resets to zero regardless.
@@ -649,7 +652,12 @@ def classify(f, prior_age=None):
     age_h = np.minimum(age_conn, age_free)
 
     # --- decision -----------------------------------------------------------------------
-    anvil = ice_aloft & (iwp_hi >= ANVIL_IWP) & (near_core | sourced)
+    # Attached vs detached is about CONTINUITY with the parent, not distance from it. The
+    # 10 nm in the LLCC is the standoff you keep from an anvil, not what makes one attached -
+    # so an unbroken shield streaming 60 km downwind of a live core is still an attached
+    # anvil, and this used to call it detached. `joined` is the continuous-ice trace; `recent`
+    # is trajectory reach through clear air, which is precisely ice that has separated.
+    anvil = ice_aloft & (iwp_hi >= ANVIL_IWP) & sourced
     cirrus = ice_aloft & ~anvil
 
     liq_base = has_cloud & (liq_frac_lo > 0.5)
@@ -663,17 +671,38 @@ def classify(f, prior_age=None):
 
     out = np.full((ny, nx), CLEAR, dtype=np.uint8)
     for mask, cid in ((cirrus, CIRRUS), (st, STRATIFORM), (cu, CUMULUS),
-                      (tcu, TCU), (anvil & ~near_core, ANVIL_DET), (anvil & near_core, ANVIL_ATT),
+                      (tcu, TCU), (anvil & ~joined, ANVIL_DET), (anvil & joined, ANVIL_ATT),
                       (core, CONVECTIVE)):
         out[mask] = cid                                    # ascending operational significance
 
-    # Depth of cloud sitting in the 0 to -20 C band, which is what the Thick Cloud Layer
-    # rule is written about - the mixed-phase region where a vehicle can trigger a strike.
-    dz = np.abs(np.gradient(z, axis=0))
-    in_band = cloud & (tmpc_band := (f["tmpc"] <= 0.0) & (f["tmpc"] >= -20.0))
-    thick_kft = (dz * in_band).sum(axis=0)
+    # 4.1.8 measures a LAYER: base of the bottom to top of the uppermost, where any part of
+    # it lies between 0 and -20 C. Summing cloudy depth inside the band instead - which is
+    # what this did first - understates a 6 kft deck whose warm half sits below 0 C, and
+    # would wrongly clear it. So each contiguous layer is measured whole, and kept only if
+    # it intersects the band.
+    band = (f["tmpc"] <= 0.0) & (f["tmpc"] >= -20.0)
+    thick_kft = np.zeros((ny, nx))
+    run_base = np.zeros((ny, nx))
+    run_band = np.zeros((ny, nx), bool)
+    was = np.zeros((ny, nx), bool)
+    for k in range(nlev):
+        c = cloud[k]
+        start = c & ~was
+        run_base = np.where(start, z[k], run_base)
+        run_band = np.where(start, band[k], run_band | (c & band[k]))
+        if k:
+            ended = was & ~c
+            thick_kft = np.where(ended & run_band,
+                                 np.maximum(thick_kft, z[k - 1] - run_base), thick_kft)
+        was = c
+    thick_kft = np.where(was & run_band,
+                         np.maximum(thick_kft, z[nlev - 1] - run_base), thick_kft)
 
-    diag = {"top_kft": top_kft, "top_c": top_c, "thick_kft": thick_kft, "iwp": iwp_hi, "lwp": lwp_lo,
+    # "Located entirely at altitudes where the temperature is colder than 0 C" is a statement
+    # about a cloud's BASE, and it is the exception that decides most anvil calls.
+    base_c_hi = np.where(has_cloud, _at(f["tmpc"], hi_base), np.nan)
+
+    diag = {"top_kft": top_kft, "top_c": top_c, "thick_kft": thick_kft, "base_c": base_c_hi, "iwp": iwp_hi, "lwp": lwp_lo,
             "depth_lo": depth_lo, "graupel": gcol, "refc": f["refc"],
             "age_h": np.where(age_h >= NEVER, np.nan, age_h), "joined": joined}
     return out, diag
@@ -820,32 +849,88 @@ def render(cls, f, valid, cycle, path):
 # --------------------------------------------------------------------------------------
 # LLCC evaluation and probability of violation
 # --------------------------------------------------------------------------------------
-# EVERY THRESHOLD BELOW IS A PLACEHOLDER TO BE CHECKED AGAINST THE CURRENT LLCC DOCUMENT.
-# These are encoded from the commonly published form of the NASA/USSF Launch Commit Criteria
-# and are almost certainly not exact - verify each against the controlling document before
-# anyone treats the output as decision support. They are gathered here, in one dict, for
-# exactly that reason.
+# Encoded from NASA-STD-4010 (2017-06-27), "NASA Standard for Lightning Launch Commit
+# Criteria for Space Flight". Requirement numbers below are that document's [LLCCR n].
 #
-# What can and cannot be evaluated from a model field is worth stating plainly. Rules that
-# reduce to cloud geometry and distance - cumulus, anvil, thick layer, disturbed weather -
-# are computable. Rules that depend on observation - the lightning rule, surface electric
-# field mill readings, triboelectrification, smoke plumes, the "good visibility" clauses -
-# are not, and no amount of model resolution changes that. A POV computed here is a floor,
-# not a verdict.
+# WHAT A MODEL CAN AND CANNOT DECIDE
+#   Evaluable here: the criteria that reduce to cloud geometry, cloud-top and cloud-base
+#   temperature, layer thickness, and radar reflectivity - Cumulus (4.1.3), Attached Anvil
+#   (4.1.4), Detached Anvil (4.1.5), Disturbed Weather (4.1.7), Thick Cloud Layers (4.1.8).
+#
+#   Not evaluable, at all, ever, from a forecast field: Lightning (4.1.1) and every "wait 30
+#   minutes / 3 hours / 4 hours after every lightning discharge" clause hanging off the anvil
+#   rules; Surface Electric Fields (4.1.2), which needs field mills; Smoke Plumes (4.1.9);
+#   Debris Clouds (4.1.6), which needs an observed detachment or collapse time. Several of
+#   the field-mill EXCEPTIONS that would let a launch proceed are equally unevaluable, so
+#   this errs toward NO-GO where the standard would allow a mill to buy relief.
+#
+#   The upshot: a POV computed here is a floor. Rules it cannot see can only make the real
+#   answer worse, never better - except where an unevaluable exception would have granted
+#   GO. It is a planning aid, not a launch decision.
+#
+# MRR (4.2.2): the standard defines it over a box +/-3 nmi horizontally, from the 0 C level
+# to 20 km. With composite reflectivity only, 4.2.2c applies - the largest composite
+# reflectivity within 4 nmi of the evaluation point - which is what is used here.
 LLCC = {
-    # Cumulus rule: (standoff nm, cloud-top temperature threshold C). A cumulus whose top is
-    # colder than the threshold puts everything inside that radius NO-GO.
-    "cumulus": [(10.0, -20.0), (5.0, -10.0), (3.0, 0.0)],
-    "attached_anvil_nm": 10.0,
-    "detached_anvil_nm": 3.0,
-    # Thick cloud layer: flight path through a layer this deep inside the 0 to -20 C band.
-    "thick_layer_kft": 4.5,
-    # Disturbed weather: moderate-or-greater precipitation within this radius, under cloud
-    # whose top reaches the threshold. Composite reflectivity stands in for the precip.
-    "disturbed_nm": 5.0, "disturbed_dbz": 30.0, "disturbed_top_c": -20.0,
+    # --- 4.1.3 Cumulus. Excludes cirrocumulus, altocumulus, stratocumulus, and does not
+    # apply to an anvil attached to a parent cumulus.
+    "cumulus_through_c":   5.0,    # LLCCR 15: through cloud, top at or colder than +5 C
+    "cumulus_through_hard_c": -5.0,  # colder than -5 C removes the field-mill exception
+    "cumulus_5nm_c":     -10.0,    # LLCCR 16: 0-5 nmi, top at or colder than -10 C
+    "cumulus_10nm_c":    -20.0,    # LLCCR 17: 5-10 nmi, top at or colder than -20 C
+    "cumulus_5nm":         5.0,
+    "cumulus_10nm":       10.0,
+
+    # --- 4.1.4 Attached anvil, parent top at or colder than -10 C at any time.
+    "attached_3nm":        3.0,    # LLCCR 18: within 3 nmi, NO-GO unless both exceptions
+    "attached_excep_c":    0.0,    # portion within 5 nmi entirely colder than 0 C
+    "attached_excep_nm":   5.0,
+    "mrr_max_dbz":         7.5,    # MRR < +7.5 dBZ within 1 nmi
+    "mrr_nm":              4.0,    # 4.2.2c evaluation radius for MRR itself
+    "mrr_eval_nm":         1.0,
+
+    # --- 4.1.5 Detached anvil.
+    "detached_3nm":        3.0,    # LLCCR 22, minus its lightning clocks
+
+    # --- 4.1.7 Disturbed weather: through cloud whose tops are colder than 0 C, with
+    # moderate-or-greater precipitation within 5 nmi. "Moderate" is 30 dBZ by definition.
+    "disturbed_nm":        5.0, "disturbed_dbz": 30.0, "disturbed_top_c": 0.0,
+
+    # --- 4.1.8 Thick cloud layers. Does NOT apply to attached or detached anvil.
+    "thick_kft":           4.5,    # 1.4 km
+    "thick_band_c":       (0.0, -20.0),
+    "thick_connect_nm":    5.0,    # LLCCR 28b: connected thick layer within 5 nmi
+    "thick_cirriform_c": -15.0,    # LLCCR 29: cirriform, entirely colder than -15 C, exempt
+    # LLCCR 30 exempts a layer with no 0 dBZ within 5 nmi. The packed reflectivity plane
+    # clips at 0, so testing ">= 0" made every point echo-bearing and the exemption could
+    # never fire. A packed 0 means "no echo", hence the strictly-greater test.
+    "thick_min_dbz":       0.5,
+
+    # --- 4.1.10 Triboelectrification: through any cloud colder than -10 C below 910 m/s.
+    # Vehicle-dependent (LLCCR 33 exempts treated vehicles), so off by default.
+    "tribo_enabled":     False, "tribo_c": -10.0,
 }
 
-RULE_KEYS = ["cumulus", "attached_anvil", "detached_anvil", "thick_layer", "disturbed"]
+RULE_KEYS = ["cumulus_through", "cumulus_5nm", "cumulus_10nm", "attached_anvil",
+             "detached_anvil", "disturbed", "thick_layer"]
+RULE_NAMES = {
+    "cumulus_through": "Cumulus, flight through (4.1.3.1)",
+    "cumulus_5nm":     "Cumulus within 5 nmi (4.1.3.2)",
+    "cumulus_10nm":    "Cumulus 5-10 nmi (4.1.3.3)",
+    "attached_anvil":  "Attached anvil within 3 nmi (4.1.4.1)",
+    "detached_anvil":  "Detached anvil within 3 nmi (4.1.5.2)",
+    "disturbed":       "Disturbed weather (4.1.7)",
+    "thick_layer":     "Thick cloud layer (4.1.8)",
+    "tribo":           "Triboelectrification (4.1.10)",
+}
+# Stated in the UI so nobody mistakes the number for a full evaluation.
+RULES_NOT_EVALUATED = [
+    "Lightning (4.1.1) and every lightning wait clause on the anvil rules",
+    "Surface electric fields (4.1.2) - needs field mills",
+    "Debris clouds (4.1.6) - needs an observed detachment or collapse time",
+    "Smoke plumes (4.1.9)",
+    "Field-mill exceptions that would otherwise permit launch",
+]
 
 
 def _disc(nm, lat_deg, dlat, dlon):
@@ -860,28 +945,79 @@ def _disc(nm, lat_deg, dlat, dlon):
 
 
 def llcc_violation(planes, q):
-    """GO / NO-GO at every mesh point, treating that point as the pad. Returns a dict of
-    per-rule boolean grids plus the union."""
+    """GO / NO-GO at every mesh point, treating that point as the flight path.
+
+    Returns per-rule boolean grids plus their union. Each rule is applied as written in
+    NASA-STD-4010, with the exceptions that a model CAN evaluate honoured - the temperature
+    and MRR exceptions on the anvil rules matter a great deal in practice, and ignoring them
+    would paint most of a summer afternoon NO-GO.
+    """
+    L = LLCC
     lat_mid = q["lat0"] + 0.5 * q["ny"] * q["dlat"]
     near = lambda mask, nm: maximum_filter(
         mask.astype(np.uint8), footprint=_disc(nm, lat_mid, q["dlat"], q["dlon"])) > 0
+    peak = lambda field, nm: maximum_filter(
+        field, footprint=_disc(nm, lat_mid, q["dlat"], q["dlon"]))
 
-    cls = planes["class"]
-    top_c = planes["top_c"]
-    convective_like = np.isin(cls, [CUMULUS, TCU, CONVECTIVE])
-
+    cls, top_c, base_c = planes["class"], planes["top_c"], planes["base_c"]
+    dbz, thick = planes["dbz"], planes["thick_kft"]
     out = {}
-    cum = np.zeros(cls.shape, bool)
-    for nm, tc in LLCC["cumulus"]:
-        cum |= near(convective_like & (top_c <= tc), nm)
-    out["cumulus"] = cum
-    out["attached_anvil"] = near(cls == ANVIL_ATT, LLCC["attached_anvil_nm"])
-    out["detached_anvil"] = near(cls == ANVIL_DET, LLCC["detached_anvil_nm"])
-    # Thick layer is a property of the column being flown through, not of a neighbour.
-    out["thick_layer"] = planes["thick_kft"] >= LLCC["thick_layer_kft"]
-    out["disturbed"] = (near(planes["dbz"] >= LLCC["disturbed_dbz"], LLCC["disturbed_nm"])
-                        & (top_c <= LLCC["disturbed_top_c"]))
-    out["any"] = np.logical_or.reduce([out[k] for k in RULE_KEYS])
+
+    # 4.2.2c - MRR as the largest composite reflectivity within 4 nmi, then the rule tests
+    # it within 1 nmi of the flight path.
+    mrr = peak(dbz, L["mrr_nm"])
+    mrr_ok = peak(mrr, L["mrr_eval_nm"]) < L["mrr_max_dbz"]
+
+    # --- 4.1.3 Cumulus ------------------------------------------------------------------
+    # Section applies to cumuliform cloud only, and explicitly not to attached anvil.
+    cumuliform = np.isin(cls, [CUMULUS, TCU, CONVECTIVE])
+    # LLCCR 15: through the cloud. Top at or colder than +5 C is NO-GO; the field-mill
+    # exception only exists for tops warmer than -5 C and cannot be evaluated here, so
+    # anything at or colder than +5 C is taken as NO-GO.
+    out["cumulus_through"] = cumuliform & (top_c <= L["cumulus_through_c"])
+    # LLCCR 16 / 17: standoff by cloud-top temperature.
+    out["cumulus_5nm"] = near(cumuliform & (top_c <= L["cumulus_5nm_c"]), L["cumulus_5nm"])
+    out["cumulus_10nm"] = near(cumuliform & (top_c <= L["cumulus_10nm_c"]), L["cumulus_10nm"])
+
+    # --- 4.1.4 Attached anvil -----------------------------------------------------------
+    # LLCCR 18: within 3 nmi is NO-GO unless the anvil within 5 nmi sits entirely colder
+    # than 0 C AND MRR < 7.5 dBZ within 1 nmi. Both are evaluable: the base temperature of
+    # the ice layer is what "located entirely at altitudes colder than 0 C" means.
+    att = cls == ANVIL_ATT
+    att_warm = near(att & (base_c >= L["attached_excep_c"]), L["attached_excep_nm"])
+    out["attached_anvil"] = near(att, L["attached_3nm"]) & (att_warm | ~mrr_ok)
+
+    # --- 4.1.5 Detached anvil -----------------------------------------------------------
+    # LLCCR 22 with the same evaluable exceptions; its 30-minute and 3-hour lightning clocks
+    # are not evaluable and are noted rather than applied.
+    det = cls == ANVIL_DET
+    det_warm = near(det & (base_c >= L["attached_excep_c"]), L["attached_excep_nm"])
+    out["detached_anvil"] = near(det, L["detached_3nm"]) & (det_warm | ~mrr_ok)
+
+    # --- 4.1.7 Disturbed weather --------------------------------------------------------
+    # Through non-transparent cloud with tops colder than 0 C, with moderate or greater
+    # precipitation within 5 nmi. 30 dBZ is the standard's own definition of moderate.
+    in_cloud = cls != CLEAR
+    out["disturbed"] = (in_cloud & (top_c < L["disturbed_top_c"])
+                        & near(dbz >= L["disturbed_dbz"], L["disturbed_nm"]))
+
+    # --- 4.1.8 Thick cloud layers -------------------------------------------------------
+    # Not applicable to anvil of either kind (4.1.8 preamble). LLCCR 29 exempts a cirriform
+    # layer entirely colder than -15 C with no liquid water; LLCCR 30 exempts a layer with
+    # no 0 dBZ within 5 nmi.
+    thick_hit = thick >= L["thick_kft"]
+    is_anvil = np.isin(cls, [ANVIL_ATT, ANVIL_DET])
+    cirriform_exempt = (cls == CIRRUS) & (top_c <= L["thick_cirriform_c"])
+    no_echo_exempt = ~near(dbz >= L["thick_min_dbz"], L["thick_connect_nm"])
+    out["thick_layer"] = (near(thick_hit, L["thick_connect_nm"]) & in_cloud
+                          & ~is_anvil & ~cirriform_exempt & ~no_echo_exempt)
+
+    # --- 4.1.10 Triboelectrification ----------------------------------------------------
+    if L["tribo_enabled"]:
+        out["tribo"] = in_cloud & (top_c <= L["tribo_c"])
+
+    keys = [k for k in RULE_KEYS if k in out] + (["tribo"] if "tribo" in out else [])
+    out["any"] = np.logical_or.reduce([out[k] for k in keys])
     return out
 
 
@@ -895,7 +1031,7 @@ def unpack_planes(blob, q):
             "iwp": 10 ** (g(3) * np.log10(1 + q["iwp_max"]) / 255.0) - 1.0,
             "depth_kft": g(4) / 4.0, "dbz": g(5),
             "age_h": np.where(age >= 255, np.nan, age / 10.0),
-            "thick_kft": g(7) / 4.0}
+            "thick_kft": g(7) / 4.0, "base_c": g(8) - 100.0}
 
 
 # --------------------------------------------------------------------------------------
@@ -905,7 +1041,8 @@ _QGRID = {}   # the crop is identical every hour, so the resampling is solved on
 
 PLANES = ["class", "top_kft_x4", "top_c_p100", "iwp_log", "depth_kft_x4", "dbz",
           "age_h_x10",      # 255 = no outflow source found
-          "thick_kft_x4"]   # cloud depth inside the 0 to -20 C band
+          "thick_kft_x4",   # whole-layer depth where the layer meets the 0/-20 C band
+          "base_c_p100"]    # base temperature of the upper cloud layer
 
 
 def query_grid(f):
@@ -940,6 +1077,7 @@ def pack_query(cls, diag, f):
         np.where(np.isfinite(take(diag["age_h"])),
                  np.clip(np.round(take(diag["age_h"]) * 10.0), 0, 254), 255).astype(np.uint8),
         q(np.nan_to_num(take(diag["thick_kft"]), nan=0.0) * 4.0),
+        q(np.nan_to_num(take(diag["base_c"]), nan=-100.0) + 100.0),
     ]
     return b"".join(p.tobytes() for p in planes), len(qlon), len(qlat), qlat[0], qlon[0]
 
@@ -1251,7 +1389,9 @@ def main():
         "domain": DOMAIN, "classes": CLASSES, "sites": list(SITES),
         "query": qmeta or prev.get("query"),
         "cycles": cycles,
-        "pov": {"frames": pov, "rules": RULE_KEYS, "thresholds": LLCC,
+        "pov": {"frames": pov, "rules": RULE_KEYS, "rule_names": RULE_NAMES,
+                "not_evaluated": RULES_NOT_EVALUATED,
+                "standard": "NASA-STD-4010 (2017-06-27)", "thresholds": LLCC,
                 "colors": POV_COLORS, "bounds": POV_BOUNDS,
                 "source": f"time-lagged {MODELS[MODEL]['name']} cycles"},
         "frames": newest["frames"],   # so an older viewer still works
@@ -1260,7 +1400,7 @@ def main():
                        "convective_dbz": CONV_DBZ,
                        "conn_max_h": CONN_MAX_H,
                        "graupel_gm2": GRAUPEL_CONV, "attach_nm": ATTACH_NM,
-                       "anvil_tau_h": ANVIL_TAU_H, "anvil_max_nm": ANVIL_MAX_NM,
+                       "anvil_tau_h": ANVIL_TAU_H, "conn_max_h": CONN_MAX_H,
                        "tcu_top_c": TCU_TOP_C, "cu_depth_kft": CU_DEPTH_KFT},
     }
     with open(os.path.join(OUT_DIR, "manifest.json"), "w") as fp:
