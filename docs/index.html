@@ -68,6 +68,10 @@
   /* A run still being posted gets a dashed edge - the loop ending early is expected, not a
      failure, and it fills in on the next pass. */
   .run.partial{border-style:dashed}
+  /* A layer that cannot be shown has to look that way. Silently ignoring the click reads
+     as a broken button. */
+  .run:disabled{opacity:.45; cursor:not-allowed; border-style:dotted}
+  .run:disabled:hover{border-color:var(--rule); color:var(--ink-3)}
 
   /* ---- layout -------------------------------------------------------------- */
   .grid{display:grid; grid-template-columns:minmax(0,1fr) var(--rail); gap:18px;
@@ -360,7 +364,16 @@ function boot(){
   ((M.pov||{}).frames||[]).forEach(p => { POVBY[p.valid] = p; });
   const havePov = Object.keys(POVBY).length > 0;
   $("lay-pov").disabled = !havePov;
-  if (!havePov) $("lay-pov").title = "Needs two runs valid at the same time";
+  if (!havePov){
+    // The usual reason is a fresh deploy: a data-version bump drops the retained cycles, so
+    // there is only one run on disk and a one-member probability is not a probability.
+    const runs = CYC.length;
+    $("lay-pov").title = runs < 2
+      ? `Only ${runs} run on disk — the probability needs at least two. `
+        + `One more hourly pass and it appears.`
+      : "No POV frames published for these valid times yet.";
+    $("lay-pov").innerHTML = `LLCC POV<small>needs 2+ runs</small>`;
+  }
   $("source").innerHTML = `<option>${(M.pov||{}).source || "HRRR"}</option>`;
   $("source").disabled = true;
   $("source").title = "REFS/HREF publish ensemble products only, not members — see README";
