@@ -57,9 +57,21 @@
   .run:hover{border-color:var(--ink-3); color:var(--ink)}
   .run[aria-pressed=true]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
   .run small{font-size:9.5px; opacity:.72; font-weight:400}
+  .src{font:inherit; font-size:11.5px; padding:3px 6px; background:var(--paper);
+       color:var(--ink); border:1px solid var(--rule); border-radius:2px}
+  .src:disabled{color:var(--ink-3)}
+  .pov-scale{display:flex; margin:6px 0 4px; height:10px}
+  .pov-scale span{flex:1}
+  .pov-ticks{display:flex; justify-content:space-between; font-size:9.5px; color:var(--ink-3)}
+  .pov-big{font-size:26px; font-weight:600; font-variant-numeric:tabular-nums; line-height:1.1}
+  .pov-rules{font-size:10px; color:var(--ink-3); margin-top:8px; line-height:1.5}
   /* A run still being posted gets a dashed edge - the loop ending early is expected, not a
      failure, and it fills in on the next pass. */
   .run.partial{border-style:dashed}
+  /* A layer that cannot be shown has to look that way. Silently ignoring the click reads
+     as a broken button. */
+  .run:disabled{opacity:.45; cursor:not-allowed; border-style:dotted}
+  .run:disabled:hover{border-color:var(--rule); color:var(--ink-3)}
 
   /* ---- layout -------------------------------------------------------------- */
   .grid{display:grid; grid-template-columns:minmax(0,1fr) var(--rail); gap:18px;
@@ -73,7 +85,14 @@
     position:relative; width:max-content; max-width:100%; line-height:0;
   }
   figure img{display:block; width:auto; max-width:100%;
-             max-height:max(360px, calc(100vh - var(--chrome))); cursor:crosshair}
+             max-height:max(360px, calc(100vh - var(--chrome))); cursor:crosshair;
+             /* Nearest-neighbour scaling, deliberately. The browser's default smooth
+                interpolation blends neighbouring class colours, and on a categorical map
+                that manufactures classes that are not there: attached anvil #E2703A mixed
+                with the white of clear sky lands on #ECA27F, which is the detached anvil
+                swatch #F0A87E to the eye. Aliased edges are a fair price for never
+                inventing a category. */
+             image-rendering:pixelated; image-rendering:crisp-edges}
   .loading{position:absolute; inset:0; display:grid; place-items:center;
            color:var(--ink-3); font-size:11.5px; letter-spacing:.08em; line-height:1.5}
 
@@ -197,6 +216,13 @@
 <div class="runs">
   <span class="runs-label">Run</span>
   <div id="runs" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+  <span class="runs-label" style="margin-left:14px">Layer</span>
+  <div id="layers" style="display:flex;gap:8px">
+    <button class="run" id="lay-cloud" aria-pressed="true">Cloud type</button>
+    <button class="run" id="lay-pov" aria-pressed="false">LLCC POV</button>
+  </div>
+  <span class="runs-label" style="margin-left:14px">Source</span>
+  <select id="source" class="src"></select>
 </div>
 
 <div class="grid">
@@ -225,6 +251,15 @@
   </div>
 
   <aside class="rail">
+    <section id="povbox" hidden style="margin-bottom:14px;padding-bottom:12px;
+             border-bottom:1.5px solid var(--ink)">
+      <h2>LLCC violation probability</h2>
+      <div class="alt" id="pov-src">—</div>
+      <div class="pov-scale" id="pov-scale"></div>
+      <div class="pov-ticks"><span>0%</span><span>50%</span><span>100%</span></div>
+      <div class="pov-rules" id="pov-rules"></div>
+    </section>
+
     <section class="query" id="query">
       <div class="q-head">
         <span class="q-where" id="q-where">No point selected</span>
@@ -264,21 +299,27 @@
 
 <script>
 const NOTES = {
-  cirrus:     "Glaciated layer topping colder than −38 °C with no convective source upwind.",
-  debris:     "Same trajectory as an anvil, but the ice has thinned below 50 g/m².",
-  anvil_det:  "Optically thick ice traced back along its own layer wind to a core.",
-  anvil_att:  "Same, with a core inside 10 nm — still fed by its parent.",
-  convective: "40 dBZ composite, or enough graupel aloft to imply an updraft.",
+  cirrus:     "Glaciated layer topping colder than −38 °C, with no core upwind and not joined to one.",
+  anvil_det:  "Ice that has separated — no continuous shield back to a parent, but off one within 3 h.",
+  anvil_att:  "Unbroken ice shield running back to a live core, however far downwind.",
   tcu:        "Liquid-based layer glaciating at its top, colder than −10 °C.",
-  cumulus:    "Liquid layer 3 kft deep or more, or a lumpy top over 15 km.",
+  cumulus:    "Liquid layer 3 kft deep or more, a lumpy top, or a 40 dBZ convective core.",
   stratiform: "Flat, shallow liquid layer.",
   clear:      "No condensate in the column."
 };
-const ORDER = ["cirrus","debris","anvil_det","anvil_att","convective","tcu","cumulus","stratiform"];
+const ORDER = ["cirrus","anvil_det","anvil_att","tcu","cumulus","stratiform"];
 const RADIUS_NM = 10;
 
-let M=null, CYC=[], ci=0, i=0, timer=null, byKey={}, byId={};
-let BUF={}, QP=null;
+// Assets are named by cycle and forecast hour, so a NEW run gets new filenames and caches
+// cleanly. A rebuild does not: a version bump rewrites the same filename with new content,
+// and the browser will happily pair a cached PNG with a freshly fetched grid - which is how
+// a map pixel and the readout ended up disagreeing. Stamping the build onto every asset URL
+// makes a rebuild look like new files to the cache, without disabling caching in general.
+let STAMP = "";
+const bust = u => u + (u.includes("?") ? "&" : "?") + "v=" + STAMP;
+
+let M=null, CYC=[], ci=0, i=0, timer=null, byKey={}, byId={}, MK=null;
+let BUF={}, POVBUF={}, QP=null, LAYER="cloud", POVBY={};
 const $ = id => document.getElementById(id);
 const T = s => Date.parse(s || "");
 const cur = () => CYC[ci];
@@ -292,11 +333,23 @@ fetch("manifest.json?" + Date.now())
     $("sub").textContent = "Couldn't load manifest.json (" + e + "). It has to sit beside index.html.";
   });
 
+function modelCycles(k){
+  if (M.models && k && M.models[k]) return M.models[k].cycles || [];
+  return M.cycles && M.cycles.length ? M.cycles
+       : [{id:"current", label:M.cycle||"current", frames:M.frames,
+           run_h:(M.frames||[]).length}];
+}
+
 function boot(){
+  STAMP = encodeURIComponent((M.generated || "") + "|" + (M.data_version || "")
+                             + "|" + (M.render_version || ""));
   byKey = Object.fromEntries(M.classes.map(c => [c.key, c]));
   byId  = Object.fromEntries(M.classes.map(c => [c.id, c]));
-  CYC = M.cycles && M.cycles.length ? M.cycles
-      : [{id:"current", label:M.cycle||"current", frames:M.frames, run_h:(M.frames||[]).length}];
+  // Cloud-type maps come from ONE model at a time - they are categorical fields, and
+  // averaging class ids across models would be meaningless. The POV is where the models
+  // actually combine.
+  MK = M.model_key || (M.models ? Object.keys(M.models)[0] : null);
+  CYC = modelCycles(MK);
   $("generated").textContent = "built " + M.generated;
 
   const t = M.thresholds;
@@ -307,8 +360,10 @@ function boot(){
     + "path is what sets opacity. An anvil is identified by where it came from, not by its base "
     + "temperature: a glaciated layer topping at " + t.glaciated_c + " °C or colder, carrying "
     + t.anvil_iwp_gm2 + " g/m² of ice or more, with a convective core either inside "
-    + t.attach_nm + " nm or upwind along the layer's own mean wind within " + t.anvil_tau_h
-    + " h of advection. Cores are " + t.convective_dbz + " dBZ composite or " + t.graupel_gm2
+    + "either joined to it by unbroken ice or, having separated, reachable along the layer's "
+    + "own mean wind within " + t.anvil_tau_h + " h. Attachment is continuity, not distance: "
+    + "the " + t.attach_nm + " nm in the LLCC is the standoff you keep from an attached anvil, "
+    + "not what makes one attached. Cores are " + t.convective_dbz + " dBZ composite or " + t.graupel_gm2
     + " g/m² of graupel. Each column gets exactly one class — where several apply the more "
     + "operationally significant one is drawn — so the shares and clear sky sum to 100%.";
 
@@ -332,8 +387,60 @@ function boot(){
       <div class="pad-num" id="sv-${s}"></div>
     </div>`).join("");
 
+  // POV frames are keyed by valid time so they survive a run switch the same way the maps do.
+  POVBY = {};
+  ((M.pov||{}).frames||[]).forEach(p => { POVBY[p.valid] = p; });
+  const havePov = Object.keys(POVBY).length > 0;
+  $("lay-pov").disabled = !havePov;
+  if (!havePov){
+    // The usual reason is a fresh deploy: a data-version bump drops the retained cycles, so
+    // there is only one run on disk and a one-member probability is not a probability.
+    const runs = CYC.length;
+    $("lay-pov").title = runs < 2
+      ? `Only ${runs} run on disk — the probability needs at least two. `
+        + `One more hourly pass and it appears.`
+      : "No POV frames published for these valid times yet.";
+    $("lay-pov").innerHTML = `LLCC POV<small>needs 2+ runs</small>`;
+  }
+  // The dropdown picks whose cloud-type maps are on screen. It does not narrow the POV -
+  // that always pools every model, which is the entire point of running more than one.
+  const mk = M.models ? Object.keys(M.models) : [];
+  if (mk.length > 1){
+    $("source").innerHTML = mk.map(k =>
+      `<option value="${k}"${k===MK?" selected":""}>${M.models[k].name}` +
+      ` · ${(M.models[k].cycles||[]).length} runs</option>`).join("");
+    $("source").disabled = false;
+    $("source").title = "Which model's cloud-type maps to show. The POV pools all of them.";
+    $("source").addEventListener("change", e => {
+      stop(); MK = e.target.value; CYC = modelCycles(MK);
+      drawRuns(); selectCycle(0, validNow());
+    });
+  } else {
+    $("source").innerHTML = `<option>${(M.pov||{}).source || M.model || "HRRR"}</option>`;
+    $("source").disabled = true;
+  }
+  $("pov-scale").innerHTML = ((M.pov||{}).colors||[]).map(c =>
+    `<span style="background:${c}"></span>`).join("");
+  const P = M.pov || {};
+  $("pov-rules").innerHTML = havePov
+    ? "Every mesh point is treated as the flight path and scored against "
+      + (P.standard || "NASA-STD-4010") + ". Evaluated: "
+      + Object.values(P.rule_names || {}).join("; ") + ". "
+      + "<b>Not evaluated</b>, because no forecast field can decide them: "
+      + (P.not_evaluated || []).join("; ")
+      + ". So this is a floor, not a verdict — and where the standard would let a field mill "
+      + "buy relief, this errs toward NO-GO."
+    : "";
+  $("lay-cloud").addEventListener("click", () => setLayer("cloud"));
+  $("lay-pov").addEventListener("click", () => setLayer("pov"));
+
+  loadPov();
   drawRuns();
-  selectCycle(0, null);
+  // Open on the newest COMPLETE run. HRRR posts a 48 h cycle over ~100 minutes, so the
+  // freshest cycle is often a 10-hour stub; landing on it shows less of the forecast than
+  // the run before it. The stub is still one click away.
+  const firstFull = CYC.findIndex(c => c.complete !== false);
+  selectCycle(firstFull >= 0 ? firstFull : 0, null);
 
   $("scrub").addEventListener("input", e => { stop(); show(+e.target.value); });
   $("play").addEventListener("click", () => timer ? stop() : start());
@@ -361,7 +468,8 @@ function drawRuns(){
     // so the newest cycle is normally short a few hours and fills in on later passes.
     const want = c.run_h_expected, have = c.run_h || c.frames.length;
     const len = (want && have < want) ? have + "/" + want + " h" : have + " h";
-    return `<button class="run${(want&&have<want)?" partial":""}" data-n="${n}"
+    const note = (want && have < want) ? " title=\"still being posted by NCEP\"" : "";
+    return `<button class="run${(want&&have<want)?" partial":""}" data-n="${n}"${note}
       aria-pressed="${n===ci}">${c.label}<small>${age} · ${len}</small></button>`;
   }).join("");
   $("runs").querySelectorAll(".run").forEach(b =>
@@ -378,14 +486,15 @@ function validNow(){ const f = (frames()||[])[i]; return f ? f.valid : null; }
 function selectCycle(n, keepValid){
   ci = Math.max(0, Math.min(CYC.length-1, n));
   const fr = frames();
-  $("cycle").textContent = (M.model||"HRRR") + " " + (cur().date ? cur().date + " " : "") + cur().label;
+  const mname = (M.models && M.models[MK]) ? M.models[MK].name : (M.model || "HRRR");
+  $("cycle").textContent = mname + " " + (cur().date ? cur().date + " " : "") + cur().label;
   $("scrub").max = fr.length - 1;
   let idx = 0;
   if (keepValid){
     const hit = fr.findIndex(f => f.valid === keepValid);
     idx = hit >= 0 ? hit : nearestValid(fr, keepValid);
   }
-  fr.forEach(f => { const im = new Image(); im.src = f.image; });
+  fr.forEach(f => { const im = new Image(); im.src = bust(f.image); });
   loadGrids(cur());
   $("runs").querySelectorAll(".run").forEach(b =>
     b.setAttribute("aria-pressed", (+b.dataset.n === ci) ? "true" : "false"));
@@ -400,18 +509,29 @@ function nearestValid(fr, v){
 }
 
 /* ---- packed grids ---------------------------------------------------------- */
+function loadPov(){
+  Object.values(POVBY).forEach(p => {
+    if (p.data && !(p.valid in POVBUF)){
+      POVBUF[p.valid] = null;
+      fetch(bust(p.data)).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+        .then(b => { POVBUF[p.valid] = new Uint8Array(b); if (QP) drawQuery(); })
+        .catch(() => { delete POVBUF[p.valid]; });
+    }
+  });
+}
+
 function loadGrids(c){
   if (!M.query) return;
   c.frames.forEach(f => {
     const k = c.id + ":" + f.fh;
     if (!f.data || k in BUF) return;
     BUF[k] = null;
-    fetch(f.data).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+    fetch(bust(f.data)).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
       .then(b => { BUF[k] = new Uint8Array(b); if (QP) drawQuery(); })
       .catch(() => { delete BUF[k]; });
   });
 }
-const PLANE = {CLASS:0, TOP_KFT:1, TOP_C:2, IWP:3, DEPTH:4, DBZ:5};
+const PLANE = {CLASS:0, TOP_KFT:1, TOP_C:2, IWP:3, DEPTH:4, DBZ:5, AGE:6, THICK:7};
 function plane(buf, p, cell){ return buf[p * M.query.nx * M.query.ny + cell]; }
 function decIwp(v){ return Math.pow(10, v * Math.log10(1 + M.query.iwp_max) / 255) - 1; }
 
@@ -471,13 +591,24 @@ function drawQuery(){
   const topK = plane(buf, PLANE.TOP_KFT, cell)/4, topC = plane(buf, PLANE.TOP_C, cell)-100;
   const iwp = decIwp(plane(buf, PLANE.IWP, cell)), dep = plane(buf, PLANE.DEPTH, cell)/4;
   const dbz = plane(buf, PLANE.DBZ, cell);
-  const rows = c.key === "clear" ? [["Column","no condensate"]] : [
+  const ageRaw = plane(buf, PLANE.AGE, cell);
+  let rows = c.key === "clear" ? [["Column","no condensate"]] : [
     ["Cloud top", topK.toFixed(1) + " kft"],
     ["Top temp", topC.toFixed(0) + " °C"],
     ["Ice path", iwp < 1 ? "<1 g/m²" : iwp.toFixed(0) + " g/m²"],
     ["Low layer", dep < 0.3 ? "—" : dep.toFixed(1) + " kft deep"],
     ["Composite", dbz < 1 ? "<1 dBZ" : dbz + " dBZ"],
+    // Time since this ice left a convective core, followed along the flow and carried
+    // forward between forecast hours. "no source" is what separates cirrus from anvil.
+    ["Outflow age", ageRaw >= 255 ? "no source" : (ageRaw/10).toFixed(1) + " h"],
   ];
+  const thick = plane(buf, PLANE.THICK, cell) / 4;
+  if (thick >= 0.3) rows.push(["Thick layer", thick.toFixed(1) + " kft in 0/−20 °C"]);
+  const pv = POVBUF[f.valid];
+  if (pv){
+    const pct = pv[cell];
+    rows.unshift(["LLCC POV", pct + "%  (" + (POVBY[f.valid].members||[]).length + " members)"]);
+  }
   $("q-facts").innerHTML = rows.map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
 
   // The circle is centred on the pin, not on any pad - the LLCC rules are written as
@@ -544,10 +675,41 @@ function drawDpdt(){
 }
 
 /* ---- frame ----------------------------------------------------------------- */
+function setLayer(k){
+  if (k === "pov" && $("lay-pov").disabled) return;
+  LAYER = k;
+  $("lay-cloud").setAttribute("aria-pressed", k === "cloud");
+  $("lay-pov").setAttribute("aria-pressed", k === "pov");
+  $("povbox").hidden = k !== "pov";
+  show(i);
+}
+
 function show(n){
   i = n; const f = frames()[n];
-  $("frame").src = f.image;
-  $("frame").alt = "Cloud type classification valid " + f.valid;
+  const p = POVBY[f.valid];
+  // In POV the frame is matched by VALID TIME, not by index - the POV set is built from the
+  // newest run but stays aligned when an older run is selected.
+  // If a valid time has no POV frame, stay on the POV layer and say so. Silently reverting
+  // to cloud type made the button look broken, when the real answer is that this hour is not
+  // yet covered by two runs.
+  const usePov = LAYER === "pov" && p;
+  if (LAYER === "pov" && !p){
+    $("pov-src").innerHTML = "<b>No POV at " + (f.valid_label || f.valid_short) + "</b> — "
+      + "fewer than two runs reach this hour. Showing cloud type.";
+  }
+  $("frame").src = bust(usePov ? p.image : f.image);
+  $("frame").alt = (usePov ? "LLCC violation probability valid " : "Cloud type classification valid ") + f.valid;
+  if (usePov){
+    const n = p.members.length;
+    // A 2-member probability can only read 0, 50 or 100%. Say so rather than letting the
+    // colour scale imply a precision that is not there.
+    const bym = p.by_model ? Object.entries(p.by_model).map(([k,v]) => `${v} ${k}`).join(" + ")
+                           : n + " members";
+    $("pov-src").innerHTML = bym + " — " + p.members.join(", ")
+      + (n < 4 ? ` — only ${n} runs on disk, so this can only read `
+                 + Array.from({length: n + 1}, (_, k) => Math.round(100 * k / n)).join("/")
+                 + "%. It refines as the ensemble fills." : "");
+  }
   $("loading").style.display = "none";
   // Spell the valid time out. "12/22Z" beside a run button reading "10Z" looked like a
   // second cycle label rather than a day-of-month.
