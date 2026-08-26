@@ -416,8 +416,15 @@ function boot(){
       drawRuns(); selectCycle(0, validNow());
     });
   } else {
-    $("source").innerHTML = `<option>${(M.pov||{}).source || M.model || "HRRR"}</option>`;
+    // One model, or an old manifest with no per-model breakdown. Say WHICH, rather than
+    // echoing the POV membership string - that made a stale page look like a working
+    // selector showing "6 HRRR + 1 RRFS".
+    const only = mk.length === 1 ? M.models[mk[0]].name : (M.model || "HRRR");
+    $("source").innerHTML = `<option>${only} only</option>`;
     $("source").disabled = true;
+    $("source").title = mk.length
+      ? "Only one model has cycles on disk this pass."
+      : "This manifest has no per-model breakdown - the page or the build is out of date.";
   }
   $("pov-scale").innerHTML = ((M.pov||{}).colors||[]).map(c =>
     `<span style="background:${c}"></span>`).join("");
