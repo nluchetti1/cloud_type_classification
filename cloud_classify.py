@@ -1292,6 +1292,17 @@ def build_pov(out_models, q):
     return out
 
 
+def load_manifest():
+    """Last published manifest, or {} on a first run. Lost in a bad splice during the
+    multi-model refactor - main() calls it before anything else, so its absence took the
+    whole pass down with a NameError."""
+    try:
+        with open(os.path.join(OUT_DIR, "manifest.json")) as fp:
+            return json.load(fp)
+    except Exception:
+        return {}
+
+
 def _state_path(cid, fh):
     return os.path.join(STATE_DIR, f"age_{MODEL}_{cid}z_f{fh:02d}.npy")
 
