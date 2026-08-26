@@ -46,6 +46,7 @@ WHY S3, NOT THE NOMADS FILTER
 
 import datetime
 import json
+import time
 import logging
 import os
 import re
@@ -70,7 +71,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 # Configuration
 # --------------------------------------------------------------------------------------
 HRRR_ROOT = "https://noaa-hrrr-bdp-pds.s3.amazonaws.com"
-RRFS_ROOT = "https://noaa-rrfs-pds.s3.amazonaws.com"
+RRFS_NOMADS = "https://nomads.ncep.noaa.gov/pub/data/nccf/com"
+RRFS_ROOT = "https://noaa-rrfs-pds.s3.amazonaws.com"   # retro imagery only since 26 Aug 2026
+HIRESW_ROOT = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/hiresw/prod"
 OUT_DIR = "docs"                     # GitHub Pages serves from /docs
 MAP_DIR = os.path.join(OUT_DIR, "maps")
 DATA_DIR = os.path.join(OUT_DIR, "data")   # packed grids the viewer queries on click
@@ -128,25 +131,83 @@ MODELS = {
             (f"{HRRR_ROOT}/hrrr.{d}/conus/hrrr.t{c}z.wrfprsf{fh:02d}.grib2", "levels"),
             (f"{HRRR_ROOT}/hrrr.{d}/conus/hrrr.t{c}z.wrfsfcf{fh:02d}.grib2", "refc"),
         ],
-        "probe": "CLMR", "verified": True,
+        "probe": "CLMR", "verified": True, "keep_cycles": 6,
+    },
+    # HiResW: RULED OUT, and worth recording why so nobody tries again. The .conus.grib2
+    # files do publish .idx and are affordable, but they are a 2-D product - probed 26 Aug
+    # 2026, the ARW and FV3 CONUS files carry 42 variables and not one of them is condensate
+    # on isobaric levels. TMP exists only at 2 m and 80 m, HGT only at cloud base, ceiling
+    # and the wet-bulb-zero level, UGRD/VGRD only at 10 m, 80 m and the PBL. The classifier
+    # needs CLMR and CIMIXR through the depth of the atmosphere, so HiResW can seed a
+    # convective core from REFC and nothing else. NCEP publishes no pressure-level HiResW
+    # product on NOMADS. Kept here, disabled, as a record of the dead end.
+    "hiresw_arw": {
+        "name": "HiResW ARW", "dx_km": 2.5, "hourly": False,
+        "short_run_h": 48, "extended_run_h": 48,
+        "files": lambda d, c, fh: [
+            (f"{HIRESW_ROOT}/hiresw.{d}/hiresw.t{c}z.arw_2p5km.f{fh:02d}.conus.grib2",
+             "levels+refc")],
+        "probe": "CLMR", "verified": False, "blocked": "2-D product, no isobaric condensate",
+    },
+    "hiresw_fv3": {
+        "name": "HiResW FV3", "dx_km": 2.5, "hourly": False,
+        "short_run_h": 48, "extended_run_h": 48,
+        "files": lambda d, c, fh: [
+            (f"{HIRESW_ROOT}/hiresw.{d}/hiresw.t{c}z.fv3_2p5km.f{fh:02d}.conus.grib2",
+             "levels+refc")],
+        "probe": "CLMR", "verified": False, "blocked": "2-D product, no isobaric condensate",
     },
     "rrfs": {
-        # SCN 26-48: rrfs.YYYYMMDD/CC/rrfs.tCCz.prslev.3km.fFFF.conus.grib2, hourly to 18 h
-        # and to 84 h on 00/06/12/18Z. One file - prslev is expected to carry REFC too.
+        # NOMADS parallel feed, and it DOES publish .idx - byte-ranging works exactly as it
+        # does for HRRR on S3. An earlier probe concluded otherwise and that was wrong: the
+        # index requests were being throttled, and a 302 was read as "no such file". NOMADS
+        # documents a 10 s spacing between fetches and bounces anything faster, so this model
+        # carries its own pacing below. Measured in production at ~16 s per forecast hour.
         "name": "RRFS", "dx_km": 3.0, "hourly": True,
         "short_run_h": 18, "extended_run_h": 60,
         "files": lambda d, c, fh: [
-            (f"{RRFS_ROOT}/rrfs_public/rrfs.{d}/{c}/rrfs.t{c}z.prslev.3km.f{fh:03d}.conus.grib2",
-             "levels+refc"),
+            (f"{RRFS_NOMADS}/rrfs/para/rrfs.{d}/{c}/"
+             f"rrfs.t{c}z.prslev.3km.f{fh:03d}.conus.grib2", "levels+refc"),
         ],
-        "probe": "CLMR", "verified": False,
+        "probe": "CLMR", "verified": True,
+        # Four cycles, against HRRR's six: an RRFS hour costs ~16 s where an HRRR hour is a
+        # couple of seconds off S3, so the marginal member is far more expensive. Four is
+        # enough for RRFS to carry real weight in a ten-member pool without the pass running
+        # long.
+        "keep_cycles": 4,
+        # Between files, and between the byte-ranges within one file. The second must stay
+        # small: an hour needs ~100 ranges, and charging the file pause to each of them turns
+        # a 20 second download into seven minutes of sleeping.
+        "pause_s": 4.0, "range_pause_s": 0.15,
+        # ~16 s/hour measured in production, so 18 hours needs ~5 minutes; 600 s leaves room
+        # for a bad NOMADS day without risking the 45-minute Actions timeout.
+        "budget_s": 600,
     },
 }
-MODEL = os.environ.get("CLOUDSCOPE_MODEL", "hrrr").strip().lower()
-if MODEL not in MODELS:
-    MODEL = "hrrr"
+# Models built each pass, in order. The first is the "primary" - the one whose cloud-type
+# maps the viewer opens on. All of them contribute members to the POV.
+MODEL_KEYS = [m.strip().lower() for m in
+              os.environ.get("CLOUDSCOPE_MODELS", "hrrr,rrfs").split(",")
+              if m.strip().lower() in MODELS and not MODELS[m.strip().lower()].get("blocked")]
+if not MODEL_KEYS:
+    MODEL_KEYS = ["hrrr"]
 
-DX_KM = MODELS[MODEL]["dx_km"]
+# MODEL is rebound as the pass walks the list. Most of the module reads it - file naming, the
+# fetch pacing, run length, grid spacing - so rebinding one global beats threading a model
+# argument through fifteen functions.
+MODEL = MODEL_KEYS[0]
+
+
+def set_model(key):
+    """Point the module at one model for the duration of its build."""
+    global MODEL, DX_KM, SHORT_RUN_H, EXTENDED_RUN_H
+    MODEL = key
+    DX_KM = MODELS[key]["dx_km"]
+    SHORT_RUN_H = MODELS[key]["short_run_h"]
+    EXTENDED_RUN_H = MODELS[key]["extended_run_h"]
+
+DX_KM = MODELS[MODEL]["dx_km"]      # default for the selected model; classify() takes it
+                                    # explicitly so a run can mix models of different mesh
 
 # 50 mb resolves deck depth to ~1.5 kft, which is finer than any threshold here.
 LEVELS_HPA = [1000, 950, 900, 850, 800, 750, 700, 650, 600, 550,
@@ -193,7 +254,11 @@ MAX_CYCLE_LOOKBACK_H = 6
 # are 0, 25, 50, 75, 100. Six gives 17% steps, which is finer than the forecast justifies but
 # at least stops the map looking quantised. Going much beyond that is self-defeating - the
 # oldest member is then six hours stale and is not really voting on the same forecast.
-KEEP_CYCLES = 6
+KEEP_CYCLES = 6      # default; a model may override with its own "keep_cycles"
+
+
+def keep_cycles(key=None):
+    return MODELS[key or MODEL].get("keep_cycles", KEEP_CYCLES)
 
 # How many older, still-incomplete cycles to top up on one pass, on top of the newest. Bounds
 # the runtime when several runs were picked up early.
@@ -228,8 +293,8 @@ POV_MAX_AGE_H = 6
 # retained cycle too, so a palette tweak cost six hours of ensemble. Now it just rebuilds the
 # newest cycle's images; older runs keep their old-style PNGs, which is a small visual
 # inconsistency in the run selector and a much better trade than losing the POV.
-DATA_VERSION = "2026.08.14-nocbclass"
-RENDER_VERSION = "2026.08.14-nocbclass"
+DATA_VERSION = "2026.08.26-multimodel"
+RENDER_VERSION = "2026.08.26-multimodel"
 
 # ---- classification thresholds (all tunable; see README) ----
 LAYER_PATH_MIN = 0.20   # g/m^2 of condensate in one layer to call it cloudy
@@ -348,8 +413,14 @@ def find_cycle(sess):
     return None, None, None
 
 
-def _pull(sess, out, url, want_levels, want_refc):
-    """Byte-range the wanted messages out of one GRIB file. Returns bytes written."""
+def _pull(sess, out, url, want_levels, want_refc, pause_s=0.0, range_pause_s=0.0):
+    """Byte-range the wanted messages out of one GRIB file. Returns bytes written.
+
+    `pause_s` and `range_pause_s` exist for NOMADS, which documents a 10 s spacing between
+    fetches and answers anything faster with a 302. The two are separate on purpose: the
+    ranges within one file are one logical transfer, so they take the small pause, while the
+    gap between files takes the large one.
+    """
     lvl_re = re.compile(r"^(\d+)\s*mb$")
     try:
         r = sess.get(url + ".idx", timeout=20)
@@ -371,15 +442,25 @@ def _pull(sess, out, url, want_levels, want_refc):
     if not want:
         return 0
     total = 0
-    for s, e in _merge(want):
+    for n, (s, e) in enumerate(_merge(want)):
+        if n and range_pause_s:
+            time.sleep(range_pause_s)
         rng = f"bytes={s}-{'' if e is None else e}"
         try:
-            rr = sess.get(url, headers={"Range": rng}, timeout=90)
+            rr = sess.get(url, headers={"Range": rng}, timeout=120)
         except Exception:
             continue
         if rr.status_code in (200, 206):
             out.write(rr.content)
             total += len(rr.content)
+        elif rr.status_code in (301, 302, 403, 429):
+            # Throttled mid-file. Backing off and retrying once is cheaper than losing the
+            # hour, and far better than recording a truncated GRIB as a successful fetch.
+            time.sleep(max(pause_s, 5.0))
+            rr = sess.get(url, headers={"Range": rng}, timeout=120)
+            if rr.status_code in (200, 206):
+                out.write(rr.content)
+                total += len(rr.content)
     return total
 
 
@@ -388,10 +469,15 @@ def fetch_hour(sess, date_str, cycle, fh):
     os.makedirs(CACHE_DIR, exist_ok=True)
     local = os.path.join(CACHE_DIR, f"{MODEL}_{cycle}z_f{fh:02d}.grib2")
     total = 0
+    m = MODELS[MODEL]
     with open(local, "wb") as out:
-        for url, role in model_files(date_str, cycle, fh):
+        for n, (url, role) in enumerate(model_files(date_str, cycle, fh)):
+            if n and m.get("pause_s"):
+                time.sleep(m["pause_s"])
             total += _pull(sess, out, url,
-                           want_levels="levels" in role, want_refc="refc" in role)
+                           want_levels="levels" in role, want_refc="refc" in role,
+                           pause_s=m.get("pause_s", 0.0),
+                           range_pause_s=m.get("range_pause_s", 0.0))
     return (local, total) if total else (None, 0)
 
 
@@ -498,8 +584,12 @@ def _grow(cloud, start, direction):
     return cur
 
 
-def classify(f, prior_age=None):
+def classify(f, prior_age=None, dx_km=None):
     """One cloud type per grid column. Returns (class_grid, diagnostics).
+
+    `dx_km` is the model's own grid spacing - HiResW is 2.5 km where HRRR is 3 km, and it
+    feeds the texture filter, the core dilation and the trajectory step length, so it cannot
+    be a module-level constant once more than one model is in play.
 
     `prior_age` is the previous forecast hour's outflow age on this same grid, which makes
     the anvil label survive its parent: classified hour by hour with no memory, a shield
@@ -508,6 +598,7 @@ def classify(f, prior_age=None):
     at the core's death instead, so the shield ages out over three hours the way a real one
     does.
     """
+    dx_km = float(dx_km or DX_KM)
     p = np.asarray(f["levels"], dtype=float)
     nlev = len(p)
     ny, nx = f["refc"].shape
@@ -554,7 +645,7 @@ def classify(f, prior_age=None):
     # field is not, and that texture separates them where a depth threshold alone can't.
     # Only cloudy neighbours count: including clear sky would read the flat edge of any
     # deck as violently lumpy and promote every stratus boundary to cumulus.
-    n_tex = max(3, int(round(15.0 / DX_KM)) | 1)
+    n_tex = max(3, int(round(15.0 / dx_km)) | 1)
     zt = np.where(has_cloud & np.isfinite(lo_top_kft), lo_top_kft, 0.0)
     m = (has_cloud & np.isfinite(lo_top_kft)).astype(float)
     den = np.maximum(uniform_filter(m, n_tex), 1e-6)
@@ -615,7 +706,7 @@ def classify(f, prior_age=None):
     m = np.maximum(np.abs(ux), np.abs(uy))
     sx = np.where(m > 0, np.round(ux / np.maximum(m, 1e-9)), 0.0)
     sy = np.where(m > 0, np.round(uy / np.maximum(m, 1e-9)), 0.0)
-    step_km = np.hypot(sx, sy) * DX_KM                 # dx or dx*sqrt(2) on the diagonals
+    step_km = np.hypot(sx, sy) * dx_km                 # dx or dx*sqrt(2) on the diagonals
     dt_h = np.where((spd > 0.5) & (step_km > 0), step_km / np.maximum(spd * 3.6, 1e-6), NEVER)
     # Enough steps to cross the domain, because the AGE caps are what limit the trace now,
     # not a distance ceiling. Sizing this from a 150 nm reach was a leftover from the old
@@ -627,7 +718,7 @@ def classify(f, prior_age=None):
     # the clock resets to zero regardless.
     seed = np.where(core, 0.0, NEVER)
     if prior_age is not None and prior_age.shape == seed.shape:
-        shift = np.where(spd > 0.5, spd * 3.6 / DX_KM, 0.0)     # cells travelled in 1 h
+        shift = np.where(spd > 0.5, spd * 3.6 / dx_km, 0.0)     # cells travelled in 1 h
         carried = map_coordinates(np.nan_to_num(prior_age, nan=NEVER, posinf=NEVER),
                                   [yy - uy * shift, xx - ux * shift], order=0, mode="nearest")
         seed = np.minimum(seed, np.where(carried < AGE_MAX_H, carried + 1.0, NEVER))
@@ -1139,72 +1230,66 @@ def render_pov(pov, q, valid, label, path):
     plt.close(fig)
 
 
-def build_pov(cycles, q, cid):
-    """Probability of LLCC violation from a time-lagged ensemble.
+def build_pov(out_models, q):
+    """Probability of LLCC violation, pooled across every model and every retained cycle.
 
-    There is no public per-member feed to draw on: the operational REFS distribution carries
-    only combined ensemble products, the prototype member feed stopped on 11 Aug 2026, and
-    HREF publishes ensprod only and retires in October. So the members here are the retained
-    HRRR cycles valid at the same time - a time-lagged ensemble, which is the same trick HREF
-    itself uses for its NAM and HRRR members. Each cycle is one member; the spread is genuine
-    run-to-run uncertainty, and it costs nothing extra to download.
+    Members are (model, cycle) pairs valid at the same time. HRRR contributes six hourly
+    cycles off S3, RRFS four off NOMADS - so a typical valid time is scored by ten members
+    carrying both run-to-run and model-to-model spread, rather than time-lagging alone.
+
+    Pooling across models is only sound because pack_query resamples every model onto the
+    SAME regular lat/lon mesh. HRRR at 3 km and RRFS at 3 km land on identical cells, so the
+    per-member NO-GO grids are directly comparable without any regridding here.
     """
     if not q:
         return []
     os.makedirs(os.path.join(OUT_DIR, "pov"), exist_ok=True)
-    newest = cycles[0]
-    by_valid = {}
-    for c in cycles:
-        for fr in c["frames"]:
-            by_valid.setdefault(fr["valid"], []).append((c, fr))
 
-    t0 = datetime.datetime.strptime(newest["init"], "%Y-%m-%dT%H:%MZ")
+    # Newest initialisation anywhere is the reference for member age.
+    all_cycles = [(k, c) for k, cyc in out_models.items() for c in cyc]
+    if not all_cycles:
+        return []
+    t0 = max(datetime.datetime.strptime(c["init"], "%Y-%m-%dT%H:%MZ") for _, c in all_cycles)
+
+    by_valid = {}
+    for k, c in all_cycles:
+        age_h = (t0 - datetime.datetime.strptime(c["init"], "%Y-%m-%dT%H:%MZ")).total_seconds() / 3600.0
+        if age_h > POV_MAX_AGE_H:
+            continue
+        for fr in c["frames"]:
+            by_valid.setdefault(fr["valid"], []).append((k, c, fr))
+
     out = []
-    # Every valid time on disk with enough members, not just the ones the newest run has
-    # reached. The newest cycle is usually still posting, so keying off its frames meant the
-    # POV existed for four hours out of eighteen and the layer silently fell back to cloud
-    # type everywhere else. Older runs already cover those hours; they are the members.
     for valid_s in sorted(by_valid):
-        members = [(c, fr) for c, fr in by_valid[valid_s]
-                   if (t0 - datetime.datetime.strptime(c["init"], "%Y-%m-%dT%H:%MZ"))
-                   .total_seconds() / 3600.0 <= POV_MAX_AGE_H]
+        members = by_valid[valid_s]
         if len(members) < POV_MIN_MEMBERS:
             continue
-        stack, labels = [], []
-        for c, fr in members:
+        stack, labels, per_model = [], [], {}
+        for k, c, fr in members:
             try:
                 with open(os.path.join(OUT_DIR, fr["data"]), "rb") as fp:
                     p = unpack_planes(fp.read(), q)
             except Exception:
                 continue
             stack.append(llcc_violation(p, q)["any"])
-            labels.append(c["label"])
+            labels.append(f"{MODELS[k]['name']} {c['label']}")
+            per_model[k] = per_model.get(k, 0) + 1
         if len(stack) < POV_MIN_MEMBERS:
             continue
         pov = 100.0 * np.mean(np.stack(stack), axis=0)
         valid = datetime.datetime.strptime(valid_s, "%Y-%m-%dT%H:%MZ")
-        # Named by VALID time, not by cycle and forecast hour: a POV frame is a property of
-        # the moment being forecast, and the same file stays correct as cycles roll over.
         stamp = valid.strftime("%Y%m%dT%H%MZ")
-        png = f"pov/pov_{MODEL}_{stamp}.png"
+        png = f"pov/pov_{stamp}.png"
         render_pov(pov, q, valid, f"{len(stack)} members", os.path.join(OUT_DIR, png))
-        binrel = f"pov/pov_{MODEL}_{stamp}.bin"
+        binrel = f"pov/pov_{stamp}.bin"
         with open(os.path.join(OUT_DIR, binrel), "wb") as bf:
             bf.write(np.clip(np.round(pov), 0, 100).astype(np.uint8).tobytes())
-        out.append({"valid": valid_s,
-                    "valid_short": valid.strftime("%HZ"),
+        out.append({"valid": valid_s, "valid_short": valid.strftime("%HZ"),
                     "valid_label": valid.strftime("%HZ %a %d %b"),
                     "image": png, "data": binrel, "members": labels,
+                    "by_model": {MODELS[k]["name"]: n for k, n in per_model.items()},
                     "mean_pov": round(float(pov.mean()), 2)})
     return out
-
-
-def load_manifest():
-    try:
-        with open(os.path.join(OUT_DIR, "manifest.json")) as fp:
-            return json.load(fp)
-    except Exception:
-        return {}
 
 
 def _state_path(cid, fh):
@@ -1242,7 +1327,16 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
         return sorted(have.values(), key=lambda fr: fr["fh"]), 0, None, 0
 
     total, qmeta, made = 0, None, 0
+    # Wall-clock budget, for the same reason the aviation dashboard has one: a throttled
+    # source has no other way to end, and a short column from a finished run beats a hung job
+    # that commits nothing.
+    budget_s = MODELS[MODEL].get("budget_s")
+    t_start = time.monotonic()
     for fh in todo:
+        if budget_s and time.monotonic() - t_start > budget_s:
+            logging.info(f"{MODELS[MODEL]['name']} budget of {budget_s}s spent after "
+                         f"{made} hours; the rest top up on a later pass.")
+            break
         path, n = fetch_hour(sess, date_str, cycle, fh)
         total += n
         if not path or n == 0:
@@ -1255,7 +1349,8 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
                 continue
             # Hour fh-1's age if we have it - from this pass, or from a file a previous
             # pass left behind. Its absence is not fatal; the hour just starts a fresh clock.
-            cls, diag = classify(f, prior_age=load_age(cid, fh - 1))
+            cls, diag = classify(f, prior_age=load_age(cid, fh - 1),
+                                 dx_km=MODELS[MODEL]["dx_km"])
             save_age(cid, fh, diag["age_h"])
             valid = cyc_dt + datetime.timedelta(hours=fh)
             png = f"maps/cloudtype_{MODEL}_{cid}z_f{fh:02d}.png"
@@ -1296,43 +1391,23 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
     return sorted(have.values(), key=lambda fr: fr["fh"]), total, qmeta, made
 
 
-def main():
-    os.makedirs(MAP_DIR, exist_ok=True)
-    os.makedirs(DATA_DIR, exist_ok=True)
-    os.makedirs(STATE_DIR, exist_ok=True)
-    sess = _session()
+def build_model(sess, key, prev_models, force, data_stale, render_stale):
+    """Build one model's cycles for this pass. Returns (cycles, bytes, qmeta, n_new)."""
+    set_model(key)
     date_str, cycle, cyc_dt = find_cycle(sess)
+    name = MODELS[key]["name"]
     if not cycle:
-        logging.error(f"No {MODELS[MODEL]['name']} cycle available; leaving the previous run in place.")
-        return
+        logging.warning(f"{name}: no cycle available this pass.")
+        return list(prev_models.get(key, [])), 0, None, 0
 
-    prev = load_manifest()
-    force = os.environ.get("CLOUDSCOPE_FORCE", "").strip().lower() in ("1", "true", "yes")
-    data_stale = prev.get("data_version") != DATA_VERSION
-    render_stale = prev.get("render_version") != RENDER_VERSION
-    stale = data_stale or render_stale
-    if data_stale and prev:
-        logging.info(f"Data version changed ({prev.get('data_version', 'pre-versioning')}"
-                     f" -> {DATA_VERSION}); dropping retained cycles.")
-    elif render_stale and prev:
-        logging.info(f"Render version changed ({prev.get('render_version', 'pre-versioning')}"
-                     f" -> {RENDER_VERSION}); rebuilding images, keeping the ensemble.")
-    elif force:
-        logging.info("CLOUDSCOPE_FORCE set; rebuilding the newest cycle.")
-    # Only a DATA change invalidates what is on disk. A render change leaves the packed grids
-    # perfectly readable, so the ensemble and dprog/dt survive it.
-    prior = [] if (data_stale or force) else list(prev.get("cycles", []))
-
+    prior = [] if (data_stale or force) else list(prev_models.get(key, []))
     cid = f"{date_str}{cycle}"
     if render_stale and not data_stale:
-        # Images are stale but the packed grids are fine: throw away this cycle's frames so
-        # they re-render, and leave every older cycle alone.
         prior = [c for c in prior if c["id"] != cid]
     cyc_dts = {cid: cyc_dt}
     entries, bytes_total, qmeta, built = [], 0, None, 0
+    keep = keep_cycles(key)
 
-    # Newest cycle first, then top up any retained cycle still missing hours - a run that was
-    # picked up early is finished on a later pass instead of staying truncated forever.
     todo = [(cid, date_str, cycle)]
     for c in prior:
         if c["id"] != cid and len(c["frames"]) < len(run_hours(c["hour"])):
@@ -1342,14 +1417,11 @@ def main():
         if len(todo) >= MAX_TOPUP_CYCLES + 1:
             break
 
-    # Backfill: if the ensemble is short, reach back for cycles that were never built. HRRR
-    # keeps a couple of days on S3, so the data is still there - the only reason those cycles
-    # are missing is that this pipeline was not running, or a version bump discarded them.
     have_ids = {c["id"] for c in prior} | {cid}
-    short = KEEP_CYCLES - len(have_ids)
+    short = keep - len(have_ids)
     if short > 0:
         added = 0
-        for back in range(1, KEEP_CYCLES + MAX_CYCLE_LOOKBACK_H):
+        for back in range(1, keep + MAX_CYCLE_LOOKBACK_H):
             if added >= min(BACKFILL_PER_PASS, short):
                 break
             t = cyc_dt - datetime.timedelta(hours=back)
@@ -1361,8 +1433,8 @@ def main():
             have_ids.add(bid)
             added += 1
         if added:
-            logging.info(f"Ensemble short ({len(prior) + 1}/{KEEP_CYCLES} cycles); "
-                         f"backfilling {added} older cycle(s) this pass.")
+            logging.info(f"{name}: ensemble short ({len(prior) + 1}/{keep}); "
+                         f"backfilling {added} older cycle(s).")
 
     for tid, tdate, thour in todo:
         existing = next((c["frames"] for c in prior if c["id"] == tid), [])
@@ -1371,41 +1443,70 @@ def main():
         qmeta = qm or qmeta
         built += made
         if not frames:
-            if tid != cid:
-                logging.info(f"{tid}Z: nothing available (aged off S3?); skipping.")
             continue
         want = run_hours(thour)
-        entries.append({"id": tid, "label": f"{thour}Z", "date": tdate, "hour": thour,
+        entries.append({"id": tid, "model": key, "label": f"{thour}Z",
+                        "date": tdate, "hour": thour,
                         "init": cyc_dts[tid].strftime("%Y-%m-%dT%H:%MZ"),
                         "render_version": RENDER_VERSION,
                         "run_h": len(frames), "run_h_expected": len(want),
                         "complete": len(frames) >= len(want), "frames": frames})
         if made:
-            logging.info(f"{tid}Z: {len(frames)}/{len(want)} h "
-                         f"({'complete' if len(frames) >= len(want) else 'partial'}), "
-                         f"+{made} new this pass.")
+            logging.info(f"{name} {tid}Z: {len(frames)}/{len(want)} h, +{made} new.")
 
-    if not entries and not prior:
-        logging.error("No frames rendered; manifest not rewritten.")
-        return
-
-    # Merge by id and sort by initialisation time. The earlier version rebuilt this list from
-    # `prior` plus the newest cycle only, which silently threw away every backfilled cycle -
-    # they were downloaded, classified, rendered, and then dropped on the floor.
     merged = {c["id"]: c for c in prior}
     merged.update({e["id"]: e for e in entries})
-    cycles = sorted(merged.values(), key=lambda c: c["init"], reverse=True)[:KEEP_CYCLES]
-    if not cycles:
-        logging.error("Nothing to publish; manifest not rewritten.")
+    for c in merged.values():
+        c.setdefault("model", key)
+    cycles = sorted(merged.values(), key=lambda c: c["init"], reverse=True)[:keep]
+    return cycles, bytes_total, qmeta, built
+
+
+def main():
+    os.makedirs(MAP_DIR, exist_ok=True)
+    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(STATE_DIR, exist_ok=True)
+    sess = _session()
+
+    prev = load_manifest()
+    force = os.environ.get("CLOUDSCOPE_FORCE", "").strip().lower() in ("1", "true", "yes")
+    data_stale = prev.get("data_version") != DATA_VERSION
+    render_stale = prev.get("render_version") != RENDER_VERSION
+    if data_stale and prev:
+        logging.info(f"Data version changed ({prev.get('data_version', 'pre-versioning')}"
+                     f" -> {DATA_VERSION}); dropping retained cycles.")
+    elif render_stale and prev:
+        logging.info("Render version changed; rebuilding images, keeping the ensemble.")
+
+    # Previous cycles, per model. Old single-model manifests keep working: their flat
+    # "cycles" list is read as belonging to whichever model wrote it.
+    prev_models = {k: v.get("cycles", []) for k, v in (prev.get("models") or {}).items()}
+    if not prev_models and prev.get("cycles"):
+        prev_models = {prev.get("model_key", "hrrr"): prev["cycles"]}
+
+    out_models, bytes_total, qmeta, built = {}, 0, prev.get("query"), 0
+    for key in MODEL_KEYS:
+        cycles, nb, qm, made = build_model(sess, key, prev_models, force,
+                                           data_stale, render_stale)
+        bytes_total += nb
+        qmeta = qm or qmeta
+        built += made
+        if cycles:
+            out_models[key] = cycles
+
+    if not out_models:
+        logging.error("No model produced anything; manifest not rewritten.")
         return
 
-    live = set()
-    for c in cycles:
-        for fr in c["frames"]:
-            live.add(os.path.basename(fr["image"]))
-            live.add(os.path.basename(fr["data"]))
+    # Prune anything no longer referenced by any model.
+    live, keep_cids = set(), set()
+    for cycles in out_models.values():
+        for c in cycles:
+            keep_cids.add(c["id"])
+            for fr in c["frames"]:
+                live.add(os.path.basename(fr["image"]))
+                live.add(os.path.basename(fr["data"]))
     dropped = 0
-    keep_cids = {c["id"] for c in cycles}
     for d, ext in ((MAP_DIR, ".png"), (DATA_DIR, ".bin")):
         for fn in os.listdir(d):
             if fn.endswith(ext) and fn not in live:
@@ -1416,9 +1517,9 @@ def main():
             os.remove(os.path.join(STATE_DIR, fn))
             dropped += 1
 
-    newest = cycles[0]
-    pov = build_pov(cycles, qmeta or prev.get("query"), newest["id"])
-    live_pov = {os.path.basename(p["image"]) for p in pov} | {os.path.basename(p["data"]) for p in pov}
+    pov = build_pov(out_models, qmeta)
+    live_pov = ({os.path.basename(p["image"]) for p in pov}
+                | {os.path.basename(p["data"]) for p in pov})
     povdir = os.path.join(OUT_DIR, "pov")
     if os.path.isdir(povdir):
         for fn in os.listdir(povdir):
@@ -1426,33 +1527,39 @@ def main():
                 os.remove(os.path.join(povdir, fn))
                 dropped += 1
 
+    primary = MODEL_KEYS[0] if MODEL_KEYS[0] in out_models else next(iter(out_models))
+    newest = out_models[primary][0]
+    n_members = sum(len(c) for c in out_models.values())
     manifest = {
         "generated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
         "render_version": RENDER_VERSION, "data_version": DATA_VERSION,
-        "model": MODELS[MODEL]["name"], "model_key": MODEL,
+        "model": MODELS[primary]["name"], "model_key": primary,
+        "models": {k: {"name": MODELS[k]["name"], "dx_km": MODELS[k]["dx_km"],
+                       "cycles": v} for k, v in out_models.items()},
         "cycle": f"{newest['date']} {newest['hour']}Z",
         "domain": DOMAIN, "classes": CLASSES, "sites": list(SITES),
-        "query": qmeta or prev.get("query"),
-        "cycles": cycles,
+        "query": qmeta,
         "pov": {"frames": pov, "rules": RULE_KEYS, "rule_names": RULE_NAMES,
                 "not_evaluated": RULES_NOT_EVALUATED,
                 "standard": "NASA-STD-4010 (2017-06-27)", "thresholds": LLCC,
                 "colors": POV_COLORS, "bounds": POV_BOUNDS,
-                "source": f"time-lagged {MODELS[MODEL]['name']} cycles"},
-        "frames": newest["frames"],   # so an older viewer still works
+                "source": " + ".join(f"{len(v)} {MODELS[k]['name']}"
+                                     for k, v in out_models.items())},
+        "cycles": out_models[primary],     # so an older viewer still works
+        "frames": newest["frames"],
         "thresholds": {"layer_path_min_gm2": LAYER_PATH_MIN, "glaciated_c": GLACIATED_C,
                        "ice_fraction": ICE_FRAC, "anvil_iwp_gm2": ANVIL_IWP,
                        "convective_dbz": CONV_DBZ,
-                       "conn_max_h": CONN_MAX_H,
                        "graupel_gm2": GRAUPEL_CONV, "attach_nm": ATTACH_NM,
                        "anvil_tau_h": ANVIL_TAU_H, "conn_max_h": CONN_MAX_H,
                        "tcu_top_c": TCU_TOP_C, "cu_depth_kft": CU_DEPTH_KFT},
     }
     with open(os.path.join(OUT_DIR, "manifest.json"), "w") as fp:
         json.dump(manifest, fp, indent=1)
-    logging.info(f"+{built} frames, {bytes_total/1024/1024:.0f} MB transferred; holding "
-                 + ", ".join(f"{c['id']}({c['run_h']}/{c['run_h_expected']}h)" for c in cycles)
-                 + f"; pruned {dropped} files.")
+    logging.info(f"+{built} frames, {bytes_total/1024/1024:.0f} MB; "
+                 + "; ".join(f"{MODELS[k]['name']} {len(v)} cycles" for k, v in out_models.items())
+                 + f"; {n_members} potential members; {len(pov)} POV frames; "
+                 f"pruned {dropped} files.")
 
 
 if __name__ == "__main__":
