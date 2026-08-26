@@ -164,7 +164,11 @@ MODELS = {
         # documents a 10 s spacing between fetches and bounces anything faster, so this model
         # carries its own pacing below. Measured in production at ~16 s per forecast hour.
         "name": "RRFS", "dx_km": 3.0, "hourly": True,
-        "short_run_h": 18, "extended_run_h": 60,
+        # 18 h on every cycle, synoptic ones included. RRFS runs to 60 h on 00/06/12/18Z and
+        # taking all of it was self-defeating: ~3.2 GB and 25 minutes for one cycle, which is
+        # what walked into NOMADS' limiter at f023 and cost the whole pass. The POV only
+        # needs RRFS where it overlaps HRRR's valid times, and 18 h covers that.
+        "short_run_h": 18, "extended_run_h": 18,
         "files": lambda d, c, fh: [
             (f"{RRFS_NOMADS}/rrfs/para/rrfs.{d}/{c}/"
              f"rrfs.t{c}z.prslev.3km.f{fh:03d}.conus.grib2", "levels+refc"),
@@ -1378,9 +1382,9 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
     hours = run_hours(cycle)
     todo = [h for h in hours if h not in have]
     if not todo:
-        return sorted(have.values(), key=lambda fr: fr["fh"]), 0, None, 0
+        return sorted(have.values(), key=lambda fr: fr["fh"]), 0, None, 0, False, False
 
-    total, qmeta, made = 0, None, 0
+    total, qmeta, made, throttled = 0, None, 0, False
     # Wall-clock budget, for the same reason the aviation dashboard has one: a throttled
     # source has no other way to end, and a short column from a finished run beats a hung job
     # that commits nothing.
@@ -1394,11 +1398,13 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
         try:
             path, n = fetch_hour(sess, date_str, cycle, fh)
         except Throttled as e:
-            # Stop this model here. Hammering a source that is already refusing turns one
-            # throttled cycle into an entire pass of phantom "not posted" hours.
-            logging.warning(f"{MODELS[MODEL]['name']}: throttled ({e}); "
-                            f"stopping after {made} hours. The rest top up next pass.")
-            raise
+            # Stop this cycle, but KEEP the hours already built. Re-raising here threw away
+            # everything the pass had done - 22 classified forecast hours discarded because
+            # hour 23 got a 302 - and the next pass then started over from nothing.
+            logging.warning(f"{MODELS[MODEL]['name']}: throttled ({e}); keeping the "
+                            f"{made} hours already built. The rest top up next pass.")
+            throttled = True
+            break
         total += n
         if not path or n == 0:
             logging.info(f"f{fh:02d}: not posted yet")
@@ -1449,7 +1455,7 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
             if os.path.exists(path):
                 os.remove(path)
 
-    return sorted(have.values(), key=lambda fr: fr["fh"]), total, qmeta, made
+    return sorted(have.values(), key=lambda fr: fr["fh"]), total, qmeta, made, throttled
 
 
 def build_model(sess, key, prev_models, force, data_stale, render_stale):
@@ -1507,13 +1513,11 @@ def build_model(sess, key, prev_models, force, data_stale, render_stale):
             logging.info(f"{name} {tid}Z: skipped, source was throttling this pass.")
             continue
         existing = next((c["frames"] for c in prior if c["id"] == tid), [])
-        try:
-            frames, nbytes, qm, made = build_cycle(sess, tdate, thour, cyc_dts[tid],
-                                                   tid, existing)
-        except Throttled:
+        frames, nbytes, qm, made, hit_limit = build_cycle(sess, tdate, thour, cyc_dts[tid],
+                                                          tid, existing)
+        if hit_limit:
+            # Publish what this cycle produced, then stop asking this source for more.
             throttled = True
-            frames = existing
-            nbytes, qm, made = 0, None, 0
         bytes_total += nbytes
         qmeta = qm or qmeta
         built += made
