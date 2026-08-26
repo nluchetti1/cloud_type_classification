@@ -26,7 +26,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
 
@@ -42,8 +42,12 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - name: Classify latest HRRR cycle
+      - name: Classify latest cycles (all models)
         env:
+          # One pass builds every model in the list; the POV pools their cycles. RRFS is
+          # fetched from NOMADS under its own throttle and wall-clock budget, so it cannot
+          # run the job long even on a bad NOMADS day.
+          CLOUDSCOPE_MODELS: "hrrr,rrfs"
           # Also forces a rebuild whenever RENDER_VERSION in the script has moved on.
           CLOUDSCOPE_FORCE: ${{ inputs.force && '1' || '0' }}
         run: python cloud_classify.py
