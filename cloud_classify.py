@@ -174,7 +174,12 @@ MODELS = {
         # couple of seconds off S3, so the marginal member is far more expensive. Four is
         # enough for RRFS to carry real weight in a ten-member pool without the pass running
         # long.
-        "keep_cycles": 4,
+        # Three, not four. At ~180 MB a forecast hour a single RRFS cycle is ~3.2 GB and
+        # ~7 minutes off NOMADS; four cycles only ever get built during backfill, and a
+        # backfill pass that pulls two of them is 6 GB and 15 minutes against a source that
+        # starts refusing long before that. Raise it once a few passes have shown the
+        # measured MB and seconds per hour in the log.
+        "keep_cycles": 3,
         # Between files, and between the byte-ranges within one file. The second must stay
         # small: an hour needs ~100 ranges, and charging the file pause to each of them turns
         # a 20 second download into seven minutes of sleeping.
@@ -215,6 +220,29 @@ LEVELS_HPA = [1000, 950, 900, 850, 800, 750, 700, 650, 600, 550,
 
 # Only ask for each field where it can physically be non-zero. Liquid above 400 mb in HRRR
 # is numerical dust; cloud ice below 700 mb likewise; graupel lives in the riming layer.
+# Per-model overrides of LEVEL_SETS. A GRIB message cannot be spatially subset by byte range,
+# so every message we ask for is the whole CONUS field - which makes the message COUNT the
+# entire cost. An RRFS hour at the full set ran ~250 MB; the trims below cut it by about a
+# third without touching what the classifier actually depends on:
+#   winds  - only ever used to steer outflow and to fall back on the outflow-layer mean, so
+#            levels below 500 mb were being downloaded and never read
+#   GRLE   - a second opinion on where the cores are, and REFC already answers that. Its
+#            absence costs a little sensitivity to updrafts too weak to reach 40 dBZ.
+# SNMR is deliberately kept: it feeds the anvil ice path, and dropping it would make RRFS
+# systematically thinner-anvilled than HRRR, which is exactly the kind of inconsistency that
+# poisons a pooled probability.
+MODEL_LEVEL_TRIMS = {
+    "rrfs": {"UGRD": lambda L: [x for x in L if x <= 500],
+             "VGRD": lambda L: [x for x in L if x <= 500],
+             "GRLE": lambda L: []},
+}
+
+
+def level_sets(key=None):
+    trims = MODEL_LEVEL_TRIMS.get(key or MODEL, {})
+    return {v: (trims[v](lv) if v in trims else lv) for v, lv in LEVEL_SETS.items()}
+
+
 LEVEL_SETS = {
     "HGT":    LEVELS_HPA,
     "TMP":    LEVELS_HPA,
@@ -413,6 +441,13 @@ def find_cycle(sess):
     return None, None, None
 
 
+_MB_BY_MODEL = {}
+
+
+class Throttled(Exception):
+    """The source is refusing us, as distinct from having nothing to give."""
+
+
 def _pull(sess, out, url, want_levels, want_refc, pause_s=0.0, range_pause_s=0.0):
     """Byte-range the wanted messages out of one GRIB file. Returns bytes written.
 
@@ -422,10 +457,16 @@ def _pull(sess, out, url, want_levels, want_refc, pause_s=0.0, range_pause_s=0.0
     gap between files takes the large one.
     """
     lvl_re = re.compile(r"^(\d+)\s*mb$")
+    _LV = level_sets()
     try:
         r = sess.get(url + ".idx", timeout=20)
     except Exception:
         return 0
+    if r.status_code in (301, 302, 403, 429):
+        # THROTTLED, not missing. NOMADS answers the first request of a burst and bounces the
+        # rest, so reading this as "file absent" makes a whole cycle look unposted 0.25 s at
+        # a time - which is exactly what happened to the RRFS backfill cycles.
+        raise Throttled(f"{url.rsplit('/', 1)[-1]}: HTTP {r.status_code} on .idx")
     if r.status_code != 200:
         return 0
     want = []
@@ -454,13 +495,15 @@ def _pull(sess, out, url, want_levels, want_refc, pause_s=0.0, range_pause_s=0.0
             out.write(rr.content)
             total += len(rr.content)
         elif rr.status_code in (301, 302, 403, 429):
-            # Throttled mid-file. Backing off and retrying once is cheaper than losing the
-            # hour, and far better than recording a truncated GRIB as a successful fetch.
-            time.sleep(max(pause_s, 5.0))
+            # Throttled mid-file. One backoff-and-retry, then give up on the hour rather than
+            # write a GRIB with a hole in it and classify the result.
+            time.sleep(max(pause_s, 10.0))
             rr = sess.get(url, headers={"Range": rng}, timeout=120)
             if rr.status_code in (200, 206):
                 out.write(rr.content)
                 total += len(rr.content)
+            else:
+                raise Throttled(f"{url.rsplit('/', 1)[-1]}: HTTP {rr.status_code} mid-file")
     return total
 
 
@@ -1348,7 +1391,14 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
             logging.info(f"{MODELS[MODEL]['name']} budget of {budget_s}s spent after "
                          f"{made} hours; the rest top up on a later pass.")
             break
-        path, n = fetch_hour(sess, date_str, cycle, fh)
+        try:
+            path, n = fetch_hour(sess, date_str, cycle, fh)
+        except Throttled as e:
+            # Stop this model here. Hammering a source that is already refusing turns one
+            # throttled cycle into an entire pass of phantom "not posted" hours.
+            logging.warning(f"{MODELS[MODEL]['name']}: throttled ({e}); "
+                            f"stopping after {made} hours. The rest top up next pass.")
+            raise
         total += n
         if not path or n == 0:
             logging.info(f"f{fh:02d}: not posted yet")
@@ -1433,7 +1483,11 @@ def build_model(sess, key, prev_models, force, data_stale, render_stale):
     if short > 0:
         added = 0
         for back in range(1, keep + MAX_CYCLE_LOOKBACK_H):
-            if added >= min(BACKFILL_PER_PASS, short):
+            # A throttled source gets one backfill cycle per pass, not two: the second one
+            # is what tipped RRFS over NOMADS' limit and produced a screenful of phantom
+            # "not posted yet".
+            per_pass = 1 if MODELS[key].get("pause_s") else BACKFILL_PER_PASS
+            if added >= min(per_pass, short):
                 break
             t = cyc_dt - datetime.timedelta(hours=back)
             bid = t.strftime("%Y%m%d%H")
@@ -1447,9 +1501,19 @@ def build_model(sess, key, prev_models, force, data_stale, render_stale):
             logging.info(f"{name}: ensemble short ({len(prior) + 1}/{keep}); "
                          f"backfilling {added} older cycle(s).")
 
+    throttled = False
     for tid, tdate, thour in todo:
+        if throttled:
+            logging.info(f"{name} {tid}Z: skipped, source was throttling this pass.")
+            continue
         existing = next((c["frames"] for c in prior if c["id"] == tid), [])
-        frames, nbytes, qm, made = build_cycle(sess, tdate, thour, cyc_dts[tid], tid, existing)
+        try:
+            frames, nbytes, qm, made = build_cycle(sess, tdate, thour, cyc_dts[tid],
+                                                   tid, existing)
+        except Throttled:
+            throttled = True
+            frames = existing
+            nbytes, qm, made = 0, None, 0
         bytes_total += nbytes
         qmeta = qm or qmeta
         built += made
@@ -1495,11 +1559,13 @@ def main():
     if not prev_models and prev.get("cycles"):
         prev_models = {prev.get("model_key", "hrrr"): prev["cycles"]}
 
+    _MB_BY_MODEL.clear()
     out_models, bytes_total, qmeta, built = {}, 0, prev.get("query"), 0
     for key in MODEL_KEYS:
         cycles, nb, qm, made = build_model(sess, key, prev_models, force,
                                            data_stale, render_stale)
         bytes_total += nb
+        _MB_BY_MODEL[key] = nb / 1048576.0
         qmeta = qm or qmeta
         built += made
         if cycles:
@@ -1567,7 +1633,9 @@ def main():
     }
     with open(os.path.join(OUT_DIR, "manifest.json"), "w") as fp:
         json.dump(manifest, fp, indent=1)
-    logging.info(f"+{built} frames, {bytes_total/1024/1024:.0f} MB; "
+    logging.info(f"+{built} frames, {bytes_total/1024/1024:.0f} MB "
+                 + "(" + ", ".join(f"{MODELS[k]['name']} {mb:.0f} MB"
+                                   for k, mb in _MB_BY_MODEL.items()) + "); "
                  + "; ".join(f"{MODELS[k]['name']} {len(v)} cycles" for k, v in out_models.items())
                  + f"; {n_members} potential members; {len(pov)} POV frames; "
                  f"pruned {dropped} files.")
