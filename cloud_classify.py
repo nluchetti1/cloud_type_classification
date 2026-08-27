@@ -127,6 +127,9 @@ MODELS = {
     "hrrr": {
         "name": "HRRR", "dx_km": 3.0, "hourly": True,
         "short_run_h": 18, "extended_run_h": 48,
+        # Bounded even though S3 is fast: a full backfill of five cycles is real time, and
+        # the pass must leave room for RRFS afterwards.
+        "budget_s": 900,
         "files": lambda d, c, fh: [
             (f"{HRRR_ROOT}/hrrr.{d}/conus/hrrr.t{c}z.wrfprsf{fh:02d}.grib2", "levels"),
             (f"{HRRR_ROOT}/hrrr.{d}/conus/hrrr.t{c}z.wrfsfcf{fh:02d}.grib2", "refc"),
@@ -183,7 +186,7 @@ MODELS = {
         # backfill pass that pulls two of them is 6 GB and 15 minutes against a source that
         # starts refusing long before that. Raise it once a few passes have shown the
         # measured MB and seconds per hour in the log.
-        "keep_cycles": 3,
+        "keep_cycles": 4,
         # Between files, and between the byte-ranges within one file. The second must stay
         # small: an hour needs ~100 ranges, and charging the file pause to each of them turns
         # a 20 second download into seven minutes of sleeping.
@@ -310,25 +313,19 @@ THROTTLE_BACKOFF_S = 60
 # Below this many members a probability is not a probability, it is a deterministic flag.
 POV_MIN_MEMBERS = 2
 
-# Older cycles to build per pass while the ensemble is short-handed. Normally each pass only
-# builds the newest cycle and the ensemble grows an hour at a time - fine in steady state,
-# useless after a DATA_VERSION bump wipes the retained cycles and leaves two members
-# producing a probability that can only read 0, 50 or 100%. Backfill pulls the older cycles
-# that are still on S3 so the ensemble refills in a couple of passes instead of six. It only
-# runs when short, so steady-state bandwidth is unchanged.
-BACKFILL_PER_PASS = 2
+# Backfill is now window-driven rather than count-driven - see build_model. A model with a
+# throttle takes one missing cycle per pass; one without takes the whole gap.
 
-# Members older than this are dropped from the POV.
+# Age cut on POV members. This has caused more trouble than it ever prevented: at 6 h it
+# silently dropped a third of the ensemble, and at 10 h it dropped two thirds again the
+# moment the workflow missed a few passes and the retained cycles spread out.
 #
-# Was 6, which quietly discarded a third of the ensemble: cycles are not contiguous - a pass
-# builds the newest plus one or two backfilled ones, so a six-deep HRRR list can span 22Z,
-# 18Z, 17Z, 16Z, 15Z, 13Z. A six-hour cut then admitted four of those six and two of three
-# RRFS, and nine retained cycles showed up as "6 members" on the map.
-#
-# keep_cycles is the real bound on ensemble size, so this only has to be generous enough not
-# to fight it. Ten hours covers a full non-contiguous six-deep list while still excluding a
-# run old enough to be describing a different atmosphere.
-POV_MAX_AGE_H = 10
+# keep_cycles is the real bound - we only ever hold the N most recent cycles per model, so
+# they ARE the ensemble and a second filter can only subtract from it. This is set wide
+# enough to be inert in normal operation and only bites if the pipeline has been down long
+# enough that the newest run on disk is a day old, at which point the map should be showing
+# nothing rather than a confident-looking probability.
+POV_MAX_AGE_H = 24
 
 # Bump whenever the rendering or the classification changes. A cycle that is already
 # published is normally skipped, but a version mismatch means the PNGs on disk were made by
@@ -1516,28 +1513,30 @@ def build_model(sess, key, prev_models, force, data_stale, render_stale):
         if len(todo) >= MAX_TOPUP_CYCLES + 1:
             break
 
+    # WHICH cycles we want, not merely how many. Counting was the bug behind a ragged run
+    # strip that never healed: after an outage the retained list could hold six cycles -
+    # 27T08Z, 27T07Z, then 26T18Z back to 26T15Z - and because that is six, `short` was zero
+    # and backfill never fired. The twelve-hour hole then sat there being pushed out one
+    # cycle an hour. The ensemble is meant to be the last N CONSECUTIVE cycles, so that is
+    # what gets asked for.
+    step = 1 if MODELS[key]["hourly"] else 6
+    window = [cyc_dt - datetime.timedelta(hours=step * k) for k in range(keep)]
     have_ids = {c["id"] for c in prior} | {cid}
-    short = keep - len(have_ids)
-    if short > 0:
-        added = 0
-        for back in range(1, keep + MAX_CYCLE_LOOKBACK_H):
-            # A throttled source gets one backfill cycle per pass, not two: the second one
-            # is what tipped RRFS over NOMADS' limit and produced a screenful of phantom
-            # "not posted yet".
-            per_pass = 1 if MODELS[key].get("pause_s") else BACKFILL_PER_PASS
-            if added >= min(per_pass, short):
-                break
-            t = cyc_dt - datetime.timedelta(hours=back)
-            bid = t.strftime("%Y%m%d%H")
-            if bid in have_ids:
-                continue
+    missing = [(t.strftime("%Y%m%d%H"), t) for t in window
+               if t.strftime("%Y%m%d%H") not in have_ids]
+    if missing:
+        # A throttled source gets ONE a pass - the second is what tipped RRFS over NOMADS'
+        # limiter. A source without a throttle closes the whole gap at once: HRRR is ~90 s a
+        # cycle off S3, and dribbling one an hour means the ensemble never recovers from an
+        # outage before the cycles age out again.
+        per_pass = 1 if MODELS[key].get("pause_s") else len(missing)
+        for bid, t in missing[:per_pass]:
             todo.append((bid, t.strftime("%Y%m%d"), t.strftime("%H")))
             cyc_dts[bid] = t
             have_ids.add(bid)
-            added += 1
-        if added:
-            logging.info(f"{name}: ensemble short ({len(prior) + 1}/{keep}); "
-                         f"backfilling {added} older cycle(s).")
+        logging.info(f"{name}: window is {len(window) - len(missing)}/{keep} filled; "
+                     f"building {min(per_pass, len(missing))} missing "
+                     f"({', '.join(b for b, _ in missing[:per_pass])}).")
 
     throttled = False
     for tid, tdate, thour in todo:
