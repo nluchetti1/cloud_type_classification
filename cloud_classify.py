@@ -318,9 +318,17 @@ POV_MIN_MEMBERS = 2
 # runs when short, so steady-state bandwidth is unchanged.
 BACKFILL_PER_PASS = 2
 
-# Members older than this are dropped from the POV. A run from eight hours ago has seen a
-# genuinely different atmosphere and drags the probability toward its own stale solution.
-POV_MAX_AGE_H = 6
+# Members older than this are dropped from the POV.
+#
+# Was 6, which quietly discarded a third of the ensemble: cycles are not contiguous - a pass
+# builds the newest plus one or two backfilled ones, so a six-deep HRRR list can span 22Z,
+# 18Z, 17Z, 16Z, 15Z, 13Z. A six-hour cut then admitted four of those six and two of three
+# RRFS, and nine retained cycles showed up as "6 members" on the map.
+#
+# keep_cycles is the real bound on ensemble size, so this only has to be generous enough not
+# to fight it. Ten hours covers a full non-contiguous six-deep list while still excluding a
+# run old enough to be describing a different atmosphere.
+POV_MAX_AGE_H = 10
 
 # Bump whenever the rendering or the classification changes. A cycle that is already
 # published is normally skipped, but a version mismatch means the PNGs on disk were made by
