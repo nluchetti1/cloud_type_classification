@@ -298,6 +298,12 @@
 </div>
 
 <script>
+// Bump on every viewer change. Printed next to the build stamp, so "is the page I am looking
+// at the file I just deployed?" is answerable by looking rather than by argument. If the
+// header does not show this string, the browser or GitHub Pages is serving an older copy -
+// which is a different problem from anything in the code below.
+const VIEWER_VERSION = "v7-modelselect";
+
 const NOTES = {
   cirrus:     "Glaciated layer topping colder than −38 °C, with no core upwind and not joined to one.",
   anvil_det:  "Ice that has separated — no continuous shield back to a parent, but off one within 3 h.",
@@ -318,13 +324,14 @@ const RADIUS_NM = 10;
 let STAMP = "";
 const bust = u => u + (u.includes("?") ? "&" : "?") + "v=" + STAMP;
 
-let M=null, CYC=[], ci=0, i=0, timer=null, byKey={}, byId={};
+let M=null, CYC=[], ci=0, i=0, timer=null, byKey={}, byId={}, MK=null;
 let BUF={}, POVBUF={}, QP=null, LAYER="cloud", POVBY={};
 const $ = id => document.getElementById(id);
 const T = s => Date.parse(s || "");
 const cur = () => CYC[ci];
 const frames = () => cur().frames;
 
+document.getElementById("generated").textContent = "page " + VIEWER_VERSION;
 fetch("manifest.json?" + Date.now())
   .then(r => r.ok ? r.json() : Promise.reject(r.status))
   .then(m => { M = m; boot(); })
@@ -333,14 +340,24 @@ fetch("manifest.json?" + Date.now())
     $("sub").textContent = "Couldn't load manifest.json (" + e + "). It has to sit beside index.html.";
   });
 
+function modelCycles(k){
+  if (M.models && k && M.models[k]) return M.models[k].cycles || [];
+  return M.cycles && M.cycles.length ? M.cycles
+       : [{id:"current", label:M.cycle||"current", frames:M.frames,
+           run_h:(M.frames||[]).length}];
+}
+
 function boot(){
   STAMP = encodeURIComponent((M.generated || "") + "|" + (M.data_version || "")
                              + "|" + (M.render_version || ""));
   byKey = Object.fromEntries(M.classes.map(c => [c.key, c]));
   byId  = Object.fromEntries(M.classes.map(c => [c.id, c]));
-  CYC = M.cycles && M.cycles.length ? M.cycles
-      : [{id:"current", label:M.cycle||"current", frames:M.frames, run_h:(M.frames||[]).length}];
-  $("generated").textContent = "built " + M.generated;
+  // Cloud-type maps come from ONE model at a time - they are categorical fields, and
+  // averaging class ids across models would be meaningless. The POV is where the models
+  // actually combine.
+  MK = M.model_key || (M.models ? Object.keys(M.models)[0] : null);
+  CYC = modelCycles(MK);
+  $("generated").textContent = "built " + M.generated + "  ·  page " + VIEWER_VERSION;
 
   const t = M.thresholds;
   $("method").textContent =
@@ -392,9 +409,30 @@ function boot(){
       : "No POV frames published for these valid times yet.";
     $("lay-pov").innerHTML = `LLCC POV<small>needs 2+ runs</small>`;
   }
-  $("source").innerHTML = `<option>${(M.pov||{}).source || "HRRR"}</option>`;
-  $("source").disabled = true;
-  $("source").title = "REFS/HREF publish ensemble products only, not members — see README";
+  // The dropdown picks whose cloud-type maps are on screen. It does not narrow the POV -
+  // that always pools every model, which is the entire point of running more than one.
+  const mk = M.models ? Object.keys(M.models) : [];
+  if (mk.length > 1){
+    $("source").innerHTML = mk.map(k =>
+      `<option value="${k}"${k===MK?" selected":""}>${M.models[k].name}` +
+      ` · ${(M.models[k].cycles||[]).length} runs</option>`).join("");
+    $("source").disabled = false;
+    $("source").title = "Which model's cloud-type maps to show. The POV pools all of them.";
+    $("source").addEventListener("change", e => {
+      stop(); MK = e.target.value; CYC = modelCycles(MK);
+      drawRuns(); selectCycle(0, validNow());
+    });
+  } else {
+    // One model, or an old manifest with no per-model breakdown. Say WHICH, rather than
+    // echoing the POV membership string - that made a stale page look like a working
+    // selector showing "6 HRRR + 1 RRFS".
+    const only = mk.length === 1 ? M.models[mk[0]].name : (M.model || "HRRR");
+    $("source").innerHTML = `<option>${only} only</option>`;
+    $("source").disabled = true;
+    $("source").title = mk.length
+      ? "Only one model has cycles on disk this pass."
+      : "This manifest has no per-model breakdown - the page or the build is out of date.";
+  }
   $("pov-scale").innerHTML = ((M.pov||{}).colors||[]).map(c =>
     `<span style="background:${c}"></span>`).join("");
   const P = M.pov || {};
@@ -462,7 +500,8 @@ function validNow(){ const f = (frames()||[])[i]; return f ? f.valid : null; }
 function selectCycle(n, keepValid){
   ci = Math.max(0, Math.min(CYC.length-1, n));
   const fr = frames();
-  $("cycle").textContent = (M.model||"HRRR") + " " + (cur().date ? cur().date + " " : "") + cur().label;
+  const mname = (M.models && M.models[MK]) ? M.models[MK].name : (M.model || "HRRR");
+  $("cycle").textContent = mname + " " + (cur().date ? cur().date + " " : "") + cur().label;
   $("scrub").max = fr.length - 1;
   let idx = 0;
   if (keepValid){
@@ -678,7 +717,9 @@ function show(n){
     const n = p.members.length;
     // A 2-member probability can only read 0, 50 or 100%. Say so rather than letting the
     // colour scale imply a precision that is not there.
-    $("pov-src").innerHTML = n + " members: " + p.members.join(", ")
+    const bym = p.by_model ? Object.entries(p.by_model).map(([k,v]) => `${v} ${k}`).join(" + ")
+                           : n + " members";
+    $("pov-src").innerHTML = bym + " — " + p.members.join(", ")
       + (n < 4 ? ` — only ${n} runs on disk, so this can only read `
                  + Array.from({length: n + 1}, (_, k) => Math.round(100 * k / n)).join("/")
                  + "%. It refines as the ensemble fills." : "");
