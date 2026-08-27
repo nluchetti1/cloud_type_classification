@@ -1407,7 +1407,7 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
     hours = run_hours(cycle)
     todo = [h for h in hours if h not in have]
     if not todo:
-        return sorted(have.values(), key=lambda fr: fr["fh"]), 0, None, 0, False, False
+        return sorted(have.values(), key=lambda fr: fr["fh"]), 0, None, 0, False
 
     total, qmeta, made, throttled = 0, None, 0, False
     # Wall-clock budget, for the same reason the aviation dashboard has one: a throttled
