@@ -468,6 +468,10 @@ def find_cycle(sess):
 
 
 _MB_BY_MODEL = {}
+# Why the most recent fetch came back empty. "not posted yet" covered a 404, a 500 and a
+# truncated index alike, which made a cycle that is genuinely absent from the server
+# indistinguishable from one we were merely too early for.
+_LAST_MISS = {"url": None, "status": None}
 
 
 class Throttled(Exception):
@@ -494,6 +498,8 @@ def _pull(sess, out, url, want_levels, want_refc, pause_s=0.0, range_pause_s=0.0
         # a time - which is exactly what happened to the RRFS backfill cycles.
         raise Throttled(f"{url.rsplit('/', 1)[-1]}: HTTP {r.status_code} on .idx")
     if r.status_code != 200:
+        _LAST_MISS["url"] = url
+        _LAST_MISS["status"] = r.status_code
         return 0
     want = []
     for e in _parse_idx(r.text):
@@ -1391,6 +1397,23 @@ def load_age(cid, fh):
     return np.where(q >= 255, np.nan, q.astype(float) / 10.0)
 
 
+def cycle_available(sess, date_str, cycle):
+    """Does this cycle's f01 index exist? Returns True / False / None (throttled).
+
+    Worth one request before committing to a cycle: an absent one otherwise costs eighteen
+    requests and, for RRFS, seventy-odd seconds of inter-hour pauses - every pass, forever,
+    because nothing remembers that it was absent last time.
+    """
+    url = model_files(date_str, cycle, 1)[0][0]
+    try:
+        r = sess.get(url + ".idx", headers={"Range": "bytes=0-200"}, timeout=20)
+    except Exception:
+        return None
+    if r.status_code in (301, 302, 403, 429):
+        return None
+    return r.status_code in (200, 206)
+
+
 def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
     """Render whatever hours of this cycle are on S3 and are not already built.
 
@@ -1436,7 +1459,14 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
             break
         total += n
         if not path or n == 0:
-            logging.info(f"f{fh:02d}: not posted yet")
+            why = (f"HTTP {_LAST_MISS['status']}" if _LAST_MISS.get("status")
+                   else "no index / no matching messages")
+            if made == 0 and fh == todo[0]:
+                # First hour of a cycle: name the URL, because that is the one worth pasting
+                # into a browser to settle whether the file is really there.
+                logging.info(f"f{fh:02d}: {why} - {_LAST_MISS.get('url')}")
+            else:
+                logging.info(f"f{fh:02d}: {why}")
             continue
         try:
             f = read_fields(path)
@@ -1530,13 +1560,30 @@ def build_model(sess, key, prev_models, force, data_stale, render_stale):
         # cycle off S3, and dribbling one an hour means the ensemble never recovers from an
         # outage before the cycles age out again.
         per_pass = 1 if MODELS[key].get("pause_s") else len(missing)
-        for bid, t in missing[:per_pass]:
+        # Check each candidate exists before queueing it, and walk further back when one
+        # does not. Some cycles simply are not on the server - a run that failed upstream,
+        # or one already purged - and queueing those spends a whole pass discovering it.
+        picked, probed = [], 0
+        for bid, t in missing:
+            if len(picked) >= per_pass or probed >= keep + 6:
+                break
+            probed += 1
+            ok = cycle_available(sess, t.strftime("%Y%m%d"), t.strftime("%H"))
+            if ok is None:
+                logging.info(f"{name}: throttled while probing {bid}Z; leaving backfill "
+                             f"for the next pass.")
+                break
+            if not ok:
+                logging.info(f"{name}: {bid}Z is not on the server; skipping it.")
+                continue
+            picked.append((bid, t))
+        for bid, t in picked:
             todo.append((bid, t.strftime("%Y%m%d"), t.strftime("%H")))
             cyc_dts[bid] = t
             have_ids.add(bid)
-        logging.info(f"{name}: window is {len(window) - len(missing)}/{keep} filled; "
-                     f"building {min(per_pass, len(missing))} missing "
-                     f"({', '.join(b for b, _ in missing[:per_pass])}).")
+        logging.info(f"{name}: window {len(window) - len(missing)}/{keep} filled; "
+                     f"{len(missing)} missing, building "
+                     f"{', '.join(b for b, _ in picked) if picked else 'none available'}.")
 
     throttled = False
     for tid, tdate, thour in todo:
