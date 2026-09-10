@@ -160,6 +160,42 @@ MODELS = {
              "levels+refc")],
         "probe": "CLMR", "verified": False, "blocked": "2-D product, no isobaric condensate",
     },
+    # RRFS deterministic, kept as a fallback between synoptic cycles - the members below
+    # only run 4x daily.
+    "rrfs": {
+        "name": "RRFS", "dx_km": 3.0, "hourly": True,
+        "short_run_h": 18, "extended_run_h": 18,
+        "files": lambda d, c, fh: [
+            (f"{RRFS_NOMADS}/rrfs/para/rrfs.{d}/{c}/"
+             f"rrfs.t{c}z.prslev.3km.f{fh:03d}.conus.grib2", "levels+refc"),
+        ],
+        "probe": "CLMR", "verified": True, "keep_cycles": 2,
+        "pause_s": 4.0, "range_pause_s": 0.3, "merge_gap": 512 * 1024, "budget_s": 900,
+    },
+    # HiResW: RULED OUT, and worth recording why so nobody tries again. The .conus.grib2
+    # files do publish .idx and are affordable, but they are a 2-D product - probed 26 Aug
+    # 2026, the ARW and FV3 CONUS files carry 42 variables and not one of them is condensate
+    # on isobaric levels. TMP exists only at 2 m and 80 m, HGT only at cloud base, ceiling
+    # and the wet-bulb-zero level, UGRD/VGRD only at 10 m, 80 m and the PBL. The classifier
+    # needs CLMR and CIMIXR through the depth of the atmosphere, so HiResW can seed a
+    # convective core from REFC and nothing else. NCEP publishes no pressure-level HiResW
+    # product on NOMADS. Kept here, disabled, as a record of the dead end.
+    "hiresw_arw": {
+        "name": "HiResW ARW", "dx_km": 2.5, "hourly": False,
+        "short_run_h": 48, "extended_run_h": 48,
+        "files": lambda d, c, fh: [
+            (f"{HIRESW_ROOT}/hiresw.{d}/hiresw.t{c}z.arw_2p5km.f{fh:02d}.conus.grib2",
+             "levels+refc")],
+        "probe": "CLMR", "verified": False, "blocked": "2-D product, no isobaric condensate",
+    },
+    "hiresw_fv3": {
+        "name": "HiResW FV3", "dx_km": 2.5, "hourly": False,
+        "short_run_h": 48, "extended_run_h": 48,
+        "files": lambda d, c, fh: [
+            (f"{HIRESW_ROOT}/hiresw.{d}/hiresw.t{c}z.fv3_2p5km.f{fh:02d}.conus.grib2",
+             "levels+refc")],
+        "probe": "CLMR", "verified": False, "blocked": "2-D product, no isobaric condensate",
+    },
     "rrfs": {
         # NOMADS parallel feed, and it DOES publish .idx - byte-ranging works exactly as it
         # does for HRRR on S3. An earlier probe concluded otherwise and that was wrong: the
@@ -205,8 +241,32 @@ MODELS = {
 }
 # Models built each pass, in order. The first is the "primary" - the one whose cloud-type
 # maps the viewer opens on. All of them contribute members to the POV.
+
+# The RRFS ensemble members, under rrfs/v1.0/rrfsens.YYYYMMDD/HH/m00N/. These are the five
+# perturbed members REFS is built from - genuine initial-condition and physics spread, which
+# is the one thing a time-lagged ensemble cannot manufacture. 00/06/12/18Z only.
+#
+# verified=None means the build checks for ITSELF, once, whether the file carries condensate
+# on isobaric levels. "prslevnomads" is a NOMADS subset product with no guarantee it keeps
+# the hydrometeor fields, and making someone probe by hand and edit a flag is how a build
+# spends 25 minutes discovering the answer the hard way.
+for _n in range(1, 6):
+    _m = f"m{_n:03d}"
+    MODELS[f"rrfs_{_m}"] = {
+        "name": f"RRFS {_m}", "dx_km": 3.0, "hourly": False,
+        "short_run_h": 18, "extended_run_h": 18,
+        "files": (lambda mm: lambda d, c, fh: [
+            (f"{RRFS_NOMADS}/rrfs/v1.0/rrfsens.{d}/{c}/{mm}/"
+             f"rrfs.t{c}z.{mm}.prslevnomads.3km.f{fh:03d}.conus.grib2", "levels+refc")
+        ])(_m),
+        "probe": "CLMR", "verified": None, "keep_cycles": 1,
+        "pause_s": 4.0, "range_pause_s": 0.3, "merge_gap": 512 * 1024, "budget_s": 900,
+    }
+
 MODEL_KEYS = [m.strip().lower() for m in
-              os.environ.get("CLOUDSCOPE_MODELS", "hrrr,rrfs").split(",")
+              os.environ.get("CLOUDSCOPE_MODELS",
+                             "hrrr,rrfs_m001,rrfs_m002,rrfs_m003,rrfs_m004,rrfs_m005"
+                             ).split(",")
               if m.strip().lower() in MODELS and not MODELS[m.strip().lower()].get("blocked")]
 if not MODEL_KEYS:
     MODEL_KEYS = ["hrrr"]
@@ -309,6 +369,11 @@ MAX_TOPUP_CYCLES = 2
 # How long to wait out a throttle before retrying the same forecast hour. NOMADS' limiter is
 # a rolling window rather than a ban, so one patient pause usually clears it.
 THROTTLE_BACKOFF_S = 60
+
+# Wall-clock a pass will spend on throttled sources in total. Five RRFS members at ~11 min
+# each is nearly an hour; this bounds the pass and the rotation makes sure every member gets
+# its turn within a few hours - which is well inside their 6-hourly cycle.
+SLOW_BUDGET_S = 1500
 
 # Below this many members a probability is not a probability, it is a deterministic flag.
 POV_MIN_MEMBERS = 2
@@ -1397,6 +1462,36 @@ def load_age(cid, fh):
     return np.where(q >= 255, np.nan, q.astype(float) / 10.0)
 
 
+def verify_model(sess, key, date_str, cycle):
+    """Does this model's file actually carry what the classifier needs? Checked once.
+
+    "prslevnomads" is a NOMADS subset product, and a subset is exactly the kind of thing that
+    drops cloud water and cloud ice while keeping temperature and height. Rather than have
+    someone probe by hand and flip a flag - or worse, have a 25-minute build discover it -
+    the model proves itself on first use and turns itself off with a reason if it cannot.
+    Returns True / False / None (throttled or unreachable, so try again next pass).
+    """
+    url = MODELS[key]["files"](date_str, cycle, 1)[0][0]
+    try:
+        r = sess.get(url + ".idx", timeout=25)
+    except Exception:
+        return None, "unreachable"
+    if r.status_code in (301, 302, 403, 429):
+        return None, f"throttled (HTTP {r.status_code})"
+    if r.status_code != 200:
+        return None, f"HTTP {r.status_code}"
+    have = {e["short"] for e in _parse_idx(r.text)}
+    need = {"TMP", "HGT", "UGRD", "VGRD"}
+    ice = have & {"CIMIXR", "CICE", "ICMR", "CIWMR"}
+    liq = have & {"CLMR", "CLWMR"}
+    missing = sorted((need - have)) + ([] if ice else ["cloud ice"]) + ([] if liq else ["cloud water"])
+    if missing:
+        return False, "missing " + ", ".join(missing) + f" (has {len(have)} variables)"
+    extras = [v for v in ("SNMR", "GRLE", "REFC") if v in have]
+    return True, f"{len(have)} variables, condensate present" + (
+        f", plus {'/'.join(extras)}" if extras else "")
+
+
 def cycle_available(sess, date_str, cycle):
     """Does this cycle's f01 index exist? Returns True / False / None (throttled).
 
@@ -1517,7 +1612,7 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
     return sorted(have.values(), key=lambda fr: fr["fh"]), total, qmeta, made, throttled
 
 
-def build_model(sess, key, prev_models, force, data_stale, render_stale):
+def build_model(sess, key, prev_models, force, data_stale, render_stale, verified=None):
     """Build one model's cycles for this pass. Returns (cycles, bytes, qmeta, n_new)."""
     set_model(key)
     date_str, cycle, cyc_dt = find_cycle(sess)
@@ -1525,6 +1620,21 @@ def build_model(sess, key, prev_models, force, data_stale, render_stale):
     if not cycle:
         logging.warning(f"{name}: no cycle available this pass.")
         return list(prev_models.get(key, [])), 0, None, 0
+
+    # An unproven model proves itself here, once, and the answer is remembered in the
+    # manifest so this costs one request in the model's whole life rather than one a pass.
+    if MODELS[key].get("verified") is None and verified is not None:
+        prior_answer = verified.get(key)
+        if prior_answer is None:
+            ok, why = verify_model(sess, key, date_str, cycle)
+            if ok is None:
+                logging.info(f"{name}: cannot verify yet ({why}); skipping this pass.")
+                return list(prev_models.get(key, [])), 0, None, 0
+            verified[key] = bool(ok)
+            logging.info(f"{name}: {'USABLE' if ok else 'UNUSABLE'} - {why}")
+            prior_answer = bool(ok)
+        if not prior_answer:
+            return list(prev_models.get(key, [])), 0, None, 0
 
     prior = [] if (data_stale or force) else list(prev_models.get(key, []))
     cid = f"{date_str}{cycle}"
@@ -1642,10 +1752,32 @@ def main():
         prev_models = {prev.get("model_key", "hrrr"): prev["cycles"]}
 
     _MB_BY_MODEL.clear()
+    # Five throttled members at ~11 minutes each will not fit in one pass, and trying is how
+    # a job hits the Actions timeout having published nothing. So: every fast model every
+    # pass, then throttled models from a rotating cursor until the slow budget is spent.
+    # Members run 4x daily and passes run hourly, so each member still gets rebuilt long
+    # before its cycle rolls over.
+    verified = dict(prev.get("verified") or {})
+    fast = [k for k in MODEL_KEYS if not MODELS[k].get("pause_s")]
+    slow = [k for k in MODEL_KEYS if MODELS[k].get("pause_s")]
+    cursor = int(prev.get("slow_cursor", 0)) % max(len(slow), 1)
+    order = fast + [slow[(cursor + i) % len(slow)] for i in range(len(slow))] if slow else fast
+
     out_models, bytes_total, qmeta, built = {}, 0, prev.get("query"), 0
-    for key in MODEL_KEYS:
+    slow_spent, slow_done = 0.0, 0
+    for key in order:
+        is_slow = bool(MODELS[key].get("pause_s"))
+        if is_slow and slow_spent > SLOW_BUDGET_S:
+            # Carry it over rather than start a model we cannot finish.
+            if key in prev_models:
+                out_models[key] = prev_models[key]
+            continue
+        t_key = time.monotonic()
         cycles, nb, qm, made = build_model(sess, key, prev_models, force,
-                                           data_stale, render_stale)
+                                           data_stale, render_stale, verified)
+        if is_slow:
+            slow_spent += time.monotonic() - t_key
+            slow_done += 1
         bytes_total += nb
         _MB_BY_MODEL[key] = nb / 1048576.0
         qmeta = qm or qmeta
@@ -1704,6 +1836,8 @@ def main():
                 "colors": POV_COLORS, "bounds": POV_BOUNDS,
                 "source": " + ".join(f"{len(v)} {MODELS[k]['name']}"
                                      for k, v in out_models.items())},
+        "verified": verified,              # so a model proves itself once, not once a pass
+        "slow_cursor": (cursor + max(slow_done, 1)) % max(len(slow), 1),
         "cycles": out_models[primary],     # so an older viewer still works
         "frames": newest["frames"],
         "thresholds": {"layer_path_min_gm2": LAYER_PATH_MIN, "glaciated_c": GLACIATED_C,
