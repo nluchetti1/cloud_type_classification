@@ -664,6 +664,18 @@ def find_cycle(sess):
     return None, None, None
 
 
+_MB_BY_MODEL = {}
+
+# Why the most recent fetch came back empty. "not posted yet" covered a 404, a 500 and a
+# truncated index alike, which made a cycle genuinely absent from the server
+# indistinguishable from one we were merely too early for.
+_LAST_MISS = {"url": None, "status": None}
+
+
+class Throttled(Exception):
+    """The source is refusing us, as distinct from having nothing to give."""
+
+
 def _pull(sess, out, url, want_levels, want_refc, pause_s=0.0, range_pause_s=0.0):
     """Byte-range the wanted messages out of one GRIB file. Returns bytes written.
 
