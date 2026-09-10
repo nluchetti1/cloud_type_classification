@@ -42,6 +42,12 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      # Two seconds, no network. Catches a name that no longer exists and a function whose
+      # returns disagree on arity - the two ways this script has broken in production, both
+      # invisible to a syntax check and both fatal on the first real run.
+      - name: Static checks
+        run: python _checks.py cloud_classify.py
+
       - name: Classify latest cycles (all models)
         env:
           # One pass builds every model in the list; the POV pools their cycles.
