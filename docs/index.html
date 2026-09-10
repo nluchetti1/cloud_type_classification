@@ -302,7 +302,7 @@
 // at the file I just deployed?" is answerable by looking rather than by argument. If the
 // header does not show this string, the browser or GitHub Pages is serving an older copy -
 // which is a different problem from anything in the code below.
-const VIEWER_VERSION = "v7-modelselect";
+const VIEWER_VERSION = "v8-members";
 
 const NOTES = {
   cirrus:     "Glaciated layer topping colder than −38 °C, with no core upwind and not joined to one.",
@@ -717,8 +717,18 @@ function show(n){
     const n = p.members.length;
     // A 2-member probability can only read 0, 50 or 100%. Say so rather than letting the
     // colour scale imply a precision that is not there.
-    const bym = p.by_model ? Object.entries(p.by_model).map(([k,v]) => `${v} ${k}`).join(" + ")
-                           : n + " members";
+    // Collapse "1 RRFS m001 + 1 RRFS m002 + ..." into "5 RRFS members". Five separate
+    // entries is technically accurate and unreadable; what matters at a glance is how many
+    // of each FAMILY voted, since that is what carries the spread.
+    const fam = {};
+    Object.entries(p.by_model || {}).forEach(([k, v]) => {
+      const g = /^(.*?)\s+m\d+$/.exec(k);
+      const name = g ? g[1] + " members" : k;
+      fam[name] = (fam[name] || 0) + v;
+    });
+    const bym = Object.keys(fam).length
+      ? Object.entries(fam).map(([k, v]) => `${v} ${k}`).join(" + ")
+      : n + " members";
     $("pov-src").innerHTML = bym + " — " + p.members.join(", ")
       + (n < 4 ? ` — only ${n} runs on disk, so this can only read `
                  + Array.from({length: n + 1}, (_, k) => Math.round(100 * k / n)).join("/")
