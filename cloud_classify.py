@@ -259,7 +259,8 @@ for _n in range(1, 6):
             (f"{RRFS_NOMADS}/rrfs/v1.0/rrfsens.{d}/{c}/{mm}/"
              f"rrfs.t{c}z.{mm}.prslevnomads.3km.f{fh:03d}.conus.grib2", "levels+refc")
         ])(_m),
-        "probe": "CLMR", "verified": None, "keep_cycles": 1,
+        "probe": ["CLMR", "CLWMR", "CIMIXR", "CICE"], "verified": None, "keep_cycles": 1,
+        "discover": True,
         "pause_s": 4.0, "range_pause_s": 0.3, "merge_gap": 512 * 1024, "budget_s": 900,
     }
 
@@ -502,9 +503,21 @@ def _merge(entries, gap=8192):
     return merged
 
 
+_FILES = {}   # (model, date, cycle) -> {fh: (url, size)} learned from the directory index
+
+
 def model_files(date_str, cycle, fh, model=None):
-    """(url, role) for one forecast hour. role says what to pull out of that file."""
-    return MODELS[model or MODEL]["files"](date_str, cycle, fh)
+    """(url, role) for one forecast hour. role says what to pull out of that file.
+
+    A discovered filename beats the guessed pattern - the pattern is only a starting point
+    for finding the directory, and NCEP names things inconsistently enough that it should
+    never be the last word.
+    """
+    key = model or MODEL
+    found = _FILES.get((key, date_str, cycle), {}).get(fh)
+    if found:
+        return [(found[0], "levels+refc")]
+    return MODELS[key]["files"](date_str, cycle, fh)
 
 
 def run_hours(cycle):
@@ -513,34 +526,142 @@ def run_hours(cycle):
     return list(range(1, n + 1))
 
 
+# --------------------------------------------------------------------------------------
+# Directory discovery
+# --------------------------------------------------------------------------------------
+# Guessing filenames and probing them one at a time was the wrong approach. NOMADS serves an
+# Apache index for every directory, and ONE request for it answers everything that mattered:
+# the exact filenames, whether a .idx sits beside each file, and how big they are. That is
+# the difference between "no cycle available this pass" and "18 files, no indexes, 512 MB
+# each" - the second tells you what to do next.
+_LISTING = {}
+_SIZE_RE = re.compile(r"^([\d.]+)([KMG]?)$")
+
+
+def _parse_size(txt):
+    m = _SIZE_RE.match(txt.strip())
+    if not m:
+        return None
+    n = float(m.group(1))
+    return int(n * {"": 1, "K": 1024, "M": 1024 ** 2, "G": 1024 ** 3}[m.group(2)])
+
+
+def nomads_list(sess, url):
+    """[(name, size_bytes)] from an Apache index. Cached: a member directory is listed once
+    per pass, not once per forecast hour."""
+    if url in _LISTING:
+        return _LISTING[url]
+    try:
+        r = sess.get(url, timeout=25)
+    except Exception:
+        return None
+    if r.status_code != 200:
+        _LISTING[url] = None if r.status_code in (301, 302, 403, 429) else []
+        return _LISTING[url]
+    rows = re.findall(r'href="([^"?][^"]*)"(?:</a>)?\s*([^<]*)', r.text)
+    out = []
+    for name, tail in rows:
+        if name.startswith(("/", "?", "http")) or name in ("..", "../"):
+            continue
+        bits = tail.split()
+        out.append((name, _parse_size(bits[-1]) if bits else None))
+    _LISTING[url] = out
+    return out
+
+
+def discover_cycle(sess, date_str, cycle):
+    """What this model actually published for one cycle, read off the directory index.
+
+    Returns (files_by_fh, has_idx, median_size) or (None, ...) when the directory is absent.
+    """
+    probe_url = model_files(date_str, cycle, 1)[0][0]
+    base = probe_url.rsplit("/", 1)[0] + "/"
+    names = nomads_list(sess, base)
+    if names is None:
+        return None, None, None, "throttled"
+    if not names:
+        return None, None, None, "directory absent"
+    grib, idx = {}, set()
+    for name, size in names:
+        m = re.search(r"f(\d{2,3})\.", name)
+        if not m:
+            continue
+        if name.endswith(".idx"):
+            idx.add(name[:-4])
+        elif name.endswith(".grib2") and "prslev" in name:
+            grib[int(m.group(1))] = (base + name, size)
+    if not grib:
+        kinds = sorted({re.sub(r"f\d{2,3}", "fNNN", n) for n, _ in names})[:3]
+        return None, None, None, f"{len(names)} files but no prslev grib2 ({'; '.join(kinds)})"
+    sizes = [s for _, s in grib.values() if s]
+    med = sorted(sizes)[len(sizes) // 2] if sizes else None
+    has_idx = any(u.rsplit("/", 1)[-1] in idx for u, _ in grib.values())
+    return grib, has_idx, med, None
+
+
 def find_cycle(sess):
-    """Newest cycle at least CYCLE_LAG_H old whose f01 index is posted."""
+    """Newest cycle at least CYCLE_LAG_H old whose f01 index is posted.
+
+    Reports WHY it failed. "no cycle available this pass" covered a 404, a missing .idx and a
+    variable named CLWMR instead of CLMR alike - three different problems with three
+    different fixes, and no way to tell them apart from the log.
+    """
     now = datetime.datetime.now(datetime.timezone.utc)
-    probe = MODELS[MODEL]["probe"]
-    for back in range(CYCLE_LAG_H, MAX_CYCLE_LOOKBACK_H + 1):
+    m = MODELS[MODEL]
+    probes = m["probe"] if isinstance(m["probe"], (list, tuple, set)) else [m["probe"]]
+    # A 6-hourly model needs a wider window than an hourly one: six hours back from 17:40Z
+    # contains exactly one synoptic cycle, so a single unlucky probe meant no data at all.
+    step = 1 if m["hourly"] else 6
+    lookback = MAX_CYCLE_LOOKBACK_H if m["hourly"] else max(MAX_CYCLE_LOOKBACK_H, 3 * step + 6)
+    tried = []
+    for back in range(CYCLE_LAG_H, lookback + 1):
         t = now - datetime.timedelta(hours=back)
         d, cc = t.strftime("%Y%m%d"), t.strftime("%H")
-        if not MODELS[MODEL]["hourly"] and int(cc) not in EXTENDED_CYCLES:
+        if not m["hourly"] and int(cc) not in EXTENDED_CYCLES:
             continue
+        if m.get("discover"):
+            # One listing instead of a blind probe: says what is there AND what shape it is.
+            grib, has_idx, med, why = discover_cycle(sess, d, cc)
+            if grib is None:
+                tried.append((cc, why))
+                continue
+            logging.info(f"{m['name']} {d} {cc}Z: {len(grib)} forecast hours, "
+                         f"indexes {'present' if has_idx else 'ABSENT'}"
+                         + (f", ~{med/1048576:.0f} MB each" if med else ""))
+            if not has_idx:
+                tried.append((cc, f"{len(grib)} files but no .idx"
+                                  + (f" at ~{med/1048576:.0f} MB each" if med else "")))
+                continue
+            _FILES.setdefault((MODEL, d, cc), {}).update(grib)
+            return d, cc, t.replace(minute=0, second=0, microsecond=0)
+
+        url = model_files(d, cc, 1)[0][0]
         try:
-            url = model_files(d, cc, 1)[0][0]
             r = sess.get(url + ".idx", timeout=15)
-            if r.status_code == 200 and probe in r.text:
-                return d, cc, t.replace(minute=0, second=0, microsecond=0)
-        except Exception:
-            pass
+        except Exception as e:
+            tried.append((cc, type(e).__name__))
+            continue
+        if r.status_code != 200:
+            tried.append((cc, f"HTTP {r.status_code}"
+                              + (" on .idx" if r.status_code == 404 else "")))
+            continue
+        if not any(p in r.text for p in probes):
+            # Index is there and readable, so this is a naming problem, not availability.
+            names = sorted({e["short"] for e in _parse_idx(r.text)})
+            tried.append((cc, f"index OK but none of {probes} present; has "
+                              f"{len(names)} vars: {', '.join(names[:12])}"))
+            continue
+        return d, cc, t.replace(minute=0, second=0, microsecond=0)
+
+    if tried:
+        logging.warning(f"{m['name']}: no usable cycle in the last {lookback} h. Tried "
+                        + "; ".join(f"{cc}Z {why}" for cc, why in tried[:4])
+                        + (f" (+{len(tried)-4} more)" if len(tried) > 4 else ""))
+        logging.warning(f"{m['name']}: last URL tried was "
+                        + model_files(now.strftime("%Y%m%d"), tried[0][0], 1)[0][0])
+    else:
+        logging.warning(f"{m['name']}: no candidate cycles in the last {lookback} h at all.")
     return None, None, None
-
-
-_MB_BY_MODEL = {}
-# Why the most recent fetch came back empty. "not posted yet" covered a 404, a 500 and a
-# truncated index alike, which made a cycle that is genuinely absent from the server
-# indistinguishable from one we were merely too early for.
-_LAST_MISS = {"url": None, "status": None}
-
-
-class Throttled(Exception):
-    """The source is refusing us, as distinct from having nothing to give."""
 
 
 def _pull(sess, out, url, want_levels, want_refc, pause_s=0.0, range_pause_s=0.0):
@@ -1618,7 +1739,7 @@ def build_model(sess, key, prev_models, force, data_stale, render_stale, verifie
     date_str, cycle, cyc_dt = find_cycle(sess)
     name = MODELS[key]["name"]
     if not cycle:
-        logging.warning(f"{name}: no cycle available this pass.")
+        # find_cycle has already logged which cycles it tried and what each said.
         return list(prev_models.get(key, [])), 0, None, 0
 
     # An unproven model proves itself here, once, and the answer is remembered in the
