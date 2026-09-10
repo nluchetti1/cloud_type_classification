@@ -44,10 +44,23 @@ jobs:
 
       - name: Classify latest cycles (all models)
         env:
-          # One pass builds every model in the list; the POV pools their cycles. RRFS is
-          # fetched from NOMADS under its own throttle and wall-clock budget, so it cannot
-          # run the job long even on a bad NOMADS day.
-          CLOUDSCOPE_MODELS: "hrrr,rrfs"
+          # One pass builds every model in the list; the POV pools their cycles.
+          #
+          # hrrr        - hourly, off S3, fast. Six cycles, rebuilt every pass.
+          # rrfs_m001-5 - the RRFS ensemble members under rrfs/v1.0/rrfsens.*/m00N/. Real
+          #               perturbation spread rather than time-lagging. 00/06/12/18Z only,
+          #               fetched from NOMADS under a throttle, so a rotating cursor gives
+          #               two of them a turn each pass and every member is refreshed within
+          #               two or three hours - well inside their 6-hourly cycle.
+          # rrfs        - the hourly deterministic run. Left OUT by default: with five real
+          #               members it adds a time-lagged near-duplicate of them, and it is
+          #               the most expensive single thing in the pass. Add it back if the
+          #               members turn out to be unusable.
+          #
+          # Leaving this unset would use the same default; it is spelled out because the
+          # previous value ("hrrr,rrfs") silently pinned the roster to two models and the
+          # members never ran.
+          CLOUDSCOPE_MODELS: "hrrr,rrfs_m001,rrfs_m002,rrfs_m003,rrfs_m004,rrfs_m005"
           # Also forces a rebuild whenever RENDER_VERSION in the script has moved on.
           CLOUDSCOPE_FORCE: ${{ inputs.force && '1' || '0' }}
         run: python cloud_classify.py
