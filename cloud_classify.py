@@ -246,10 +246,25 @@ MODELS = {
 # perturbed members REFS is built from - genuine initial-condition and physics spread, which
 # is the one thing a time-lagged ensemble cannot manufacture. 00/06/12/18Z only.
 #
-# verified=None means the build checks for ITSELF, once, whether the file carries condensate
-# on isobaric levels. "prslevnomads" is a NOMADS subset product with no guarantee it keeps
-# the hydrometeor fields, and making someone probe by hand and edit a flag is how a build
-# spends 25 minutes discovering the answer the hard way.
+# MEASURED 11 Sep 2026, and the reason these are NOT in the default roster:
+#
+#   prslevnomads  - 8 variables, none of them condensate. A NOMADS subset that kept
+#                   temperature, height and winds and dropped cloud water and ice.
+#   2dfldnomads   - many more variables, but every one is Geo2D: surface, height-above-
+#                   ground, entire-atmosphere. Composite reflectivity, echo top, ceiling,
+#                   cloud-cover layers, lightning. Nothing through the depth of the column.
+#
+# So a member could seed a convective core and evaluate disturbed weather, but could never
+# flag an anvil - no ice, and nothing to trace it with. Pooling a member that cannot violate
+# the anvil rules is worse than leaving it out: it votes GO in precisely the situations that
+# dominate a Cape afternoon, and biases the probability toward optimism exactly when the
+# answer matters. Fewer honest members beat more dishonest ones.
+#
+# Left wired up, disabled, because they re-check every 6 h and would switch themselves on
+# the day NCEP adds isobaric hydrometeors. Set CLOUDSCOPE_MODELS to include them to try.
+#
+# verified=None means the build checks for ITSELF whether the file carries condensate on
+# isobaric levels, rather than anyone probing by hand and editing a flag.
 for _n in range(1, 6):
     _m = f"m{_n:03d}"
     MODELS[f"rrfs_{_m}"] = {
@@ -266,7 +281,7 @@ for _n in range(1, 6):
 
 MODEL_KEYS = [m.strip().lower() for m in
               os.environ.get("CLOUDSCOPE_MODELS",
-                             "hrrr,rrfs_m001,rrfs_m002,rrfs_m003,rrfs_m004,rrfs_m005"
+                             "hrrr,rrfs"
                              ).split(",")
               if m.strip().lower() in MODELS and not MODELS[m.strip().lower()].get("blocked")]
 if not MODEL_KEYS:
@@ -597,6 +612,14 @@ def discover_cycle(sess, date_str, cycle):
     if not grib:
         kinds = sorted({re.sub(r"f\d{2,3}", "fNNN", n) for n, _ in names})[:3]
         return None, None, None, f"{len(names)} files but no prslev grib2 ({'; '.join(kinds)})"
+    # Every distinct product in this directory, collapsed over forecast hour and domain.
+    # When the product we chose turns out to lack condensate, this is the list that says
+    # whether a better one is sitting right beside it.
+    kinds = sorted({re.sub(r"\.f\d{2,3}\.", ".fNNN.", n) for n, _ in names
+                    if n.endswith(".grib2")})
+    if kinds:
+        logging.info(f"{MODELS[MODEL]['name']} {date_str} {cycle}Z products: "
+                     + "; ".join(k.split(f"{cycle}z.", 1)[-1] for k in kinds[:8]))
     sizes = [s for _, s in grib.values() if s]
     med = sorted(sizes)[len(sizes) // 2] if sizes else None
     has_idx = any(u.rsplit("/", 1)[-1] in idx for u, _ in grib.values())
@@ -1625,7 +1648,8 @@ def verify_model(sess, key, date_str, cycle):
     liq = have & {"CLMR", "CLWMR"}
     missing = sorted((need - have)) + ([] if ice else ["cloud ice"]) + ([] if liq else ["cloud water"])
     if missing:
-        return False, "missing " + ", ".join(missing) + f" (has {len(have)} variables)"
+        return False, ("missing " + ", ".join(missing) + f"; has {len(have)}: "
+                       + ", ".join(sorted(have)))
     extras = [v for v in ("SNMR", "GRLE", "REFC") if v in have]
     return True, f"{len(have)} variables, condensate present" + (
         f", plus {'/'.join(extras)}" if extras else "")
