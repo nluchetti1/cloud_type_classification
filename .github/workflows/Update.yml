@@ -52,21 +52,15 @@ jobs:
         env:
           # One pass builds every model in the list; the POV pools their cycles.
           #
-          # hrrr        - hourly, off S3, fast. Six cycles, rebuilt every pass.
-          # rrfs_m001-5 - the RRFS ensemble members under rrfs/v1.0/rrfsens.*/m00N/. Real
-          #               perturbation spread rather than time-lagging. 00/06/12/18Z only,
-          #               fetched from NOMADS under a throttle, so a rotating cursor gives
-          #               two of them a turn each pass and every member is refreshed within
-          #               two or three hours - well inside their 6-hourly cycle.
-          # rrfs        - the hourly deterministic run. Left OUT by default: with five real
-          #               members it adds a time-lagged near-duplicate of them, and it is
-          #               the most expensive single thing in the pass. Add it back if the
-          #               members turn out to be unusable.
+          # hrrr  - hourly, off S3, fast. Six cycles, rebuilt every pass.
+          # rrfs  - hourly deterministic, off NOMADS under a throttle. Four cycles.
           #
-          # Leaving this unset would use the same default; it is spelled out because the
-          # previous value ("hrrr,rrfs") silently pinned the roster to two models and the
-          # members never ran.
-          CLOUDSCOPE_MODELS: "hrrr,rrfs_m001,rrfs_m002,rrfs_m003,rrfs_m004,rrfs_m005"
+          # Ten time-lagged members. The five RRFS ENSEMBLE members (rrfs_m001..m005) are
+          # coded and deliberately left out: measured 11 Sep 2026, neither of their published
+          # products carries condensate on isobaric levels, so a member could never flag an
+          # anvil and would vote GO through every Cape afternoon. They re-check every 6 h if
+          # added back, and would switch on by themselves if NCEP adds the fields.
+          CLOUDSCOPE_MODELS: "hrrr,rrfs"
           # Also forces a rebuild whenever RENDER_VERSION in the script has moved on.
           CLOUDSCOPE_FORCE: ${{ inputs.force && '1' || '0' }}
         run: python cloud_classify.py
