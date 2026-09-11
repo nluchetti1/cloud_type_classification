@@ -376,6 +376,10 @@ THROTTLE_BACKOFF_S = 60
 # its turn within a few hours - which is well inside their 6-hourly cycle.
 SLOW_BUDGET_S = 1500
 
+# How long a "this model cannot be used" verdict stands before being re-tested. Feeds change,
+# and so does our own field list, so a negative should expire rather than be permanent.
+REVERIFY_H = 6
+
 # Below this many members a probability is not a probability, it is a deterministic flag.
 POV_MIN_MEMBERS = 2
 
@@ -1604,7 +1608,9 @@ def verify_model(sess, key, date_str, cycle):
     the model proves itself on first use and turns itself off with a reason if it cannot.
     Returns True / False / None (throttled or unreachable, so try again next pass).
     """
-    url = MODELS[key]["files"](date_str, cycle, 1)[0][0]
+    # model_files(), not the raw pattern: discovery may have learned a different filename,
+    # and verifying a URL we are not going to fetch is worse than not verifying at all.
+    url = model_files(date_str, cycle, 1, key)[0][0]
     try:
         r = sess.get(url + ".idx", timeout=25)
     except Exception:
@@ -1757,16 +1763,28 @@ def build_model(sess, key, prev_models, force, data_stale, render_stale, verifie
     # An unproven model proves itself here, once, and the answer is remembered in the
     # manifest so this costs one request in the model's whole life rather than one a pass.
     if MODELS[key].get("verified") is None and verified is not None:
-        prior_answer = verified.get(key)
-        if prior_answer is None:
+        rec = verified.get(key)
+        if isinstance(rec, bool):                      # older manifest, no reason recorded
+            rec = {"ok": rec, "why": "recorded by an earlier build", "at": 0}
+        now_h = datetime.datetime.now(datetime.timezone.utc).timestamp() / 3600.0
+        stale_neg = rec and not rec["ok"] and (now_h - rec.get("at", 0)) > REVERIFY_H
+        if rec is None or stale_neg:
+            if stale_neg:
+                logging.info(f"{name}: re-checking after {REVERIFY_H} h "
+                             f"(last answer: {rec['why']}).")
             ok, why = verify_model(sess, key, date_str, cycle)
             if ok is None:
                 logging.info(f"{name}: cannot verify yet ({why}); skipping this pass.")
                 return list(prev_models.get(key, [])), 0, None, 0
-            verified[key] = bool(ok)
+            rec = {"ok": bool(ok), "why": why, "at": now_h}
+            verified[key] = rec
             logging.info(f"{name}: {'USABLE' if ok else 'UNUSABLE'} - {why}")
-            prior_answer = bool(ok)
-        if not prior_answer:
+        if not rec["ok"]:
+            # Say so EVERY pass. A cached negative that returns silently is indistinguishable
+            # from a model that is quietly doing nothing, which is exactly how five members
+            # sat idle for a day while the log showed their directories being found.
+            logging.warning(f"{name}: skipped - recorded UNUSABLE ({rec['why']}). "
+                            f"Re-checked every {REVERIFY_H} h.")
             return list(prev_models.get(key, [])), 0, None, 0
 
     prior = [] if (data_stale or force) else list(prev_models.get(key, []))
