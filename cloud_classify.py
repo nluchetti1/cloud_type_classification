@@ -5,6 +5,42 @@ CloudScope - model cloud-type classification over the Florida spaceport corridor
 Classifies every grid column of an HRRR forecast into one cloud type and renders a map
 per forecast hour, plus a manifest the viewer reads.
 
+WHAT CHANGED (v3, Oct 2026) AND WHY
+    1. RRFS BACKFILL. Five separate faults, each of which could leave the RRFS window ragged:
+       - find_cycle read a NOMADS 302 on the newest cycle as "not posted" and silently fell
+         back to an OLDER cycle, which anchored the backfill window in the past - the cycles
+         newer than the anchor were then outside the window and never asked for.
+       - Every cycle had its own 900 s budget, so newest + two top-ups + a backfill could run
+         past the 55-minute Actions timeout. A killed job publishes nothing, so the work of
+         the whole pass - including the backfill - was thrown away.
+       - THROTTLE_BACKOFF_S was defined and never used: one 302 ended the model for the pass.
+       - Backfill was queued LAST, after the newest cycle's ~100 requests, so its probe met
+         the limiter at its hottest and "left backfill for the next pass" - every pass.
+       - A partial cycle asked for every unposted hour (404 + 4 s pause each) instead of
+         stopping at the posting frontier, spending limiter budget on files that don't exist.
+       Fixed with one job deadline plus a per-model budget, a real backoff, newest -> backfill
+       -> top-up ordering with a cooldown, a frontier stop, and a remembered "absent" list.
+       Also: _pull computed the per-model level trims and then ignored them (LEVEL_SETS was
+       read instead), so RRFS was pulling every wind level. The wind trim now applies; the
+       GRLE trim is withdrawn, because RRFS has in fact been fetching graupel all along and
+       removing it now would change its classification.
+    2. CROSS-SECTIONS. Each hour now also writes a gzipped 3-D reflectivity + cloud volume on
+       the query mesh at 0.5 km steps (docs/xs/*.xsz). Reflectivity is the model's own REFD on
+       isobaric levels where the file carries it, otherwise diagnosed from rain, snow and
+       graupel mixing ratios (Stoelinga's fixed-intercept method, as in wrf-python's dbz).
+       Isotherm heights come from the same run's column at KXMR - the model analogue of the
+       squadron's XMR sounding convention.
+    3. 45 WS CONVENTIONS in the LLCC scoring: echo gate (a hazard only counts where simulated
+       composite >= 0 dBZ), disturbed weather off, cumulus not scored by the thick-layer rule,
+       thick-layer exception by MRR < 7.5 dBZ, anvil persists until it thins out rather than
+       on a 3 h clock (detached still requires a core origin).
+    4. CUMULUS TOP. The cumulus rules read the HIGHEST cloud top in the column, so a +10 C
+       fair-weather cumulus under -50 C cirrus was scored as a -50 C cumulus and painted a
+       5 nmi NO-GO. A new plane carries the top of the cumuliform (lowest) layer itself.
+    5. Two planes appended to the packed grid - per-rule NO-GO bits for this member and the
+       cumuliform top temperature. Older .bin files simply lack them; nothing is unreadable,
+       so DATA_VERSION is unchanged and the ensemble survives the deploy.
+
 WHAT CHANGED (v2) AND WHY
     1. LAYERS, NOT COLUMNS. v1 measured cloud base at the lowest cloudy level and cloud top
        at the highest, so a 2 kft stratocumulus deck under unrelated cirrus became a 35 kft
@@ -45,6 +81,7 @@ WHY S3, NOT THE NOMADS FILTER
 """
 
 import datetime
+import gzip
 import json
 import time
 import logging
@@ -78,6 +115,7 @@ OUT_DIR = "docs"                     # GitHub Pages serves from /docs
 MAP_DIR = os.path.join(OUT_DIR, "maps")
 DATA_DIR = os.path.join(OUT_DIR, "data")   # packed grids the viewer queries on click
 STATE_DIR = os.path.join(OUT_DIR, "state") # outflow age carried hour to hour
+XS_PATH = os.path.join(OUT_DIR, "xs")       # gzipped 3-D section volumes
 CACHE_DIR = "_cache"
 
 DOMAIN = {"lat_min": 26.5, "lat_max": 30.5, "lon_min": -82.5, "lon_max": -79.0}
@@ -128,50 +166,20 @@ MODELS = {
         "name": "HRRR", "dx_km": 3.0, "hourly": True,
         "short_run_h": 18, "extended_run_h": 48,
         # Bounded even though S3 is fast: a full backfill of five cycles is real time, and
-        # the pass must leave room for RRFS afterwards.
-        "budget_s": 900,
+        # the pass must leave room for RRFS afterwards. This is now the budget for the MODEL'S
+        # WHOLE PASS - newest, backfill and top-ups together - not per cycle. Per cycle, a
+        # backfill pass could legitimately spend 4 x 900 s and run into the job timeout. 1500
+        # leaves a full outage recovery (six cycles, two of them 48 h) room to finish over two
+        # passes without starving RRFS of the remaining ~15 minutes.
+        "budget_s": 1500,
         "files": lambda d, c, fh: [
             (f"{HRRR_ROOT}/hrrr.{d}/conus/hrrr.t{c}z.wrfprsf{fh:02d}.grib2", "levels"),
             (f"{HRRR_ROOT}/hrrr.{d}/conus/hrrr.t{c}z.wrfsfcf{fh:02d}.grib2", "refc"),
         ],
         "probe": "CLMR", "verified": True, "keep_cycles": 6,
     },
-    # HiResW: RULED OUT, and worth recording why so nobody tries again. The .conus.grib2
-    # files do publish .idx and are affordable, but they are a 2-D product - probed 26 Aug
-    # 2026, the ARW and FV3 CONUS files carry 42 variables and not one of them is condensate
-    # on isobaric levels. TMP exists only at 2 m and 80 m, HGT only at cloud base, ceiling
-    # and the wet-bulb-zero level, UGRD/VGRD only at 10 m, 80 m and the PBL. The classifier
-    # needs CLMR and CIMIXR through the depth of the atmosphere, so HiResW can seed a
-    # convective core from REFC and nothing else. NCEP publishes no pressure-level HiResW
-    # product on NOMADS. Kept here, disabled, as a record of the dead end.
-    "hiresw_arw": {
-        "name": "HiResW ARW", "dx_km": 2.5, "hourly": False,
-        "short_run_h": 48, "extended_run_h": 48,
-        "files": lambda d, c, fh: [
-            (f"{HIRESW_ROOT}/hiresw.{d}/hiresw.t{c}z.arw_2p5km.f{fh:02d}.conus.grib2",
-             "levels+refc")],
-        "probe": "CLMR", "verified": False, "blocked": "2-D product, no isobaric condensate",
-    },
-    "hiresw_fv3": {
-        "name": "HiResW FV3", "dx_km": 2.5, "hourly": False,
-        "short_run_h": 48, "extended_run_h": 48,
-        "files": lambda d, c, fh: [
-            (f"{HIRESW_ROOT}/hiresw.{d}/hiresw.t{c}z.fv3_2p5km.f{fh:02d}.conus.grib2",
-             "levels+refc")],
-        "probe": "CLMR", "verified": False, "blocked": "2-D product, no isobaric condensate",
-    },
-    # RRFS deterministic, kept as a fallback between synoptic cycles - the members below
-    # only run 4x daily.
-    "rrfs": {
-        "name": "RRFS", "dx_km": 3.0, "hourly": True,
-        "short_run_h": 18, "extended_run_h": 18,
-        "files": lambda d, c, fh: [
-            (f"{RRFS_NOMADS}/rrfs/para/rrfs.{d}/{c}/"
-             f"rrfs.t{c}z.prslev.3km.f{fh:03d}.conus.grib2", "levels+refc"),
-        ],
-        "probe": "CLMR", "verified": True, "keep_cycles": 2,
-        "pause_s": 4.0, "range_pause_s": 0.3, "merge_gap": 512 * 1024, "budget_s": 900,
-    },
+    # (Duplicate HiResW and RRFS entries removed - the dict literal kept only the last of
+    # each anyway, so the first RRFS block's keep_cycles=2 was dead code.)
     # HiResW: RULED OUT, and worth recording why so nobody tries again. The .conus.grib2
     # files do publish .idx and are affordable, but they are a 2-D product - probed 26 Aug
     # 2026, the ARW and FV3 CONUS files carry 42 variables and not one of them is condensate
@@ -203,6 +211,12 @@ MODELS = {
         # documents a 10 s spacing between fetches and bounces anything faster, so this model
         # carries its own pacing below. Measured in production at ~16 s per forecast hour.
         "name": "RRFS", "dx_km": 3.0, "hourly": True,
+        # 3-HOURLY, measured 9 Oct 2026: of eight consecutive rrfs/para cycles on NOMADS only
+        # 09Z, 12Z and 15Z carried prslev files (09Z to f018, 12Z to f084); the hours between
+        # had none. Treating RRFS as hourly put 2-3 cycles that can never exist into every
+        # 4-slot window, and the one-per-pass backfill spent itself probing them. That - not
+        # throttling - is why the prior runs never filled. A 4-cycle window now spans 9 h.
+        "cycle_step_h": 3,
         # 18 h on every cycle, synoptic ones included. RRFS runs to 60 h on 00/06/12/18Z and
         # taking all of it was self-defeating: ~3.2 GB and 25 minutes for one cycle, which is
         # what walked into NOMADS' limiter at f023 and cost the whole pass. The POV only
@@ -232,11 +246,14 @@ MODELS = {
         # for about 1.9x the bytes. Going wider buys almost nothing: 8 MB only reaches 4
         # requests and costs 2.2x. Against a request-rate limiter this is the whole trade.
         "merge_gap": 512 * 1024,
-        # ~16 s/hour measured in production, so 18 hours needs ~5 minutes; 600 s leaves room
-        # for a bad NOMADS day without risking the 45-minute Actions timeout.
-        # Raised with the inter-hour pause and the backoff retry in mind: 18 h at ~25 s of
-        # transfer plus 4 s of pause is ~9 minutes, and one 60 s backoff still fits.
+        # Whole-pass budget for this model (newest + backfill + top-ups), not per cycle. 18 h
+        # at ~25 s of transfer plus 4 s of pause is ~9 minutes for a full cycle, so 900 s is
+        # one full cycle plus the frontier of the next, with room for one 60 s backoff.
         "budget_s": 900,
+        # Whole missing cycles to fetch per pass. Two: with a new cycle only every third pass
+        # there is room, and an outage of a few hours then heals in one or two passes. Set
+        # CLOUDSCOPE_RRFS_BACKFILL=1 if the window summary starts showing throttles.
+        "backfill_per_pass": int(os.environ.get("CLOUDSCOPE_RRFS_BACKFILL", "2")),
     },
 }
 # Models built each pass, in order. The first is the "primary" - the one whose cloud-type
@@ -321,10 +338,17 @@ LEVELS_HPA = [1000, 950, 900, 850, 800, 750, 700, 650, 600, 550,
 # SNMR is deliberately kept: it feeds the anvil ice path, and dropping it would make RRFS
 # systematically thinner-anvilled than HRRR, which is exactly the kind of inconsistency that
 # poisons a pooled probability.
+#
+# These trims were never actually applied until v3: _pull built level_sets() and then read
+# LEVEL_SETS. The GRLE trim is withdrawn rather than switched on - RRFS has in practice been
+# classified WITH graupel since it joined the pool, graupel now also feeds the diagnosed
+# reflectivity in the cross-section, and quietly removing it would make RRFS cores weaker
+# than HRRR's. The missing low winds are filled from the lowest level present (see
+# read_fields) rather than with zeros, so an ice layer reaching below 500 mb is not steered
+# by a fictitious calm.
 MODEL_LEVEL_TRIMS = {
     "rrfs": {"UGRD": lambda L: [x for x in L if x <= 500],
-             "VGRD": lambda L: [x for x in L if x <= 500],
-             "GRLE": lambda L: []},
+             "VGRD": lambda L: [x for x in L if x <= 500]},
 }
 
 
@@ -342,6 +366,12 @@ LEVEL_SETS = {
     "CIMIXR": [L for L in LEVELS_HPA if L <= 700],
     "SNMR":   [L for L in LEVELS_HPA if L <= 700],
     "GRLE":   [L for L in LEVELS_HPA if 200 <= L <= 900],
+    # Cross-section reflectivity. REFD on isobaric levels is used when the file carries it
+    # (and then RWMR is skipped - see _pull); otherwise rain is needed to diagnose it, and
+    # rain lives below ~400 mb. Both are only taken if the .idx lists them, so a file that
+    # lacks either costs nothing extra.
+    "RWMR":   [L for L in LEVELS_HPA if L >= 400],
+    "REFD":   LEVELS_HPA,
 }
 
 # The PNG carries colour, not data, so a queryable copy of each hour is written alongside it.
@@ -373,6 +403,11 @@ MAX_CYCLE_LOOKBACK_H = 6
 # at least stops the map looking quantised. Going much beyond that is self-defeating - the
 # oldest member is then six hours stale and is not really voting on the same forecast.
 KEEP_CYCLES = 6      # default; a model may override with its own "keep_cycles"
+
+
+def cycle_step(m):
+    """Hours between a model's published cycles: explicit, else 1 for hourly, 6 otherwise."""
+    return int(m.get("cycle_step_h") or (1 if m.get("hourly") else 6))
 
 
 def keep_cycles(key=None):
@@ -427,7 +462,10 @@ POV_MAX_AGE_H = 24
 # newest cycle's images; older runs keep their old-style PNGs, which is a small visual
 # inconsistency in the run selector and a much better trade than losing the POV.
 DATA_VERSION = "2026.08.26-multimodel"
-RENDER_VERSION = "2026.08.26-multimodel"
+# Bumped for the cross-section volumes: they are new, additive output, and a RENDER bump is
+# exactly the "rebuild the newest cycle of each model, keep the ensemble" lever. Retained
+# older cycles keep working; they just have no section data, and the viewer says so.
+RENDER_VERSION = "2026.10.09-xs"
 
 # ---- classification thresholds (all tunable; see README) ----
 LAYER_PATH_MIN = 0.20   # g/m^2 of condensate in one layer to call it cloudy
@@ -449,6 +487,45 @@ AGE_MAX_H      = 25.0   # ceiling of the stored age field, hours
 TCU_TOP_C      = -10.0  # liquid-based layer glaciating at its top
 CU_DEPTH_KFT   = 3.0    # depth separating cumuliform from a layered deck
 CU_TEX_KFT     = 1.2    # or lumpiness: sigma of cloud-top height over ~15 km
+
+# 45 WS convention: an anvil is an anvil until it rains out. In model terms "rains out" is
+# the ice thinning below ANVIL_IWP, so an optically substantial shield that came out of a
+# core keeps the anvil label for as long as it stays substantial (up to AGE_MAX_H of travel),
+# rather than turning into cirrus on a fixed 3 h clock. Detached anvil still REQUIRES a
+# convective origin - the age field is only ever seeded at cores. False restores the 3 h cap.
+ANVIL_PERSISTS = True
+
+# ---- cross-section volume ----
+# Heights, not pressure levels: the viewer draws km and kft directly and never needs the
+# column's own hypsometry. 0.5 km is finer than the 50 mb input spacing (~0.5-1.5 km) so it
+# loses nothing; 16 km matches the radar companion's section. Above the top fetched level
+# (150 mb, ~14 km) the volume is empty, which the viewer marks.
+XS_DZ_KM = 0.5
+XS_TOP_KM = 16.0
+XS_NZ = int(round(XS_TOP_KM / XS_DZ_KM)) + 1
+# Isotherms drawn on the section, from this run's column at KXMR (the squadron reads them off
+# the XMR model sounding; here the model IS the sounding).
+ISO_TEMPS_C = [5, 0, -5, -10, -20]
+ISO_SITE = "KXMR"
+# Stoelinga (2005) / wrf-python fixed-intercept reflectivity constants.
+N0_RAIN, N0_SNOW, N0_GRPL = 8.0e6, 2.0e7, 4.0e6        # m^-4
+RHO_WATER, RHO_SNOW, RHO_GRPL = 1000.0, 100.0, 400.0   # kg m^-3
+DIELECTRIC_ICE = 0.224                                 # |K_ice|^2 / |K_water|^2 * density term
+
+# ---- scheduling ----
+# One deadline for the whole classify step, from process start. The workflow timeout is 55
+# minutes; setup takes ~4 and POV + manifest + publish ~3, so 42 leaves real margin. Every
+# fetch loop checks it, so a slow source ends the pass cleanly instead of the runner killing
+# it mid-download and publishing nothing at all.
+DEADLINE_S = float(os.environ.get("CLOUDSCOPE_DEADLINE_MIN", "42")) * 60.0
+# A throttled source gets a quiet spell between its newest cycle and its backfill, so the
+# backfill probe doesn't land on the limiter at its hottest.
+SLOW_COOLDOWN_S = 20.0
+# Hours post in order. Two consecutive misses means the posting frontier, not a hole - stop
+# asking for the rest of the run instead of spending a 404 and a pause on every one of them.
+MISS_STREAK_STOP = 2
+# A cycle found absent from the server is not re-probed for this long.
+ABSENT_TTL_H = 3.0
 
 # Debris is gone. In model land the difference between thinning anvil ice and cirrus is a
 # guess about optical depth that HRRR's microphysics does not really support, so sourced ice
@@ -626,29 +703,70 @@ def discover_cycle(sess, date_str, cycle):
     return grib, has_idx, med, None
 
 
+_T0 = time.monotonic()     # reset by main(); the job deadline counts from here
+
+
+def time_left():
+    """Seconds until the job deadline."""
+    return DEADLINE_S - (time.monotonic() - _T0)
+
+
+def _backoff(why):
+    """One patient wait on a throttled source, if the deadline can afford it. NOMADS' limiter
+    is a rolling window, not a ban, so a single pause usually clears it. Returns whether it
+    waited (False means: give up for this pass)."""
+    wait = THROTTLE_BACKOFF_S
+    if time_left() < wait + 120:
+        logging.info(f"{MODELS[MODEL]['name']}: throttled ({why}); no time left to wait it out.")
+        return False
+    logging.info(f"{MODELS[MODEL]['name']}: throttled ({why}); backing off {wait:.0f} s.")
+    time.sleep(wait)
+    return True
+
+
+# Why find_cycle came back empty. "throttled" must not be confused with "nothing posted":
+# the first means try the SAME cycle later, the second means look further back.
+_FIND = {"throttled": False}
+
+
 def find_cycle(sess):
     """Newest cycle at least CYCLE_LAG_H old whose f01 index is posted.
 
     Reports WHY it failed. "no cycle available this pass" covered a 404, a missing .idx and a
     variable named CLWMR instead of CLMR alike - three different problems with three
     different fixes, and no way to tell them apart from the log.
+
+    A THROTTLED answer is never read as "not posted". It used to be, and the search then
+    stepped back to an older cycle and anchored the whole backfill window there - so the
+    newer cycles were outside the window and were never asked for. Now a throttle gets one
+    backoff on the same cycle and, failing that, the model sits this pass out.
     """
+    _FIND["throttled"] = False
     now = datetime.datetime.now(datetime.timezone.utc)
     m = MODELS[MODEL]
     probes = m["probe"] if isinstance(m["probe"], (list, tuple, set)) else [m["probe"]]
     # A 6-hourly model needs a wider window than an hourly one: six hours back from 17:40Z
     # contains exactly one synoptic cycle, so a single unlucky probe meant no data at all.
-    step = 1 if m["hourly"] else 6
-    lookback = MAX_CYCLE_LOOKBACK_H if m["hourly"] else max(MAX_CYCLE_LOOKBACK_H, 3 * step + 6)
+    step = cycle_step(m)
+    lookback = MAX_CYCLE_LOOKBACK_H if step == 1 else max(MAX_CYCLE_LOOKBACK_H, 3 * step + 6)
     tried = []
     for back in range(CYCLE_LAG_H, lookback + 1):
         t = now - datetime.timedelta(hours=back)
         d, cc = t.strftime("%Y%m%d"), t.strftime("%H")
-        if not m["hourly"] and int(cc) not in EXTENDED_CYCLES:
-            continue
+        if int(cc) % step:
+            continue                       # this model publishes no cycle at this hour
         if m.get("discover"):
             # One listing instead of a blind probe: says what is there AND what shape it is.
             grib, has_idx, med, why = discover_cycle(sess, d, cc)
+            if why == "throttled":
+                _LISTING.pop(model_files(d, cc, 1)[0][0].rsplit("/", 1)[0] + "/", None)
+                if _backoff(f"listing {cc}Z"):
+                    grib, has_idx, med, why = discover_cycle(sess, d, cc)
+                if why == "throttled":
+                    _FIND["throttled"] = True
+                    logging.warning(f"{m['name']}: throttled at {cc}Z; sitting this pass out "
+                                    f"rather than anchoring on an older cycle.")
+                    return None, None, None
             if grib is None:
                 tried.append((cc, why))
                 continue
@@ -663,10 +781,23 @@ def find_cycle(sess):
             return d, cc, t.replace(minute=0, second=0, microsecond=0)
 
         url = model_files(d, cc, 1)[0][0]
-        try:
-            r = sess.get(url + ".idx", timeout=15)
-        except Exception as e:
-            tried.append((cc, type(e).__name__))
+        r = None
+        for attempt in (0, 1):
+            try:
+                r = sess.get(url + ".idx", timeout=15)
+            except Exception as e:
+                r = None
+                tried.append((cc, type(e).__name__))
+                break
+            if r.status_code in (301, 302, 403, 429):
+                if attempt == 0 and _backoff(f"HTTP {r.status_code} on {cc}Z .idx"):
+                    continue
+                _FIND["throttled"] = True
+                logging.warning(f"{m['name']}: throttled at {cc}Z (HTTP {r.status_code}); "
+                                f"sitting this pass out rather than anchoring on an older cycle.")
+                return None, None, None
+            break
+        if r is None:
             continue
         if r.status_code != 200:
             tried.append((cc, f"HTTP {r.status_code}"
@@ -703,6 +834,12 @@ class Throttled(Exception):
     """The source is refusing us, as distinct from having nothing to give."""
 
 
+# Other names the same field goes by in an .idx. Measured 9 Oct 2026: RRFS prslev has NO
+# CIMIXR, so asking only for that name meant RRFS was classified with zero cloud ice - snow
+# alone carried every RRFS anvil and cirrus deck. Whichever alias the file uses is taken.
+IDX_ALIASES = {"ICMR": "CIMIXR", "CICE": "CIMIXR", "CIWMR": "CIMIXR", "CLWMR": "CLMR"}
+
+
 def _pull(sess, out, url, want_levels, want_refc, pause_s=0.0, range_pause_s=0.0):
     """Byte-range the wanted messages out of one GRIB file. Returns bytes written.
 
@@ -712,6 +849,8 @@ def _pull(sess, out, url, want_levels, want_refc, pause_s=0.0, range_pause_s=0.0
     gap between files takes the large one.
     """
     lvl_re = re.compile(r"^(\d+)\s*mb$")
+    # The per-model trims. This used to be computed and then ignored in favour of the global
+    # LEVEL_SETS, so RRFS was downloading every wind level the trim existed to skip.
     _LV = level_sets()
     try:
         r = sess.get(url + ".idx", timeout=20)
@@ -731,12 +870,18 @@ def _pull(sess, out, url, want_levels, want_refc, pause_s=0.0, range_pause_s=0.0
         if want_levels:
             m = lvl_re.match(e["level"].strip())
             if m:
-                lv = LEVEL_SETS.get(e["short"])
+                lv = _LV.get(IDX_ALIASES.get(e["short"], e["short"]))
                 if lv and int(m.group(1)) in lv:
                     want.append(e)
                     continue
         if want_refc and e["short"] == "REFC" and "entire atmosphere" in e["level"]:
             want.append(e)
+    # The model's own 3-D reflectivity beats one diagnosed from rain, so when the file has
+    # REFD on isobaric levels the rain messages are not worth their bytes.
+    if sum(e["short"] == "REFD" for e in want) >= 6:
+        want = [e for e in want if e["short"] != "RWMR"]
+    else:
+        want = [e for e in want if e["short"] != "REFD"]
     if not want:
         return 0
     total = 0
@@ -767,6 +912,7 @@ def _pull(sess, out, url, want_levels, want_refc, pause_s=0.0, range_pause_s=0.0
 def fetch_hour(sess, date_str, cycle, fh):
     """Byte-range the fields needed for one forecast hour. Returns a local GRIB path."""
     os.makedirs(CACHE_DIR, exist_ok=True)
+    _LAST_MISS.update(url=None, status=None)      # a stale 404 must not explain a new miss
     local = os.path.join(CACHE_DIR, f"{MODEL}_{cycle}z_f{fh:02d}.grib2")
     total = 0
     m = MODELS[MODEL]
@@ -787,13 +933,16 @@ def fetch_hour(sess, date_str, cycle, fh):
 # pygrib's shortName for the microphysics fields varies with the eccodes build, so match on
 # name as well and let either route win.
 SHORT2KEY = {"gh": "HGT", "t": "TMP", "clwmr": "CLMR", "cimixr": "CIMIXR", "ciwmr": "CIMIXR",
-             "cice": "CIMIXR", "snmr": "SNMR", "grle": "GRLE", "u": "UGRD", "v": "VGRD"}
+             "cice": "CIMIXR", "icmr": "CIMIXR", "snmr": "SNMR", "grle": "GRLE", "u": "UGRD", "v": "VGRD",
+             "rwmr": "RWMR", "refd": "REFD"}
 NAME2KEY = [("geopotential height", "HGT"), ("temperature", "TMP"),
+            ("rain mixing ratio", "RWMR"), ("rain water", "RWMR"),
             ("cloud mixing ratio", "CLMR"), ("cloud water", "CLMR"),
             ("ice water mixing ratio", "CIMIXR"), ("cloud ice", "CIMIXR"),
             ("snow mixing ratio", "SNMR"), ("graupel", "GRLE"),
-            ("u component of wind", "UGRD"), ("v component of wind", "VGRD")]
-VARS = ("HGT", "TMP", "CLMR", "CIMIXR", "SNMR", "GRLE", "UGRD", "VGRD")
+            ("u component of wind", "UGRD"), ("v component of wind", "VGRD"),
+            ("radar reflectivity", "REFD")]
+VARS = ("HGT", "TMP", "CLMR", "CIMIXR", "SNMR", "GRLE", "UGRD", "VGRD", "RWMR", "REFD")
 
 
 def _key_for(g):
@@ -845,10 +994,21 @@ def read_fields(path):
         return None
     shape = crop(lvl["TMP"][levels[0]]).shape
 
-    def stack(v):
+    def stack(v, fill=0.0):
         """Missing levels are physically zero for the condensate fields, so fill rather
         than drop - dropping would put holes in the vertical coordinate."""
-        return np.stack([crop(lvl[v][L]) if L in lvl[v] else np.zeros(shape) for L in levels])
+        return np.stack([crop(lvl[v][L]) if L in lvl[v] else np.full(shape, fill)
+                         for L in levels])
+
+    def wind(v):
+        """A wind level that was trimmed from the fetch takes the nearest level that was
+        fetched. Zero-filling it read as a dead calm below 500 mb, which dragged the
+        ice-weighted outflow wind toward zero wherever an ice layer reached that low."""
+        have = sorted(lvl[v])
+        if not have:
+            return np.zeros((len(levels),) + shape)
+        return np.stack([crop(lvl[v][L if L in lvl[v] else
+                                     min(have, key=lambda h: abs(h - L))]) for L in levels])
 
     out = {"tmpc": stack("TMP") - 273.15,
            "hgt_kft": stack("HGT") / 304.8,
@@ -856,9 +1016,16 @@ def read_fields(path):
            "qice": stack("CIMIXR"),
            "qsnow": stack("SNMR"),
            "qgrpl": stack("GRLE"),
-           "u": stack("UGRD"), "v": stack("VGRD"),
+           "qrain": stack("RWMR"),
+           "u": wind("UGRD"), "v": wind("VGRD"),
            "refc": crop(refc) if refc is not None else np.zeros(shape),
-           "lats": crop(lats), "lons": crop(lons), "levels": levels}
+           "lats": crop(lats), "lons": crop(lons), "levels": levels,
+           # Which reflectivity the cross-section can use: the model's own REFD on enough
+           # levels to be a profile, else rain to diagnose it, else ice only (and say so).
+           "has_refd": len(lvl["REFD"]) >= 6, "has_rain": len(lvl["RWMR"]) > 0,
+           "has_ice": len(lvl["CIMIXR"]) > 0}
+    if out["has_refd"]:
+        out["refd"] = stack("REFD", fill=-30.0)
     return out
 
 
@@ -1049,7 +1216,9 @@ def classify(f, prior_age=None, dx_km=None):
 
     live_core = core.any()
     joined = (age_conn <= CONN_MAX_H) & live_core   # continuous ice back to a LIVE core
-    recent = age_free <= ANVIL_TAU_H                # left a core within 3 h, detached or not
+    # Left a core within 3 h - or, under the squadron's "anvil until it rains out"
+    # convention, at any traceable age; the ANVIL_IWP test below is then what ends it.
+    recent = age_free <= (AGE_MAX_H if ANVIL_PERSISTS else ANVIL_TAU_H)
     sourced = joined | recent
     age_h = np.minimum(age_conn, age_free)
 
@@ -1106,8 +1275,137 @@ def classify(f, prior_age=None, dx_km=None):
 
     diag = {"top_kft": top_kft, "top_c": top_c, "thick_kft": thick_kft, "base_c": base_c_hi, "iwp": iwp_hi, "lwp": lwp_lo,
             "depth_lo": depth_lo, "graupel": gcol, "refc": f["refc"],
-            "age_h": np.where(age_h >= NEVER, np.nan, age_h), "joined": joined}
+            "age_h": np.where(age_h >= NEVER, np.nan, age_h), "joined": joined,
+            # Top of the LOWEST layer - the cumuliform cloud itself. The cumulus rules used
+            # top_c, the highest top in the column, so fair-weather cumulus under cirrus was
+            # scored at the cirrus temperature. In a deep tower the lowest layer runs to the
+            # top, so this equals top_c exactly where it should.
+            "cu_top_c": np.where(has_cloud, lo_top_c, np.nan),
+            "cloud3d": cloud}
     return out, diag
+
+
+# --------------------------------------------------------------------------------------
+# Cross-section volume
+# --------------------------------------------------------------------------------------
+def reflectivity_3d(f):
+    """(dBZ on the model's isobaric levels, a phrase naming where it came from).
+
+    The model's own REFD wins when the file has it. Otherwise it is diagnosed from the
+    precipitating species with fixed exponential intercepts - Stoelinga's method, the one
+    wrf-python's dbz() implements, with snow and graupel always treated as dry ice. It will
+    not match the model's own composite exactly (Thompson microphysics computes Z from its own
+    size distributions), so build_cycle logs the bias against REFC once per cycle.
+    """
+    if f.get("has_refd"):
+        return np.asarray(f["refd"], dtype=float), "model REFD"
+    p = np.asarray(f["levels"], dtype=float)[:, None, None] * 100.0
+    rho = p / (287.04 * (f["tmpc"] + 273.15))                     # dry air density, kg/m^3
+    fr = 720.0e18 * (1.0 / (np.pi * RHO_WATER)) ** 1.75
+    fs = (720.0e18 * (1.0 / (np.pi * RHO_SNOW)) ** 1.75
+          * (RHO_SNOW / RHO_WATER) ** 2 * DIELECTRIC_ICE)
+    fg = (720.0e18 * (1.0 / (np.pi * RHO_GRPL)) ** 1.75
+          * (RHO_GRPL / RHO_WATER) ** 2 * DIELECTRIC_ICE)
+    m = lambda a: np.maximum(np.asarray(a, dtype=float), 0.0) * rho   # kg/m^3 of hydrometeor
+    ze = (fr * m(f["qrain"]) ** 1.75 / N0_RAIN ** 0.75
+          + fs * m(f["qsnow"]) ** 1.75 / N0_SNOW ** 0.75
+          + fg * m(f["qgrpl"]) ** 1.75 / N0_GRPL ** 0.75)
+    dbz = 10.0 * np.log10(np.maximum(ze, 1e-3))
+    src = ("diagnosed from rain, snow and graupel" if f.get("has_rain")
+           else "diagnosed from snow and graupel only (no rain field in this file)")
+    return dbz, src
+
+
+def xs_volume(f, cloud3d, dbz3d):
+    """(XS_NZ, ny, nx) uint8 on the query mesh at fixed heights.
+
+    Low 7 bits: 0 = no echo (below 0 dBZ - the squadron's scale starts at 0), else dBZ + 1,
+    capped at 80. Top bit: condensate present at that height (the classifier's own cloud
+    mask, so the outline in the section is the cloud the class was decided from).
+    """
+    idx, qlat, qlon = query_grid(f)
+    flat = idx.ravel()
+    nlev = dbz3d.shape[0]
+    take = lambda a: np.asarray(a).reshape(nlev, -1)[:, flat]
+    z = np.maximum.accumulate(take(f["hgt_kft"] * 0.3048), axis=0)    # km, made monotonic
+    d = take(dbz3d).astype(float)
+    c = take(cloud3d).astype(np.uint8)
+    out = np.zeros((XS_NZ, z.shape[1]), dtype=np.uint8)
+    for k in range(XS_NZ):
+        h = k * XS_DZ_KM
+        cnt = (z <= h).sum(axis=0)
+        lo = np.clip(cnt - 1, 0, nlev - 1)
+        hi = np.clip(cnt, 0, nlev - 1)
+        g = lambda a, ix: np.take_along_axis(a, ix[None], axis=0)[0]
+        zl, zh = g(z, lo), g(z, hi)
+        w = np.where(hi > lo, np.clip((h - zl) / np.maximum(zh - zl, 1e-6), 0.0, 1.0), 0.0)
+        dv = g(d, lo) + w * (g(d, hi) - g(d, lo))
+        cv = np.where(w < 0.5, g(c, lo), g(c, hi))
+        above = (cnt >= nlev) & (h > z[-1] + 0.5 * XS_DZ_KM)        # past the top level
+        code = np.where(dv >= 0.0, np.clip(np.round(dv), 0, 80) + 1, 0).astype(np.uint8)
+        out[k] = np.where(above, 0, code | (cv.astype(np.uint8) << 7))
+    return out.reshape(XS_NZ, len(qlat), len(qlon))
+
+
+def site_isotherms(f, jy, jx):
+    """Height (km) of each ISO_TEMPS_C isotherm in one column - the first crossing going up,
+    which is how a sounding is read. None where the column never crosses it."""
+    t = f["tmpc"][:, jy, jx]
+    z = f["hgt_kft"][:, jy, jx] * 0.3048
+    out = {}
+    for T in ISO_TEMPS_C:
+        out[str(T)] = None
+        for k in range(len(t) - 1):
+            if t[k] >= T > t[k + 1]:
+                fr = (t[k] - T) / max(t[k] - t[k + 1], 1e-6)
+                out[str(T)] = round(float(z[k] + fr * (z[k + 1] - z[k])), 2)
+                break
+    return out
+
+
+def write_gz(path, raw):
+    """Gzip with a fixed mtime, so an unchanged volume is byte-identical between passes and
+    the force-push publish does not churn it."""
+    with open(path, "wb") as fp:
+        fp.write(gzip.compress(raw, compresslevel=6, mtime=0))
+
+
+def export_basemap(path):
+    """Coastline and lake shores clipped to the domain, as [lon, lat] polylines for the
+    viewer's canvas. Written once; the map draws everything client-side, so the dark theme
+    does not depend on the white PNGs."""
+    try:
+        from shapely.geometry import box
+        b = box(DOMAIN["lon_min"] - 0.05, DOMAIN["lat_min"] - 0.05,
+                DOMAIN["lon_max"] + 0.05, DOMAIN["lat_max"] + 0.05)
+        lines = []
+
+        def add(g):
+            if g.is_empty:
+                return
+            if g.geom_type in ("LineString", "LinearRing"):
+                pts = [[round(x, 4), round(y, 4)] for x, y in g.simplify(0.003).coords]
+                if len(pts) > 1:
+                    lines.append(pts)
+            elif g.geom_type == "Polygon":
+                add(g.exterior)
+                for r in g.interiors:
+                    add(r)
+            elif hasattr(g, "geoms"):
+                for gg in g.geoms:
+                    add(gg)
+
+        for feat in (cfeature.COASTLINE.with_scale("10m"), cfeature.LAKES.with_scale("10m")):
+            for geom in feat.geometries():
+                if geom.intersects(b):
+                    clipped = geom.intersection(b)
+                    add(clipped.boundary if clipped.geom_type in ("Polygon", "MultiPolygon")
+                        else clipped)
+        with open(path, "w") as fp:
+            json.dump({"domain": DOMAIN, "lines": lines}, fp, separators=(",", ":"))
+        logging.info(f"Basemap: {len(lines)} polylines written to {path}.")
+    except Exception as e:
+        logging.warning(f"Basemap export skipped: {type(e).__name__}: {e}")
 
 
 # --------------------------------------------------------------------------------------
@@ -1296,7 +1594,19 @@ LLCC = {
 
     # --- 4.1.7 Disturbed weather: through cloud whose tops are colder than 0 C, with
     # moderate-or-greater precipitation within 5 nmi. "Moderate" is 30 dBZ by definition.
+    # OFF by 45 WS convention: the rule is written for synoptic systems (fronts), and
+    # applied to a convective afternoon it double-counts what the cumulus and anvil rules
+    # already score - it painted every shower NO-GO out to 5 nmi on its own.
+    "disturbed_enabled": False,
     "disturbed_nm":        5.0, "disturbed_dbz": 30.0, "disturbed_top_c": 0.0,
+
+    # --- 45 WS echo gate. In the radar companion a hazard exists only where the radar sees
+    # echo >= 0 dBZ. The model analogue is simulated composite reflectivity >= 0 dBZ: cloud
+    # the radar could not see does not count as a hazard source. The packed plane stores
+    # round(dBZ) clipped at 0, so ">= 0 dBZ" is read as a packed value >= 1 (>= 0.5 dBZ).
+    # Trade-off, stated plainly: a non-precipitating cumulus topping 0 to -10 C with no
+    # simulated echo is no longer scored. Set False to score every model cloud.
+    "echo_gate":         True, "echo_gate_dbz": 0.5,
 
     # --- 4.1.8 Thick cloud layers. Does NOT apply to attached or detached anvil.
     "thick_kft":           4.5,    # 1.4 km
@@ -1307,14 +1617,21 @@ LLCC = {
     # clips at 0, so testing ">= 0" made every point echo-bearing and the exemption could
     # never fire. A packed 0 means "no echo", hence the strictly-greater test.
     "thick_min_dbz":       0.5,
+    # 45 WS convention: the thick-layer exception uses MRR < 7.5 dBZ - the same test, and the
+    # same 1 nmi evaluation radius, as the anvil exception (b). When True this replaces the
+    # LLCCR 30 no-echo test above.
+    "thick_mrr_exception": True,
 
     # --- 4.1.10 Triboelectrification: through any cloud colder than -10 C below 910 m/s.
     # Vehicle-dependent (LLCCR 33 exempts treated vehicles), so off by default.
     "tribo_enabled":     False, "tribo_c": -10.0,
 }
 
-RULE_KEYS = ["cumulus_through", "cumulus_5nm", "cumulus_10nm", "attached_anvil",
-             "detached_anvil", "disturbed", "thick_layer"]
+RULE_KEYS_ALL = ["cumulus_through", "cumulus_5nm", "cumulus_10nm", "attached_anvil",
+                 "detached_anvil", "disturbed", "thick_layer", "tribo"]
+# Bit k of the packed NO-GO plane is RULE_KEYS_ALL[k]; the order is part of the file format.
+RULE_BITS = {k: n for n, k in enumerate(RULE_KEYS_ALL)}
+RULE_KEYS = [k for k in RULE_KEYS_ALL[:7] if k != "disturbed" or LLCC["disturbed_enabled"]]
 RULE_NAMES = {
     "cumulus_through": "Cumulus, flight through (4.1.3.1)",
     "cumulus_5nm":     "Cumulus within 5 nmi (4.1.3.2)",
@@ -1332,6 +1649,18 @@ RULES_NOT_EVALUATED = [
     "Debris clouds (4.1.6) - needs an observed detachment or collapse time",
     "Smoke plumes (4.1.9)",
     "Field-mill exceptions that would otherwise permit launch",
+] + ([] if LLCC["disturbed_enabled"] else
+     ["Disturbed weather (4.1.7) - off by 45 WS convention (a synoptic rule, not a convective one)"])
+# The squadron conventions in force, published so the page states what it scored.
+CONVENTIONS = [
+    "Hazards count only where simulated composite reflectivity is 0 dBZ or more (echo gate)"
+    if LLCC["echo_gate"] else "Every model cloud scored, echo or not (echo gate off)",
+    "Anvil stays anvil until it thins below " + f"{ANVIL_IWP:.0f} g/m2 of ice; detached anvil "
+    "must trace back to a convective core" if ANVIL_PERSISTS else
+    "Detached anvil ages to cirrus after 3 h",
+    "Cumulus is not scored by the thick-layer rule",
+    "Thick-layer and anvil exceptions use MRR < 7.5 dBZ within 1 nmi",
+    "Cumulus rules use the top of the cumuliform layer, not cirrus above it",
 ]
 
 
@@ -1363,6 +1692,13 @@ def llcc_violation(planes, q):
 
     cls, top_c, base_c = planes["class"], planes["top_c"], planes["base_c"]
     dbz, thick = planes["dbz"], planes["thick_kft"]
+    # Top of the cumuliform layer itself where the plane exists; older files fall back to
+    # the column top (and carry the cirrus-over-cumulus over-warning they always had).
+    cu_top = planes.get("cu_top_c")
+    if cu_top is None:
+        cu_top = top_c
+    # 45 WS echo gate: a hazard source must be echo the radar would see.
+    echo = (dbz >= L["echo_gate_dbz"]) if L["echo_gate"] else np.ones(cls.shape, bool)
     out = {}
 
     # 4.2.2c - MRR as the largest composite reflectivity within 4 nmi, then the rule tests
@@ -1372,55 +1708,68 @@ def llcc_violation(planes, q):
 
     # --- 4.1.3 Cumulus ------------------------------------------------------------------
     # Section applies to cumuliform cloud only, and explicitly not to attached anvil.
-    cumuliform = np.isin(cls, [CUMULUS, TCU])
+    cumuliform_any = np.isin(cls, [CUMULUS, TCU])
+    cumuliform = cumuliform_any & echo
     # LLCCR 15: through the cloud. Top at or colder than +5 C is NO-GO; the field-mill
     # exception only exists for tops warmer than -5 C and cannot be evaluated here, so
     # anything at or colder than +5 C is taken as NO-GO.
-    out["cumulus_through"] = cumuliform & (top_c <= L["cumulus_through_c"])
+    out["cumulus_through"] = cumuliform & (cu_top <= L["cumulus_through_c"])
     # LLCCR 16 / 17: standoff by cloud-top temperature.
-    out["cumulus_5nm"] = near(cumuliform & (top_c <= L["cumulus_5nm_c"]), L["cumulus_5nm"])
-    out["cumulus_10nm"] = near(cumuliform & (top_c <= L["cumulus_10nm_c"]), L["cumulus_10nm"])
+    out["cumulus_5nm"] = near(cumuliform & (cu_top <= L["cumulus_5nm_c"]), L["cumulus_5nm"])
+    out["cumulus_10nm"] = near(cumuliform & (cu_top <= L["cumulus_10nm_c"]), L["cumulus_10nm"])
 
     # --- 4.1.4 Attached anvil -----------------------------------------------------------
-    # LLCCR 18: within 3 nmi is NO-GO unless the anvil within 5 nmi sits entirely colder
-    # than 0 C AND MRR < 7.5 dBZ within 1 nmi. Both are evaluable: the base temperature of
-    # the ice layer is what "located entirely at altitudes colder than 0 C" means.
-    att = cls == ANVIL_ATT
+    # LLCCR 18: within 3 nmi is NO-GO unless (a) the anvil within 5 nmi sits entirely colder
+    # than 0 C AND (b) MRR < 7.5 dBZ within 1 nmi. Both are evaluable: the base temperature
+    # of the ice layer is what "located entirely at altitudes colder than 0 C" means.
+    att = (cls == ANVIL_ATT) & echo
     att_warm = near(att & (base_c >= L["attached_excep_c"]), L["attached_excep_nm"])
     out["attached_anvil"] = near(att, L["attached_3nm"]) & (att_warm | ~mrr_ok)
 
     # --- 4.1.5 Detached anvil -----------------------------------------------------------
     # LLCCR 22 with the same evaluable exceptions; its 30-minute and 3-hour lightning clocks
     # are not evaluable and are noted rather than applied.
-    det = cls == ANVIL_DET
+    det = (cls == ANVIL_DET) & echo
     det_warm = near(det & (base_c >= L["attached_excep_c"]), L["attached_excep_nm"])
     out["detached_anvil"] = near(det, L["detached_3nm"]) & (det_warm | ~mrr_ok)
 
-    # --- 4.1.7 Disturbed weather --------------------------------------------------------
-    # Through non-transparent cloud with tops colder than 0 C, with moderate or greater
-    # precipitation within 5 nmi. 30 dBZ is the standard's own definition of moderate.
+    # --- 4.1.7 Disturbed weather (off by 45 WS convention) ------------------------------
     in_cloud = cls != CLEAR
-    out["disturbed"] = (in_cloud & (top_c < L["disturbed_top_c"])
-                        & near(dbz >= L["disturbed_dbz"], L["disturbed_nm"]))
+    if L["disturbed_enabled"]:
+        out["disturbed"] = (in_cloud & (top_c < L["disturbed_top_c"])
+                            & near(dbz >= L["disturbed_dbz"], L["disturbed_nm"]))
 
     # --- 4.1.8 Thick cloud layers -------------------------------------------------------
-    # Not applicable to anvil of either kind (4.1.8 preamble). LLCCR 29 exempts a cirriform
-    # layer entirely colder than -15 C with no liquid water; LLCCR 30 exempts a layer with
-    # no 0 dBZ within 5 nmi.
-    thick_hit = thick >= L["thick_kft"]
+    # Not applicable to anvil of either kind (4.1.8 preamble), and by 45 WS convention not
+    # to cumulus either - a deep cumulus has its own section. LLCCR 29 exempts a cirriform
+    # layer entirely colder than -15 C with no liquid water. The echo exemption is either
+    # the squadron's MRR < 7.5 dBZ or LLCCR 30's "no 0 dBZ within 5 nmi".
+    thick_hit = (thick >= L["thick_kft"]) & echo & ~cumuliform_any
     is_anvil = np.isin(cls, [ANVIL_ATT, ANVIL_DET])
     cirriform_exempt = (cls == CIRRUS) & (top_c <= L["thick_cirriform_c"])
-    no_echo_exempt = ~near(dbz >= L["thick_min_dbz"], L["thick_connect_nm"])
-    out["thick_layer"] = (near(thick_hit, L["thick_connect_nm"]) & in_cloud
-                          & ~is_anvil & ~cirriform_exempt & ~no_echo_exempt)
+    if L["thick_mrr_exception"]:
+        echo_exempt = mrr_ok
+    else:
+        echo_exempt = ~near(dbz >= L["thick_min_dbz"], L["thick_connect_nm"])
+    out["thick_layer"] = (near(thick_hit, L["thick_connect_nm"]) & in_cloud & ~cumuliform_any
+                          & ~is_anvil & ~cirriform_exempt & ~echo_exempt)
 
     # --- 4.1.10 Triboelectrification ----------------------------------------------------
     if L["tribo_enabled"]:
         out["tribo"] = in_cloud & (top_c <= L["tribo_c"])
 
-    keys = [k for k in RULE_KEYS if k in out] + (["tribo"] if "tribo" in out else [])
+    keys = [k for k in RULE_KEYS_ALL if k in out]
     out["any"] = np.logical_or.reduce([out[k] for k in keys])
     return out
+
+
+def nogo_bits(viol):
+    """Per-rule NO-GO grids packed into one byte per cell, bit = RULE_BITS[rule]."""
+    bits = np.zeros(viol["any"].shape, dtype=np.uint8)
+    for k, n in RULE_BITS.items():
+        if k in viol:
+            bits |= (viol[k].astype(np.uint8) << n)
+    return bits
 
 
 def unpack_planes(blob, q):
@@ -1433,7 +1782,9 @@ def unpack_planes(blob, q):
             "iwp": 10 ** (g(3) * np.log10(1 + q["iwp_max"]) / 255.0) - 1.0,
             "depth_kft": g(4) / 4.0, "dbz": g(5),
             "age_h": np.where(age >= 255, np.nan, age / 10.0),
-            "thick_kft": g(7) / 4.0, "base_c": g(8) - 100.0}
+            "thick_kft": g(7) / 4.0, "base_c": g(8) - 100.0,
+            # Appended in v3; absent from older files, and llcc_violation copes.
+            "cu_top_c": (g(10) - 100.0) if a.size >= 11 * n else None}
 
 
 # --------------------------------------------------------------------------------------
@@ -1444,7 +1795,9 @@ _QGRID = {}   # the crop is identical every hour, so the resampling is solved on
 PLANES = ["class", "top_kft_x4", "top_c_p100", "iwp_log", "depth_kft_x4", "dbz",
           "age_h_x10",      # 255 = no outflow source found
           "thick_kft_x4",   # whole-layer depth where the layer meets the 0/-20 C band
-          "base_c_p100"]    # base temperature of the upper cloud layer
+          "base_c_p100",    # base temperature of the upper cloud layer
+          "nogo_bits",      # v3: this member's per-rule NO-GO, bit = RULE_BITS[rule]
+          "cu_top_c_p100"]  # v3: top temperature of the cumuliform (lowest) layer
 
 
 def query_grid(f):
@@ -1463,7 +1816,7 @@ def query_grid(f):
 
 
 def pack_query(cls, diag, f):
-    """Six uint8 planes, concatenated. Quantisation is chosen so the decode error is under
+    """Eleven uint8 planes, concatenated (see PLANES). Quantisation is chosen so the decode error is under
     the precision anyone would act on: 0.25 kft of height, 1 C, ~2% of ice path, 1 dBZ."""
     idx, qlat, qlon = query_grid(f)
     take = lambda a: np.asarray(a).ravel()[idx.ravel()]
@@ -1481,6 +1834,14 @@ def pack_query(cls, diag, f):
         q(np.nan_to_num(take(diag["thick_kft"]), nan=0.0) * 4.0),
         q(np.nan_to_num(take(diag["base_c"]), nan=-100.0) + 100.0),
     ]
+    cu = q(np.nan_to_num(take(diag["cu_top_c"]), nan=-100.0) + 100.0)
+    # The NO-GO bits are scored from the PACKED planes, exactly as build_pov scores them, so
+    # the strip in the cross-section and the POV can never disagree about the same member.
+    qm = {"nx": len(qlon), "ny": len(qlat), "lat0": float(qlat[0]), "lon0": float(qlon[0]),
+          "dlat": QUERY_DEG, "dlon": QUERY_DEG, "iwp_max": IWP_MAX}
+    blob = b"".join(p.tobytes() for p in planes) + np.zeros_like(cu).tobytes() + cu.tobytes()
+    bits = nogo_bits(llcc_violation(unpack_planes(blob, qm), qm))
+    planes += [bits.ravel(), cu]
     return b"".join(p.tobytes() for p in planes), len(qlon), len(qlat), qlat[0], qlon[0]
 
 
@@ -1672,14 +2033,19 @@ def cycle_available(sess, date_str, cycle):
     return r.status_code in (200, 206)
 
 
-def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
-    """Render whatever hours of this cycle are on S3 and are not already built.
+def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing, until=None):
+    """Render whatever hours of this cycle are posted and are not already built.
 
     HRRR posts a run hour by hour over roughly 50-90 minutes, so a cycle picked up shortly
     after f01 appears is genuinely incomplete - the tail 404s. Rather than waiting for the
     whole run (which would put the page an hour behind) or accepting the truncation
     permanently (which is what silently happened before), each pass fills in the hours that
-    have shown up since. Returns (frames, bytes, qmeta, n_new).
+    have shown up since. Returns (frames, bytes, qmeta, n_new, throttled).
+
+    `until` is a time.monotonic() deadline shared by every cycle of this model's pass - the
+    per-cycle budget it replaces let four cycles each spend 900 s and walk into the job
+    timeout. Hours post in order, so MISS_STREAK_STOP consecutive misses is the posting
+    frontier and the rest of the run is not asked for.
     """
     have = {int(fr["fh"]): fr for fr in existing}
     hours = run_hours(cycle)
@@ -1687,45 +2053,51 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
     if not todo:
         return sorted(have.values(), key=lambda fr: fr["fh"]), 0, None, 0, False
 
+    m = MODELS[MODEL]
+    name = m["name"]
     total, qmeta, made, throttled = 0, None, 0, False
-    # Wall-clock budget, for the same reason the aviation dashboard has one: a throttled
-    # source has no other way to end, and a short column from a finished run beats a hung job
-    # that commits nothing.
-    budget_s = MODELS[MODEL].get("budget_s")
-    t_start = time.monotonic()
-    for n_fh, fh in enumerate(todo):
+    miss_streak, backed_off, bias_logged = 0, False, False
+    k = 0
+    while k < len(todo):
+        fh = todo[k]
         # Pause BETWEEN forecast hours, which for a throttled source is the pause that
-        # actually matters. pause_s was only applied between files within one hour, and RRFS
-        # has a single file per hour - so it never fired once, and the fetcher ran ~50 range
-        # requests an hour back-to-back with no gap at all. That is what walked into the
-        # limiter after two hours.
-        if n_fh and MODELS[MODEL].get("pause_s"):
-            time.sleep(MODELS[MODEL]["pause_s"])
-        if budget_s and time.monotonic() - t_start > budget_s:
-            logging.info(f"{MODELS[MODEL]['name']} budget of {budget_s}s spent after "
-                         f"{made} hours; the rest top up on a later pass.")
+        # actually matters - RRFS has a single file per hour, so the between-files pause in
+        # fetch_hour never fires for it.
+        if k and m.get("pause_s"):
+            time.sleep(m["pause_s"])
+        if until is not None and time.monotonic() > until:
+            logging.info(f"{name} {cid}Z: budget spent after {made} new hours; the rest top "
+                         f"up on a later pass.")
             break
         try:
             path, n = fetch_hour(sess, date_str, cycle, fh)
         except Throttled as e:
-            # Stop this cycle, but KEEP the hours already built. Re-raising here threw away
-            # everything the pass had done - 22 classified forecast hours discarded because
-            # hour 23 got a 302 - and the next pass then started over from nothing.
-            logging.warning(f"{MODELS[MODEL]['name']}: throttled ({e}); keeping the "
-                            f"{made} hours already built. The rest top up next pass.")
+            # One real backoff on the same hour - THROTTLE_BACKOFF_S existed for exactly this
+            # and was never used. Hours already built are kept either way.
+            if not backed_off and _backoff(str(e)) and (until is None or
+                                                        time.monotonic() < until):
+                backed_off = True
+                continue
+            logging.warning(f"{name} {cid}Z: throttled ({e}); keeping the {made} hours "
+                            f"built. The rest top up next pass.")
             throttled = True
             break
+        k += 1
         total += n
         if not path or n == 0:
+            miss_streak += 1
             why = (f"HTTP {_LAST_MISS['status']}" if _LAST_MISS.get("status")
                    else "no index / no matching messages")
-            if made == 0 and fh == todo[0]:
-                # First hour of a cycle: name the URL, because that is the one worth pasting
-                # into a browser to settle whether the file is really there.
-                logging.info(f"f{fh:02d}: {why} - {_LAST_MISS.get('url')}")
-            else:
-                logging.info(f"f{fh:02d}: {why}")
+            logging.info(f"{name} {cid}Z f{fh:02d}: {why}"
+                         + (f" - {_LAST_MISS.get('url')}" if made == 0 and k == 1 else ""))
+            if miss_streak >= MISS_STREAK_STOP:
+                left = len(todo) - k
+                if left:
+                    logging.info(f"{name} {cid}Z: posting frontier at f{fh - 1:02d}; not asking "
+                                 f"for the remaining {left} hours this pass.")
+                break
             continue
+        miss_streak = 0
         try:
             f = read_fields(path)
             if f is None:
@@ -1733,8 +2105,7 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
                 continue
             # Hour fh-1's age if we have it - from this pass, or from a file a previous
             # pass left behind. Its absence is not fatal; the hour just starts a fresh clock.
-            cls, diag = classify(f, prior_age=load_age(cid, fh - 1),
-                                 dx_km=MODELS[MODEL]["dx_km"])
+            cls, diag = classify(f, prior_age=load_age(cid, fh - 1), dx_km=m["dx_km"])
             save_age(cid, fh, diag["age_h"])
             valid = cyc_dt + datetime.timedelta(hours=fh)
             png = f"maps/cloudtype_{MODEL}_{cid}z_f{fh:02d}.png"
@@ -1742,14 +2113,17 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
             blob, qnx, qny, qlat0, qlon0 = pack_query(cls, diag, f)
             qmeta = {"nx": qnx, "ny": qny, "lat0": round(float(qlat0), 6),
                      "lon0": round(float(qlon0), 6), "dlat": QUERY_DEG, "dlon": QUERY_DEG,
-                     "iwp_max": IWP_MAX, "planes": PLANES}
+                     "iwp_max": IWP_MAX, "planes": PLANES,
+                     "xs": {"nz": XS_NZ, "dz_km": XS_DZ_KM, "top_km": XS_TOP_KM,
+                            "encoding": "low 7 bits: 0 none, else dBZ+1; bit 7: cloud"}}
             binrel = f"data/cols_{MODEL}_{cid}z_f{fh:02d}.bin"
             with open(os.path.join(OUT_DIR, binrel), "wb") as bf:
                 bf.write(blob)
 
+            sidx = site_indices(f)
             sites = {}
-            for name, (jy, jx) in site_indices(f).items():
-                sites[name] = {
+            for sname, (jy, jx) in sidx.items():
+                sites[sname] = {
                     "key": KEY_BY_ID[int(cls[jy, jx])],
                     "top_kft": None if not np.isfinite(diag["top_kft"][jy, jx])
                     else round(float(diag["top_kft"][jy, jx]), 1),
@@ -1761,13 +2135,41 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
             counts = {c["key"]: int((cls == c["id"]).sum()) for c in CLASSES}
             # "%d/%HZ" put day-of-month first, so F12 of the 10Z run read as "12/22Z" and
             # looked like a 12Z cycle. Hour only here; valid_label carries the date.
-            have[fh] = {"fh": fh, "valid": valid.strftime("%Y-%m-%dT%H:%MZ"),
-                        "valid_short": valid.strftime("%HZ"),
-                        "valid_label": valid.strftime("%HZ %a %d %b"),
-                        "image": png, "data": binrel, "counts": counts, "sites": sites}
+            fr = {"fh": fh, "valid": valid.strftime("%Y-%m-%dT%H:%MZ"),
+                  "valid_short": valid.strftime("%HZ"),
+                  "valid_label": valid.strftime("%HZ %a %d %b"),
+                  "image": png, "data": binrel, "counts": counts, "sites": sites}
+
+            # Cross-section volume. Wrapped: a section bug must never cost the hour its map.
+            try:
+                dbz3d, zsrc = reflectivity_3d(f)
+                xsrel = f"xs/xs_{MODEL}_{cid}z_f{fh:02d}.xsz"
+                write_gz(os.path.join(OUT_DIR, xsrel),
+                         xs_volume(f, diag["cloud3d"], dbz3d).tobytes())
+                fr["xs"] = xsrel
+                fr["xs_src"] = zsrc
+                if ISO_SITE in sidx:
+                    fr["iso"] = site_isotherms(f, *sidx[ISO_SITE])
+                if not bias_logged and not f.get("has_ice", True):
+                    logging.warning(f"{name} {cid}Z: no cloud-ice field in this file under any "
+                                    f"known name; ice is snow only, so cirrus will be undercounted.")
+                if not bias_logged:
+                    hot = f["refc"] >= 20.0
+                    if hot.sum() >= 50:
+                        b = float(np.median(dbz3d.max(axis=0)[hot] - f["refc"][hot]))
+                        logging.info(f"{name} {cid}Z f{fh:02d}: section reflectivity {zsrc}; "
+                                     f"column max minus REFC where REFC >= 20: median {b:+.1f} dB "
+                                     f"over {int(hot.sum())} cells.")
+                    else:
+                        logging.info(f"{name} {cid}Z f{fh:02d}: section reflectivity {zsrc}.")
+                    bias_logged = True
+            except Exception as e:
+                logging.warning(f"f{fh:02d}: cross-section skipped: {type(e).__name__}: {e}")
+
+            have[fh] = fr
             made += 1
             logging.info(f"f{fh:02d} valid {valid:%d %b %HZ}: " +
-                         " ".join(f"{k}={v}" for k, v in counts.items() if v and k != "clear"))
+                         " ".join(f"{k2}={v}" for k2, v in counts.items() if v and k2 != "clear"))
         finally:
             if os.path.exists(path):
                 os.remove(path)
@@ -1775,8 +2177,15 @@ def build_cycle(sess, date_str, cycle, cyc_dt, cid, existing):
     return sorted(have.values(), key=lambda fr: fr["fh"]), total, qmeta, made, throttled
 
 
-def build_model(sess, key, prev_models, force, data_stale, render_stale, verified=None):
-    """Build one model's cycles for this pass. Returns (cycles, bytes, qmeta, n_new)."""
+def build_model(sess, key, prev_models, force, data_stale, render_stale, verified=None,
+                absent=None):
+    """Build one model's cycles for this pass. Returns (cycles, bytes, qmeta, n_new).
+
+    Order matters on a throttled source: NEWEST first (freshness), then whole MISSING cycles
+    in the window (a missing cycle is a missing POV member; a partial one still votes for its
+    early hours), then TOP-UPS of partial cycles. Backfill used to come last and met the
+    limiter at its hottest every single pass.
+    """
     set_model(key)
     date_str, cycle, cyc_dt = find_cycle(sess)
     name = MODELS[key]["name"]
@@ -1815,99 +2224,134 @@ def build_model(sess, key, prev_models, force, data_stale, render_stale, verifie
     cid = f"{date_str}{cycle}"
     if render_stale and not data_stale:
         prior = [c for c in prior if c["id"] != cid]
-    cyc_dts = {cid: cyc_dt}
-    entries, bytes_total, qmeta, built = [], 0, None, 0
+    m = MODELS[key]
+    slow = bool(m.get("pause_s"))
     keep = keep_cycles(key)
+    until = min(time.monotonic() + float(m.get("budget_s") or 1e9), _T0 + DEADLINE_S)
+    absent = absent if absent is not None else {}
+    gone = absent.setdefault(key, {})
+    now_h = datetime.datetime.now(datetime.timezone.utc).timestamp() / 3600.0
+    for bid in [b for b, at in gone.items() if now_h - at > ABSENT_TTL_H]:
+        del gone[bid]
 
-    todo = [(cid, date_str, cycle)]
-    for c in prior:
-        if c["id"] != cid and len(c["frames"]) < len(run_hours(c["hour"])):
-            todo.append((c["id"], c["date"], c["hour"]))
-            cyc_dts[c["id"]] = datetime.datetime.strptime(
-                c["init"], "%Y-%m-%dT%H:%MZ").replace(tzinfo=datetime.timezone.utc)
-        if len(todo) >= MAX_TOPUP_CYCLES + 1:
-            break
+    by_id = {c["id"]: c for c in prior}
+    entries = {}
+    state = {"bytes": 0, "qmeta": None, "built": 0, "throttled": False}
 
-    # WHICH cycles we want, not merely how many. Counting was the bug behind a ragged run
-    # strip that never healed: after an outage the retained list could hold six cycles -
-    # 27T08Z, 27T07Z, then 26T18Z back to 26T15Z - and because that is six, `short` was zero
-    # and backfill never fired. The twelve-hour hole then sat there being pushed out one
-    # cycle an hour. The ensemble is meant to be the last N CONSECUTIVE cycles, so that is
-    # what gets asked for.
-    step = 1 if MODELS[key]["hourly"] else 6
+    def run(tid, tdate, thour, tdt):
+        """Build (or top up) one cycle and record it. Returns False once the source has
+        throttled or the budget is gone, so the caller stops asking."""
+        if state["throttled"] or time.monotonic() > until:
+            return False
+        existing = (entries.get(tid) or by_id.get(tid) or {}).get("frames", [])
+        frames, nbytes, qm, made, hit = build_cycle(sess, tdate, thour, tdt, tid,
+                                                    existing, until)
+        state["bytes"] += nbytes
+        state["qmeta"] = qm or state["qmeta"]
+        state["built"] += made
+        state["throttled"] = state["throttled"] or hit
+        if frames:
+            want = run_hours(thour)
+            entries[tid] = {"id": tid, "model": key, "label": f"{thour}Z",
+                            "date": tdate, "hour": thour,
+                            "init": tdt.strftime("%Y-%m-%dT%H:%MZ"),
+                            "render_version": RENDER_VERSION,
+                            "run_h": len(frames), "run_h_expected": len(want),
+                            "complete": len(frames) >= len(want), "frames": frames}
+            if made:
+                logging.info(f"{name} {tid}Z: {len(frames)}/{len(want)} h, +{made} new.")
+        return not state["throttled"] and time.monotonic() <= until
+
+    # 1. Newest.
+    newest_needed = cid not in by_id or not by_id[cid].get("complete", False) \
+        or len(by_id[cid]["frames"]) < len(run_hours(cycle))
+    if newest_needed:
+        run(cid, date_str, cycle, cyc_dt)
+
+    # 2. Whole cycles missing from the window. WHICH cycles we want, not merely how many -
+    # the ensemble is the last N CONSECUTIVE cycles, so a twelve-hour hole after an outage
+    # is a hole, however many cycles happen to be on disk.
+    step = cycle_step(m)
     window = [cyc_dt - datetime.timedelta(hours=step * k) for k in range(keep)]
-    have_ids = {c["id"] for c in prior} | {cid}
+    have_ids = set(by_id) | set(entries) | {cid}
     missing = [(t.strftime("%Y%m%d%H"), t) for t in window
                if t.strftime("%Y%m%d%H") not in have_ids]
-    if missing:
-        # A throttled source gets ONE a pass - the second is what tipped RRFS over NOMADS'
-        # limiter. A source without a throttle closes the whole gap at once: HRRR is ~90 s a
-        # cycle off S3, and dribbling one an hour means the ensemble never recovers from an
-        # outage before the cycles age out again.
-        per_pass = 1 if MODELS[key].get("pause_s") else len(missing)
-        # Check each candidate exists before queueing it, and walk further back when one
-        # does not. Some cycles simply are not on the server - a run that failed upstream,
-        # or one already purged - and queueing those spends a whole pass discovering it.
-        picked, probed = [], 0
+    skipped_absent = [b for b, _ in missing if b in gone]
+    missing = [(b, t) for b, t in missing if b not in gone]
+    picked = []
+    if missing and not state["throttled"] and time.monotonic() < until:
+        per_pass = int(m.get("backfill_per_pass", 1)) if slow else len(missing)
+        if slow and newest_needed:
+            # Let the limiter's window drain before the next burst.
+            time.sleep(min(SLOW_COOLDOWN_S, max(0.0, until - time.monotonic())))
         for bid, t in missing:
-            if len(picked) >= per_pass or probed >= keep + 6:
+            if len(picked) >= per_pass or time.monotonic() > until:
                 break
-            probed += 1
             ok = cycle_available(sess, t.strftime("%Y%m%d"), t.strftime("%H"))
+            if ok is None and _backoff(f"probing {bid}Z"):
+                ok = cycle_available(sess, t.strftime("%Y%m%d"), t.strftime("%H"))
             if ok is None:
-                logging.info(f"{name}: throttled while probing {bid}Z; leaving backfill "
-                             f"for the next pass.")
+                logging.info(f"{name}: still throttled probing {bid}Z; backfill resumes next pass.")
+                state["throttled"] = True
                 break
             if not ok:
-                logging.info(f"{name}: {bid}Z is not on the server; skipping it.")
+                logging.info(f"{name}: {bid}Z is not on the server; not re-probing it for "
+                             f"{ABSENT_TTL_H:.0f} h.")
+                gone[bid] = now_h
                 continue
             picked.append((bid, t))
-        for bid, t in picked:
-            todo.append((bid, t.strftime("%Y%m%d"), t.strftime("%H")))
-            cyc_dts[bid] = t
-            have_ids.add(bid)
-        logging.info(f"{name}: window {len(window) - len(missing)}/{keep} filled; "
-                     f"{len(missing)} missing, building "
-                     f"{', '.join(b for b, _ in picked) if picked else 'none available'}.")
+            if slow:
+                time.sleep(m["pause_s"])
+            if not run(bid, t.strftime("%Y%m%d"), t.strftime("%H"), t):
+                break
 
-    throttled = False
-    for tid, tdate, thour in todo:
-        if throttled:
-            logging.info(f"{name} {tid}Z: skipped, source was throttling this pass.")
+    # 3. Top-ups of partial cycles, newest first.
+    topped = 0
+    for c in sorted(list(by_id.values()), key=lambda c: c["init"], reverse=True):
+        if topped >= MAX_TOPUP_CYCLES or state["throttled"] or time.monotonic() > until:
+            break
+        if c["id"] == cid or c["id"] in entries:
             continue
-        existing = next((c["frames"] for c in prior if c["id"] == tid), [])
-        frames, nbytes, qm, made, hit_limit = build_cycle(sess, tdate, thour, cyc_dts[tid],
-                                                          tid, existing)
-        if hit_limit:
-            # Publish what this cycle produced, then stop asking this source for more.
-            throttled = True
-        bytes_total += nbytes
-        qmeta = qm or qmeta
-        built += made
-        if not frames:
+        if len(c["frames"]) >= len(run_hours(c["hour"])):
             continue
-        want = run_hours(thour)
-        entries.append({"id": tid, "model": key, "label": f"{thour}Z",
-                        "date": tdate, "hour": thour,
-                        "init": cyc_dts[tid].strftime("%Y-%m-%dT%H:%MZ"),
-                        "render_version": RENDER_VERSION,
-                        "run_h": len(frames), "run_h_expected": len(want),
-                        "complete": len(frames) >= len(want), "frames": frames})
-        if made:
-            logging.info(f"{name} {tid}Z: {len(frames)}/{len(want)} h, +{made} new.")
+        tdt = datetime.datetime.strptime(c["init"], "%Y-%m-%dT%H:%MZ").replace(
+            tzinfo=datetime.timezone.utc)
+        topped += 1
+        if slow:
+            time.sleep(m["pause_s"])
+        if not run(c["id"], c["date"], c["hour"], tdt):
+            break
 
-    merged = {c["id"]: c for c in prior}
-    merged.update({e["id"]: e for e in entries})
+    merged = dict(by_id)
+    merged.update(entries)
     for c in merged.values():
         c.setdefault("model", key)
     cycles = sorted(merged.values(), key=lambda c: c["init"], reverse=True)[:keep]
-    return cycles, bytes_total, qmeta, built
+
+    # One line that says where the window stands. The question "why are RRFS's prior runs
+    # missing" should be answerable from this line alone.
+    ids = {c["id"]: c for c in cycles}
+    slots = []
+    for t in window:
+        b = t.strftime("%Y%m%d%H")
+        c = ids.get(b)
+        slots.append(f"{t:%H}Z " + (f"{len(c['frames'])}/{c.get('run_h_expected', '?')}" if c
+                                    else ("absent" if b in gone else "MISSING")))
+    logging.info(f"{name} window: " + ", ".join(slots)
+                 + (f"; built {', '.join(b for b, _ in picked)}" if picked else "")
+                 + (f"; known absent {', '.join(skipped_absent)}" if skipped_absent else "")
+                 + ("; source throttled" if state["throttled"] else "")
+                 + f"; {max(0.0, until - time.monotonic()):.0f} s of budget left.")
+    return cycles, state["bytes"], state["qmeta"], state["built"]
 
 
 def main():
+    global _T0
+    _T0 = time.monotonic()
     os.makedirs(MAP_DIR, exist_ok=True)
     os.makedirs(DATA_DIR, exist_ok=True)
     os.makedirs(STATE_DIR, exist_ok=True)
+    os.makedirs(XS_PATH, exist_ok=True)
     sess = _session()
 
     prev = load_manifest()
@@ -1933,6 +2377,7 @@ def main():
     # Members run 4x daily and passes run hourly, so each member still gets rebuilt long
     # before its cycle rolls over.
     verified = dict(prev.get("verified") or {})
+    absent = {k: dict(v) for k, v in (prev.get("absent") or {}).items()}
     fast = [k for k in MODEL_KEYS if not MODELS[k].get("pause_s")]
     slow = [k for k in MODEL_KEYS if MODELS[k].get("pause_s")]
     cursor = int(prev.get("slow_cursor", 0)) % max(len(slow), 1)
@@ -1948,8 +2393,14 @@ def main():
                 out_models[key] = prev_models[key]
             continue
         t_key = time.monotonic()
+        if time_left() < 90:
+            logging.warning(f"{MODELS[key]['name']}: job deadline reached; carrying its "
+                            f"previous cycles over untouched.")
+            if key in prev_models:
+                out_models[key] = prev_models[key]
+            continue
         cycles, nb, qm, made = build_model(sess, key, prev_models, force,
-                                           data_stale, render_stale, verified)
+                                           data_stale, render_stale, verified, absent)
         if is_slow:
             slow_spent += time.monotonic() - t_key
             slow_done += 1
@@ -1973,7 +2424,12 @@ def main():
                 live.add(os.path.basename(fr["image"]))
                 live.add(os.path.basename(fr["data"]))
     dropped = 0
-    for d, ext in ((MAP_DIR, ".png"), (DATA_DIR, ".bin")):
+    for cycles in out_models.values():
+        for c in cycles:
+            for fr in c["frames"]:
+                if fr.get("xs"):
+                    live.add(os.path.basename(fr["xs"]))
+    for d, ext in ((MAP_DIR, ".png"), (DATA_DIR, ".bin"), (XS_PATH, ".xsz")):
         for fn in os.listdir(d):
             if fn.endswith(ext) and fn not in live:
                 os.remove(os.path.join(d, fn))
@@ -1982,6 +2438,10 @@ def main():
         if fn.endswith(".npy") and not any(f"_{c}z_" in fn for c in keep_cids):
             os.remove(os.path.join(STATE_DIR, fn))
             dropped += 1
+
+    bm = os.path.join(OUT_DIR, "basemap.json")
+    if not os.path.exists(bm):
+        export_basemap(bm)
 
     pov = build_pov(out_models, qmeta)
     live_pov = ({os.path.basename(p["image"]) for p in pov}
@@ -2004,14 +2464,19 @@ def main():
                        "cycles": v} for k, v in out_models.items()},
         "cycle": f"{newest['date']} {newest['hour']}Z",
         "domain": DOMAIN, "classes": CLASSES, "sites": list(SITES),
+        "site_coords": {k: [la, lo] for k, (la, lo) in SITES.items()},
+        "cape_box": CAPE_BOX, "conv_dbz": CONV_DBZ,
         "query": qmeta,
         "pov": {"frames": pov, "rules": RULE_KEYS, "rule_names": RULE_NAMES,
+                "rule_bits": RULE_BITS, "conventions": CONVENTIONS,
                 "not_evaluated": RULES_NOT_EVALUATED,
                 "standard": "NASA-STD-4010 (2017-06-27)", "thresholds": LLCC,
                 "colors": POV_COLORS, "bounds": POV_BOUNDS,
                 "source": " + ".join(f"{len(v)} {MODELS[k]['name']}"
                                      for k, v in out_models.items())},
         "verified": verified,              # so a model proves itself once, not once a pass
+        "absent": absent,                  # cycles found missing upstream, with when
+        "iso_site": ISO_SITE,
         "slow_cursor": (cursor + max(slow_done, 1)) % max(len(slow), 1),
         "cycles": out_models[primary],     # so an older viewer still works
         "frames": newest["frames"],
@@ -2020,7 +2485,8 @@ def main():
                        "convective_dbz": CONV_DBZ,
                        "graupel_gm2": GRAUPEL_CONV, "attach_nm": ATTACH_NM,
                        "anvil_tau_h": ANVIL_TAU_H, "conn_max_h": CONN_MAX_H,
-                       "tcu_top_c": TCU_TOP_C, "cu_depth_kft": CU_DEPTH_KFT},
+                       "tcu_top_c": TCU_TOP_C, "cu_depth_kft": CU_DEPTH_KFT,
+                       "anvil_persists": ANVIL_PERSISTS},
     }
     with open(os.path.join(OUT_DIR, "manifest.json"), "w") as fp:
         json.dump(manifest, fp, indent=1)
@@ -2029,7 +2495,7 @@ def main():
                                    for k, mb in _MB_BY_MODEL.items()) + "); "
                  + "; ".join(f"{MODELS[k]['name']} {len(v)} cycles" for k, v in out_models.items())
                  + f"; {n_members} potential members; {len(pov)} POV frames; "
-                 f"pruned {dropped} files.")
+                 f"pruned {dropped} files; {time.monotonic() - _T0:.0f} s elapsed.")
 
 
 if __name__ == "__main__":
