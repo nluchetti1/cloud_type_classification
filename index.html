@@ -2,531 +2,509 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CloudScope — cloud type over the Cape</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CloudScope · model cloud type and LLCC outlook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Saira:wdth,wght@50..125,300..700&display=swap" rel="stylesheet">
 <style>
+  /* Range-console palette. Navy is the ocean at night off the Cape; amber is the lamp a
+     console uses for "you did this" (selection, the section line, the pin); signal cyan is
+     reserved for data, and is the colour the squadron's 0 dBZ starts at. */
   :root{
-    --paper:#E9EBE4;
-    --paper-2:#DFE2D9;
-    --ink:#14181B;
-    --ink-3:#5D6A6E;
-    --rule:#C3C8BC;
-    --panel:#FFFFFF;
-    --panel-edge:#C3C8BC;
-    --accent:#A11D33;
-    --shell:1320px;
-    --rail:320px;
-    /* Everything above the map, so the map can be told how much room is left. */
-    --chrome:186px;
+    --abyss:#0A1424; --console:#101D33; --console-2:#15264A; --wire:#22395B; --wire-2:#2E4C77;
+    --ink:#D9E5F3; --dim:#8399B6; --faint:#5A7194;
+    --amber:#FFB547; --signal:#4FD6E3; --nogo:#FF4D5E; --go:#1E7A5C;
+    --r:6px; --rail:330px;
+    font-synthesis:none;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;padding:0}
+  [hidden]{display:none !important}
+  html,body{margin:0; background:var(--abyss); color:var(--ink)}
   body{
-    background:var(--paper); color:var(--ink);
-    font-family:"IBM Plex Mono",ui-monospace,monospace;
-    font-size:13px; line-height:1.5;
-    padding:clamp(12px,2.2vw,24px);
+    font-family:"Saira",system-ui,sans-serif; font-stretch:92%;
+    font-size:14px; line-height:1.45; font-variant-numeric:tabular-nums;
+    padding:max(14px,env(safe-area-inset-top)) clamp(10px,2vw,22px) max(18px,env(safe-area-inset-bottom));
+    /* A faint plotting grid behind everything - the page reads as an instrument, and the
+       maps and section sit on the same lattice. */
+    background-image:
+      linear-gradient(rgba(79,214,227,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,214,227,.035) 1px, transparent 1px);
+    background-size:28px 28px;
   }
-  .shell{max-width:var(--shell); margin:0 auto}
+  .shell{max-width:1500px; margin:0 auto}
+  button,select,input{font:inherit; color:inherit}
+  :focus-visible{outline:2px solid var(--amber); outline-offset:2px}
 
-  /* ---- masthead ------------------------------------------------------------ */
-  header{
-    display:flex; align-items:flex-end; justify-content:space-between;
-    gap:18px; flex-wrap:wrap;
-    border-bottom:1.5px solid var(--ink); padding-bottom:8px; margin-bottom:10px;
-  }
-  h1{
-    font-family:"Bricolage Grotesque",system-ui,sans-serif;
-    font-weight:800; font-size:clamp(22px,3.2vw,34px); line-height:.92;
-    margin:0; letter-spacing:-.025em; font-variation-settings:"opsz" 72;
-  }
-  h1 em{font-style:normal; color:var(--ink-3)}
-  .sub{font-size:11px; color:var(--ink-3); margin-top:4px; letter-spacing:.02em}
-  .stamp{text-align:right; font-size:11px; color:var(--ink-3); white-space:nowrap}
-  .stamp b{display:block; color:var(--ink); font-size:13.5px; letter-spacing:.03em}
+  /* ---- masthead ---------------------------------------------------------------- */
+  header{display:grid; grid-template-columns:1fr auto; gap:6px 24px; align-items:end;
+         padding-bottom:12px; border-bottom:1px solid var(--wire); margin-bottom:12px}
+  .brand{display:flex; align-items:baseline; gap:16px; flex-wrap:wrap}
+  .wordmark{margin:0; font-weight:300; font-stretch:125%; font-size:clamp(26px,3.4vw,40px);
+            letter-spacing:.08em; line-height:1}
+  .wordmark b{font-weight:650; color:var(--signal)}
+  .tagline{color:var(--dim); font-stretch:80%; font-size:14px}
+  .clock{text-align:right}
+  .clock .v{font-size:clamp(22px,2.6vw,32px); font-weight:600; font-stretch:105%; line-height:1}
+  .clock .s{color:var(--dim); font-size:12.5px; font-stretch:85%}
+  .banner{grid-column:1/-1; border:1px solid #7A4A12; background:#2A1C08; color:#FFD9A0;
+          border-radius:var(--r); padding:6px 10px; font-size:13px}
 
-  /* ---- run selector -------------------------------------------------------- */
-  .runs{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px}
-  .runs-label{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3)}
-  .run{font:inherit; font-size:11.5px; font-weight:600; letter-spacing:.03em; cursor:pointer;
-       background:transparent; color:var(--ink-3); border:1px solid var(--rule);
-       border-radius:2px; padding:3px 9px; display:flex; align-items:baseline; gap:6px}
-  .run:hover{border-color:var(--ink-3); color:var(--ink)}
-  .run[aria-pressed=true]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
-  .run small{font-size:9.5px; opacity:.72; font-weight:400}
-  .src{font:inherit; font-size:11.5px; padding:3px 6px; background:var(--paper);
-       color:var(--ink); border:1px solid var(--rule); border-radius:2px}
-  .src:disabled{color:var(--ink-3)}
-  .pov-scale{display:flex; margin:6px 0 4px; height:10px}
-  .pov-scale span{flex:1}
-  .pov-ticks{display:flex; justify-content:space-between; font-size:9.5px; color:var(--ink-3)}
-  .pov-big{font-size:26px; font-weight:600; font-variant-numeric:tabular-nums; line-height:1.1}
-  .pov-rules{font-size:10px; color:var(--ink-3); margin-top:8px; line-height:1.5}
-  /* A run still being posted gets a dashed edge - the loop ending early is expected, not a
-     failure, and it fills in on the next pass. */
+  /* ---- controls ----------------------------------------------------------------- */
+  .controls{display:flex; flex-wrap:wrap; gap:10px 22px; align-items:center; margin-bottom:12px}
+  .ctl{display:flex; align-items:center; gap:8px}
+  .ctl > span{color:var(--dim); font-size:12.5px; font-stretch:80%}
+  .seg{display:inline-flex; border:1px solid var(--wire-2); border-radius:var(--r); overflow:hidden}
+  .seg button{background:transparent; border:0; padding:4px 11px; cursor:pointer; color:var(--dim);
+              font-stretch:85%; font-weight:500; border-right:1px solid var(--wire)}
+  .seg button:last-child{border-right:0}
+  .seg button:hover{color:var(--ink); background:var(--console-2)}
+  .seg button[aria-pressed=true]{background:var(--amber); color:#1A1305; font-weight:650}
+  .seg button:disabled{opacity:.4; cursor:not-allowed}
+  .runs{display:flex; flex-wrap:wrap; gap:6px}
+  .run{background:var(--console); border:1px solid var(--wire-2); border-radius:var(--r);
+       padding:3px 9px; cursor:pointer; color:var(--ink); font-stretch:85%; font-weight:600}
+  .run small{color:var(--dim); font-weight:400; margin-left:6px}
   .run.partial{border-style:dashed}
-  /* A layer that cannot be shown has to look that way. Silently ignoring the click reads
-     as a broken button. */
-  .run:disabled{opacity:.45; cursor:not-allowed; border-style:dotted}
-  .run:disabled:hover{border-color:var(--rule); color:var(--ink-3)}
+  .run[aria-pressed=true]{border-color:var(--amber); box-shadow:inset 0 0 0 1px var(--amber)}
 
-  /* ---- layout -------------------------------------------------------------- */
-  .grid{display:grid; grid-template-columns:minmax(0,1fr) var(--rail); gap:18px;
-        align-items:start}
-  .stage{min-width:0; display:flex; flex-direction:column; align-items:center}
+  /* ---- deck ------------------------------------------------------------------- */
+  .deck{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) var(--rail);
+        gap:12px; align-items:start}
+  .panel{background:var(--console); border:1px solid var(--wire); border-radius:var(--r);
+         position:relative; min-width:0}
+  .ph{display:flex; align-items:baseline; gap:10px; padding:7px 10px 5px}
+  .ph h2{margin:0; font-size:15px; font-weight:650; font-stretch:95%}
+  .ph .note{margin-left:auto; color:var(--dim); font-size:12px; font-stretch:80%; text-align:right}
+  .mapwrap{position:relative; margin:0 6px; line-height:0}
+  .mapwrap canvas{display:block; width:100%; touch-action:none; cursor:crosshair;
+                  border-radius:3px; background:#0C1A2E}
+  .mapwrap .wait{position:absolute; inset:0; display:grid; place-items:center; line-height:1.4;
+                 color:var(--dim); font-size:13px; pointer-events:none}
+  .legend{display:flex; flex-wrap:wrap; gap:3px 12px; padding:7px 10px 9px; font-size:12.5px;
+          font-stretch:85%; color:var(--dim)}
+  .legend i{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px;
+            vertical-align:-1px}
+  .scale{display:flex; height:9px; margin:7px 10px 2px; border-radius:2px; overflow:hidden}
+  .scale span{flex:1}
+  .ticks{display:flex; justify-content:space-between; padding:0 10px 8px; color:var(--dim);
+         font-size:11.5px}
 
-  /* The figure shrink-wraps the PNG. Letting it stretch left a wide white slab beside a
-     white map, which read as empty domain with a border down the middle of it. */
-  figure{
-    margin:0; background:var(--panel); border:1px solid var(--panel-edge); border-radius:2px;
-    position:relative; width:max-content; max-width:100%; line-height:0;
-  }
-  figure img{display:block; width:auto; max-width:100%;
-             max-height:max(360px, calc(100vh - var(--chrome))); cursor:crosshair;
-             /* Nearest-neighbour scaling, deliberately. The browser's default smooth
-                interpolation blends neighbouring class colours, and on a categorical map
-                that manufactures classes that are not there: attached anvil #E2703A mixed
-                with the white of clear sky lands on #ECA27F, which is the detached anvil
-                swatch #F0A87E to the eye. Aliased edges are a fair price for never
-                inventing a category. */
-             image-rendering:pixelated; image-rendering:crisp-edges}
-  .loading{position:absolute; inset:0; display:grid; place-items:center;
-           color:var(--ink-3); font-size:11.5px; letter-spacing:.08em; line-height:1.5}
+  .transport{grid-column:1/3; display:flex; gap:14px; align-items:center; padding:8px 12px}
+  .play{background:var(--amber); color:#1A1305; border:0; border-radius:var(--r);
+        padding:6px 16px; font-weight:700; cursor:pointer; min-width:78px}
+  .transport input[type=range]{flex:1; accent-color:var(--amber); min-width:120px}
+  .transport .when{font-weight:650; font-size:17px; white-space:nowrap}
+  .transport .fh{color:var(--dim); font-size:13px}
 
-  /* ---- transport ----------------------------------------------------------- */
-  .transport{display:flex; align-items:center; gap:12px; margin-top:10px; flex-wrap:wrap;
-             width:100%}
-  button{font:inherit; font-weight:600; letter-spacing:.05em; cursor:pointer;
-         background:var(--ink); color:var(--paper); border:none; border-radius:2px;
-         padding:6px 14px}
-  button:hover{background:#2C3438}
-  button:focus-visible, input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
-  input[type=range]{flex:1; min-width:140px; accent-color:var(--accent)}
-  .valid{font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap}
-  .fh{color:var(--ink-3); font-size:11.5px}
+  /* ---- section ------------------------------------------------------------------ */
+  .xs{grid-column:1/3}
+  .xs .ph label{display:flex; gap:6px; align-items:center; color:var(--dim); font-size:12.5px;
+                cursor:pointer}
+  .xs .ph input{accent-color:var(--amber)}
+  .xsbody{position:relative; margin:0 6px; min-height:120px}
+  .xsbody canvas{display:block; width:100%; border-radius:3px}
+  .xs-empty{padding:26px 16px 30px; color:var(--dim); line-height:1.6; max-width:70ch}
+  .xs-empty strong{color:var(--ink); font-weight:600}
+  .xsfoot{display:flex; flex-wrap:wrap; gap:4px 18px; padding:6px 10px 9px; font-size:12px;
+          color:var(--dim); font-stretch:85%}
+  .xsfoot i{display:inline-block; width:12px; height:6px; margin-right:5px; vertical-align:1px}
+  .xsread{min-height:1.4em}
+  /* The one orchestrated moment: a new cut sweeps in left to right, like a scope trace. */
+  .sweep{animation:sweep .7s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes sweep{from{clip-path:inset(0 100% 0 0)} to{clip-path:inset(0 0 0 0)}}
+  @media (prefers-reduced-motion:reduce){ .sweep{animation:none} }
 
-  /* ---- pin overlay --------------------------------------------------------- */
-  .pin{position:absolute; pointer-events:none; transform:translate(-50%,-50%)}
-  .pin .ring{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-             border:1.5px solid var(--ink); border-radius:50%; opacity:.62}
-  .pin .cross::before,.pin .cross::after{content:""; position:absolute; background:var(--ink)}
-  .pin .cross::before{left:-1px; top:-9px; width:2px; height:18px}
-  .pin .cross::after{top:-1px; left:-9px; height:2px; width:18px}
+  /* ---- rail --------------------------------------------------------------------- */
+  .rail{grid-column:3; grid-row:1 / span 3; position:sticky; top:10px;
+        max-height:calc(100vh - 20px); overflow:auto; padding:10px 12px}
+  .rail h3{margin:14px 0 6px; font-size:13px; font-weight:650; font-stretch:90%; color:var(--dim)}
+  .rail h3:first-child{margin-top:0}
+  .where{font-weight:650; font-size:15px}
+  .hint{color:var(--dim); font-size:13px}
+  .cls{display:flex; align-items:center; gap:8px; font-size:16px; font-weight:650; margin:4px 0}
+  .chip{width:12px; height:12px; border-radius:2px; flex:none; display:inline-block}
+  dl.facts{display:grid; grid-template-columns:auto 1fr; gap:2px 12px; margin:6px 0 0;
+           font-size:13.5px}
+  dl.facts dt{color:var(--dim)}
+  dl.facts dd{margin:0}
+  .nogo{color:var(--nogo)}
+  .mixbar{display:flex; height:8px; margin:6px 0; border-radius:2px; overflow:hidden;
+          background:var(--console-2)}
+  .mix{display:grid; grid-template-columns:auto 1fr auto; gap:2px 8px; font-size:13px;
+       align-items:center}
+  .mix b{font-weight:500}
+  .mix em{font-style:normal; color:var(--dim)}
+  .dpdt{display:grid; grid-template-columns:auto auto 1fr; gap:3px 8px; font-size:13px;
+        align-items:center}
+  .dpdt .c{color:var(--dim)}
+  .dpdt .c.now{color:var(--amber); font-weight:650}
+  .shares .row{display:grid; grid-template-columns:14px 1fr auto; gap:6px; align-items:center;
+               font-size:13px; padding:3px 0}
+  .shares .bar{grid-column:2/4; height:3px; background:var(--console-2); border-radius:2px}
+  .shares .bar span{display:block; height:100%; border-radius:2px}
+  .small{font-size:12px; color:var(--dim); line-height:1.5}
+  .rules li{margin:2px 0}
+  .rules{padding-left:16px; margin:4px 0}
 
-  /* ---- rail ---------------------------------------------------------------- */
-  /* Sticky: the readout has to stay level with the map, or answering "what did I click"
-     means scrolling away from the thing you clicked. */
-  .rail{position:sticky; top:12px; max-height:calc(100vh - 24px); overflow:auto;
-        padding-left:13px; border-left:1.5px solid var(--ink)}
-  .rail h2{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
-           color:var(--ink-3); margin:0 0 2px; font-weight:500}
-  .alt{font-size:10px; color:var(--ink-3); letter-spacing:.04em; margin-bottom:8px}
-
-  .query{margin-bottom:14px; padding-bottom:12px; border-bottom:1.5px solid var(--ink)}
-  .q-head{display:flex; align-items:baseline; gap:8px; margin-bottom:7px}
-  .q-where{font-weight:600; font-size:12px; font-variant-numeric:tabular-nums}
-  .q-head button{margin-left:auto; padding:2px 8px; font-size:10px}
-  .q-cls{display:flex; align-items:center; gap:7px; font-weight:600; font-size:14px}
-  .q-cls .chip{width:13px; height:13px}
-  .q-hint{font-size:10px; color:var(--ink-3); margin-top:2px}
-  .q-facts{margin:8px 0 0; display:grid; grid-template-columns:auto 1fr; gap:2px 10px;
-           font-size:11.5px}
-  .q-facts dt{color:var(--ink-3)}
-  .q-facts dd{margin:0; font-variant-numeric:tabular-nums}
-  .q-sub{font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3);
+  /* ---- lower ------------------------------------------------------------------- */
+  .lower{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) var(--rail); gap:12px;
          margin-top:12px}
-  .q-stack{display:flex; height:9px; margin:6px 0 7px; background:var(--paper-2)}
-  .q-stack span{height:100%}
-  .q-mix{display:grid; grid-template-columns:auto 1fr auto; gap:2px 8px; font-size:11.5px;
-         align-items:center}
-  .q-mix .chip{width:9px; height:9px}
-  .q-mix b{font-weight:600}
-  .q-mix i{font-style:normal; text-align:right; font-variant-numeric:tabular-nums;
-           color:var(--ink-3)}
-  .dpdt-rows{margin-top:6px; display:grid; grid-template-columns:auto auto 1fr;
-             gap:3px 8px; align-items:center; font-size:11.5px}
-  .dpdt-rows .cyc{color:var(--ink-3); font-variant-numeric:tabular-nums}
-  .dpdt-rows .cyc.now{color:var(--ink); font-weight:600}
-  .dpdt-rows .chip{width:11px; height:11px}
-  .dpdt-rows .nm{font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  .dpdt-rows .miss{grid-column:2/-1; color:var(--ink-3); font-size:10.5px}
-  .dpdt-note{font-size:10px; color:var(--ink-3); margin-top:7px; line-height:1.45}
-  .hint{font-size:10.5px; color:var(--ink-3); line-height:1.5}
+  .pads{grid-column:1/3; display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+        gap:6px}
+  .pad{background:var(--console); padding:6px 9px; border:1px solid var(--wire); border-radius:var(--r)}
+  .pad .n{color:var(--dim); font-size:12px; font-stretch:80%}
+  .pad .k{display:flex; gap:6px; align-items:center; font-weight:600; font-size:13px}
+  .pad .x{color:var(--dim); font-size:12px}
+  .trend{grid-column:1/3; padding:8px 10px}
+  .trend svg{width:100%; height:96px; display:block}
+  footer{margin-top:14px; color:var(--dim); font-size:13px; max-width:90ch; line-height:1.6}
 
-  .band{padding:6px 0; border-bottom:1px dotted var(--rule)}
-  .band-top{display:flex; align-items:center; gap:8px}
-  .chip{width:12px; height:12px; border-radius:2px; flex:none;
-        box-shadow:0 0 0 1px rgba(20,24,27,.22) inset}
-  .band-name{font-weight:600; font-size:12px}
-  .band-pct{margin-left:auto; font-variant-numeric:tabular-nums; color:var(--ink-3);
-            font-size:11.5px}
-  .bar{height:3px; background:var(--paper-2); margin-top:5px; overflow:hidden}
-  .bar span{display:block; height:100%; width:0; transition:width .28s ease}
-  .band-note{font-size:10px; color:var(--ink-3); margin-top:4px; line-height:1.4}
-  .total{display:flex; align-items:baseline; gap:8px; margin-top:9px; padding-top:8px;
-         border-top:1.5px solid var(--ink); font-size:11.5px}
-  .total b{font-size:15px; font-variant-numeric:tabular-nums}
-  .total span{color:var(--ink-3)}
-  .scale-note{font-size:9.5px; color:var(--ink-3); margin-top:7px; line-height:1.45}
-
-  /* ---- pads ---------------------------------------------------------------- */
-  .pads{display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:1px;
-        margin-top:14px; background:var(--rule); border:1px solid var(--rule); width:100%}
-  .pad{background:var(--paper); padding:6px 9px}
-  .pad-name{font-size:9.5px; letter-spacing:.1em; color:var(--ink-3)}
-  .pad-cls{display:flex; align-items:center; gap:5px; margin-top:3px; font-weight:600;
-           font-size:11.5px; line-height:1.2}
-  .pad-cls .chip{width:9px; height:9px}
-  .pad-num{font-size:10px; color:var(--ink-3); margin-top:2px; font-variant-numeric:tabular-nums}
-
-  .trend{margin-top:16px; border-top:1px solid var(--rule); padding-top:10px; width:100%}
-  .trend h2{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
-            color:var(--ink-3); margin:0; font-weight:500}
-  .trend svg{width:100%; height:92px; display:block; margin-top:4px}
-
-  footer{margin-top:18px; border-top:1px solid var(--rule); padding-top:9px;
-         font-size:10.5px; color:var(--ink-3); max-width:78ch}
-
-  @media (max-width:900px){
-    .grid{grid-template-columns:1fr}
-    .rail{position:static; max-height:none; border-left:none; padding-left:0;
-          border-top:1.5px solid var(--ink); padding-top:12px}
-    figure img{max-height:60vh}
+  @media (max-width:1150px){
+    .deck,.lower{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+    .rail{grid-column:1/3; grid-row:auto; position:static; max-height:none}
   }
-  @media (prefers-reduced-motion:reduce){ *{transition:none !important} }
+  @media (max-width:720px){
+    .deck,.lower{grid-template-columns:minmax(0,1fr)}
+    .transport,.xs,.rail,.pads,.trend{grid-column:1}
+    header{grid-template-columns:1fr}
+    .clock{text-align:left}
+  }
 </style>
 </head>
 <body>
 <div class="shell">
 
 <header>
-  <div>
-    <h1>Cloud<em>Scope</em></h1>
-    <div class="sub" id="sub">Model cloud type over the Florida spaceport corridor</div>
+  <div class="brand">
+    <h1 class="wordmark">cloud<b>scope</b></h1>
+    <div class="tagline" id="tagline">Model cloud type and LLCC outlook over the Florida spaceport corridor</div>
   </div>
-  <div class="stamp">
-    <b id="cycle">—</b>
-    <span id="generated"></span>
+  <div class="clock">
+    <div class="v" id="valid">—</div>
+    <div class="s" id="runline">loading manifest</div>
   </div>
+  <div class="banner" id="banner" hidden></div>
 </header>
 
-<div class="runs">
-  <span class="runs-label">Run</span>
-  <div id="runs" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-  <span class="runs-label" style="margin-left:14px">Layer</span>
-  <div id="layers" style="display:flex;gap:8px">
-    <button class="run" id="lay-cloud" aria-pressed="true">Cloud type</button>
-    <button class="run" id="lay-pov" aria-pressed="false">LLCC POV</button>
+<div class="controls">
+  <div class="ctl"><span>Model</span><div class="seg" id="models"></div></div>
+  <div class="ctl"><span>Run</span><div class="runs" id="runs"></div></div>
+  <div class="ctl"><span>Left map</span>
+    <div class="seg" id="layers">
+      <button id="lay-cloud" aria-pressed="true">Cloud class</button>
+      <button id="lay-pov" aria-pressed="false">Violation probability</button>
+    </div>
   </div>
-  <span class="runs-label" style="margin-left:14px">Source</span>
-  <select id="source" class="src"></select>
+  <div class="ctl"><span>Click to</span>
+    <div class="seg" id="tools">
+      <button id="tool-inspect" aria-pressed="true" title="Read out the column under a point (I)">Inspect a point</button>
+      <button id="tool-section" aria-pressed="false" title="Click A then B, or drag, to cut a cross-section (X)">Cut a section</button>
+    </div>
+  </div>
+  <div class="ctl"><span>View</span>
+    <div class="seg" id="views">
+      <button id="view-domain" aria-pressed="true">Corridor</button>
+      <button id="view-cape" aria-pressed="false">Cape, 25 nmi</button>
+    </div>
+  </div>
 </div>
 
-<div class="grid">
-  <div class="stage">
-    <figure>
-      <img id="frame" alt="Classified cloud type map. Click a point for a readout.">
-      <div class="pin" id="pin" hidden aria-hidden="true">
-        <div class="ring" id="ring"></div><div class="cross"></div>
-      </div>
-      <div class="loading" id="loading">LOADING</div>
-    </figure>
+<main class="deck">
+  <section class="panel" aria-labelledby="h-left">
+    <div class="ph"><h2 id="h-left">Cloud class</h2><span class="note" id="n-left">what the column is</span></div>
+    <div class="mapwrap"><canvas id="map-left" aria-label="Cloud class map. Click to inspect a point or cut a section."></canvas>
+      <div class="wait" id="wait-left">Loading grids</div></div>
+    <div id="leg-left"></div>
+  </section>
+  <section class="panel" aria-labelledby="h-right">
+    <div class="ph"><h2 id="h-right">Simulated reflectivity</h2><span class="note">model composite, scale from 0 dBZ</span></div>
+    <div class="mapwrap"><canvas id="map-right" aria-label="Simulated composite reflectivity map."></canvas>
+      <div class="wait" id="wait-right">Loading grids</div></div>
+    <div id="leg-right"></div>
+  </section>
 
-    <div class="transport">
-      <button id="play" aria-label="Play or pause the forecast loop">PLAY</button>
-      <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Forecast hour">
-      <span class="fh">VALID</span><span class="valid" id="valid">—</span>
-      <span class="fh" id="fh"></span>
+  <aside class="panel rail" aria-label="Readout">
+    <h3>Point readout</h3>
+    <div class="where" id="q-where">No point selected</div>
+    <div id="q-empty" class="hint">Choose “Inspect a point” and click either map for the column
+      beneath it, the cloud mix within 10 nmi, which rules this run trips there, and how the
+      last few runs have handled it.</div>
+    <div id="q-full" hidden>
+      <div class="cls" id="q-cls"></div>
+      <div class="small" id="q-hint"></div>
+      <dl class="facts" id="q-facts"></dl>
+      <h3>Within 10 nmi</h3>
+      <div class="mixbar" id="q-bar"></div>
+      <div class="mix" id="q-mix"></div>
+      <h3>Same point, same valid time, every run</h3>
+      <div class="dpdt" id="dpdt"></div>
+      <div class="small" id="dpdt-note"></div>
     </div>
 
-    <div class="pads" id="pads"></div>
+    <h3>Share of the corridor</h3>
+    <div class="shares" id="shares"></div>
+    <div class="small">Percent of 3 km columns in the domain. Bars are square-root scaled so a
+      sliver stays visible; read the number.</div>
 
-    <div class="trend">
-      <h2>Share of the domain, by forecast hour</h2>
-      <svg id="trend" role="img" aria-label="Share of the domain by cloud type across forecast hours"></svg>
-    </div>
+    <h3>How the probability is scored</h3>
+    <div class="small" id="pov-about"></div>
+  </aside>
+
+  <div class="panel transport">
+    <button class="play" id="play" aria-label="Play or pause the forecast loop">Play</button>
+    <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Forecast hour">
+    <span class="when" id="when">—</span><span class="fh" id="fh"></span>
   </div>
 
-  <aside class="rail">
-    <section id="povbox" hidden style="margin-bottom:14px;padding-bottom:12px;
-             border-bottom:1.5px solid var(--ink)">
-      <h2>LLCC violation probability</h2>
-      <div class="alt" id="pov-src">—</div>
-      <div class="pov-scale" id="pov-scale"></div>
-      <div class="pov-ticks"><span>0%</span><span>50%</span><span>100%</span></div>
-      <div class="pov-rules" id="pov-rules"></div>
-    </section>
-
-    <section class="query" id="query">
-      <div class="q-head">
-        <span class="q-where" id="q-where">No point selected</span>
-        <button id="q-clear" hidden>CLEAR</button>
-      </div>
-      <div id="q-empty" class="hint">
-        Click anywhere on the map for the column beneath that point, the class mix within
-        10&nbsp;nm of it, and how the last few runs have handled it.
-      </div>
-      <div id="q-full" hidden>
-        <div class="q-cls" id="q-cls"></div>
-        <div class="q-hint" id="q-hint"></div>
-        <dl class="q-facts" id="q-facts"></dl>
-        <div class="q-sub">Within 10 nm of the pin</div>
-        <div class="q-stack" id="q-stack"></div>
-        <div class="q-mix" id="q-mix"></div>
-        <div class="q-sub">dprog/dt — same point, same valid time</div>
-        <div class="dpdt-rows" id="dpdt"></div>
-        <div class="dpdt-note" id="dpdt-note"></div>
-      </div>
-    </section>
-
-    <h2>Cloud type</h2>
-    <div class="alt">share of the domain — highest cloud first</div>
-    <div id="bands"></div>
-    <div class="total"><b id="covered">—</b><span>of the domain has cloud overhead</span></div>
-    <div class="scale-note">
-      Each figure is the percentage of the 3&nbsp;km grid columns inside the domain given that
-      class. Bars are square-root scaled so a fraction of a percent stays visible next to a
-      sky full of one thing — read the number, not the bar.
+  <section class="panel xs" aria-labelledby="h-xs">
+    <div class="ph"><h2 id="h-xs">Vertical cross-section</h2>
+      <label><input type="checkbox" id="smooth" checked> Smooth</label>
+      <span class="note" id="xs-note">no line drawn</span></div>
+    <div class="xsbody" id="xsbody">
+      <div class="xs-empty" id="xs-empty"><strong>Cut a section.</strong> Pick “Cut a section”,
+        then click a start point and an end point on either map, or drag from one to the other.
+        The section follows the forecast as you scrub and play.</div>
+      <canvas id="xs" hidden></canvas>
     </div>
-  </aside>
+    <div class="xsfoot" id="xs-foot" hidden>
+      <span><i style="background:var(--nogo)"></i>Top strip: this run's NO-GO along the line</span>
+      <span><i style="background:#3A7BF2"></i>Second strip: cloud class</span>
+      <span id="xs-povkey"><i style="background:#B03A7E"></i>Third strip: ensemble violation probability</span>
+      <span id="xs-iso"></span>
+      <span id="xs-src"></span>
+      <span class="xsread" id="xs-read"></span>
+    </div>
+  </section>
+</main>
+
+<div class="lower">
+  <div class="pads" id="pads"></div>
+  <div class="panel trend">
+    <div class="small">Corridor share by class through the run</div>
+    <svg id="trend" role="img" aria-label="Share of the domain by cloud class across forecast hours"></svg>
+  </div>
 </div>
 
 <footer id="method"></footer>
 </div>
 
 <script>
-const NOTES = {
-  cirrus:     "Glaciated layer topping colder than −38 °C, with no core upwind and not joined to one.",
-  anvil_det:  "Ice that has separated — no continuous shield back to a parent, but off one within 3 h.",
-  anvil_att:  "Unbroken ice shield running back to a live core, however far downwind.",
-  tcu:        "Liquid-based layer glaciating at its top, colder than −10 °C.",
-  cumulus:    "Liquid layer 3 kft deep or more, a lumpy top, or a 40 dBZ convective core.",
-  stratiform: "Flat, shallow liquid layer.",
-  clear:      "No condensate in the column."
-};
-const ORDER = ["cirrus","anvil_det","anvil_att","tcu","cumulus","stratiform"];
-const RADIUS_NM = 10;
+"use strict";
+const VIEWER_VERSION = "v9-console";
 
-// Assets are named by cycle and forecast hour, so a NEW run gets new filenames and caches
-// cleanly. A rebuild does not: a version bump rewrites the same filename with new content,
-// and the browser will happily pair a cached PNG with a freshly fetched grid - which is how
-// a map pixel and the readout ended up disagreeing. Stamping the build onto every asset URL
-// makes a rebuild look like new files to the cache, without disabling caching in general.
-let STAMP = "";
-const bust = u => u + (u.includes("?") ? "&" : "?") + "v=" + STAMP;
+/* ---- constants ---------------------------------------------------------------- */
+// Fallbacks for manifests written before site coordinates were published.
+const SITES_FALLBACK = {"LC-39A":[28.6084,-80.6043],"LC-39B":[28.6272,-80.6208],
+  "SLC-41":[28.5833,-80.5834],"SLC-40":[28.5619,-80.5772],"SLC-37B":[28.5317,-80.5657],
+  "SLC-20":[28.5085,-80.5546],"LZ-1":[28.4857,-80.5444],"SLC-36":[28.4707,-80.5379],
+  "SLC-46":[28.4584,-80.5271],"KTTS":[28.6150,-80.6944],"KXMR":[28.4675,-80.5664]};
+const CAPE_CENTER = [28.55, -80.60], CAPE_HALF_NM = 25;
+const RADIUS_NM = 10, NM = 1.852;
 
-let M=null, CYC=[], ci=0, i=0, timer=null, byKey={}, byId={}, MK=null;
-let BUF={}, POVBUF={}, QP=null, LAYER="cloud", POVBY={};
+// Display classes. The server's cumulus/TCU split is re-cut here by the TOP TEMPERATURE of
+// the cumuliform layer, the way the LLCC and the radar companion read cumulus, and a
+// cumulus with a 40 dBZ composite is drawn as a convective core.
+const DISP = [
+  {k:"cu_warm",  name:"Cumulus, top warmer than 0 °C",  c:"#7FA3C8"},
+  {k:"cu_0_10",  name:"Cumulus topping 0 to −10 °C",    c:"#3CCFE0"},
+  {k:"cu_10_20", name:"Cumulus topping −10 to −20 °C",  c:"#3A7BF2"},
+  {k:"cu_20",    name:"Cumulus topping below −20 °C",   c:"#A58BF5"},
+  {k:"core",     name:"Convective core",                c:"#F45FC7"},
+  {k:"anvil_att",name:"Attached anvil",                 c:"#F7953B"},
+  {k:"anvil_det",name:"Detached anvil",                 c:"#F2F2EC"},
+  {k:"layer",    name:"Layered cloud, not convective",  c:"#B89B72"},
+  {k:"cirrus",   name:"Cirrus",                         c:"#4F6A8C"},
+];
+const DISPBY = Object.fromEntries(DISP.map(d => [d.k, d]));
+const CLASS_DARK = {clear:"transparent", stratiform:"#B89B72", cumulus:"#3CCFE0", tcu:"#3A7BF2",
+  anvil_att:"#F7953B", anvil_det:"#F2F2EC", cirrus:"#6F8BB0"};
+// Radar scale, starting at 0 dBZ in cyan - how the squadron displays it.
+const DBZ_STOPS = [[0,"#2EE6F0"],[5,"#1CA6F4"],[10,"#1452F2"],[15,"#0E2FB4"],[20,"#22E04B"],
+  [25,"#17B33A"],[30,"#0F8A2C"],[35,"#F5EE2A"],[40,"#E8B70E"],[45,"#F98C14"],[50,"#F42A1E"],
+  [55,"#C8141B"],[60,"#9E0F1E"],[65,"#F23AEB"],[70,"#9A5BD0"],[75,"#F4F4F4"]];
+const POV_DARK = ["rgba(0,0,0,0)","#3A2C6E","#6E2F8C","#B03A7E","#E25A4B","#F7923A","#FFD45C"];
+const PLANE = {CLASS:0, TOP_KFT:1, TOP_C:2, IWP:3, DEPTH:4, DBZ:5, AGE:6, THICK:7, BASE_C:8,
+               NOGO:9, CU_TOP:10};
+
+/* ---- state ------------------------------------------------------------------- */
+let M = null, MK = null, CYC = [], ci = 0, i = 0, timer = null;
+let byKey = {}, byId = {}, POVBY = {}, SITES = {}, BASE = null;
+let BUF = {}, POVBUF = {}, XSBUF = {}, IMG = {};
+let LEFT = "cloud", TOOL = "inspect", VIEWK = "domain";
+let QP = null, XS = {a:null, b:null}, XSHOVER = null, DRAG = null;
+let STAMP = "", CONV = 40;
 const $ = id => document.getElementById(id);
 const T = s => Date.parse(s || "");
 const cur = () => CYC[ci];
-const frames = () => cur().frames;
+const frames = () => (cur() || {frames:[]}).frames;
+const frame = () => frames()[i];
+const bust = u => u + (u.includes("?") ? "&" : "?") + "v=" + STAMP;
+const hex = h => { const n = parseInt(h.slice(1), 16); return [n>>16 & 255, n>>8 & 255, n & 255]; };
+const DPR = () => (typeof devicePixelRatio === "number" && devicePixelRatio > 0) ? Math.min(devicePixelRatio, 2) : 1;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-fetch("manifest.json?" + Date.now())
-  .then(r => r.ok ? r.json() : Promise.reject(r.status))
-  .then(m => { M = m; boot(); })
-  .catch(e => {
-    $("loading").textContent = "NO FORECAST YET";
-    $("sub").textContent = "Couldn't load manifest.json (" + e + "). It has to sit beside index.html.";
-  });
+// Lookup tables: packed dBZ code (0 none, else dBZ+1) and POV percent -> RGBA.
+const DBZ_LUT = (() => { const t = new Uint8ClampedArray(128*4);
+  for (let c = 1; c < 128; c++){ const d = c - 1; let col = DBZ_STOPS[0][1];
+    for (const [lo, h] of DBZ_STOPS) if (d >= lo) col = h;
+    const [r,g,b] = hex(col); t.set([r,g,b,255], c*4); }
+  return t; })();
+function dbzRGBA(d){ if (!(d >= 0)) return null; return DBZ_LUT.subarray((Math.min(126, Math.round(d))+1)*4, (Math.min(126, Math.round(d))+2)*4); }
+function povColor(p){ const b = (M.pov && M.pov.bounds) || [0,5,20,40,60,80,95,100.01];
+  for (let k = b.length - 2; k >= 0; k--) if (p >= b[k]) return POV_DARK[k] || POV_DARK[POV_DARK.length-1];
+  return POV_DARK[0]; }
+
+/* ---- boot --------------------------------------------------------------------- */
+function start(){
+  return fetch("manifest.json?" + Date.now())
+    .then(r => r.ok ? r.json() : Promise.reject("HTTP " + r.status))
+    .then(m => { M = m; boot(); })
+    .catch(e => {
+      $("runline").textContent = "No forecast published yet";
+      $("tagline").textContent = "manifest.json did not load (" + e + "). It has to sit beside index.html; the hourly build writes it.";
+      ["wait-left","wait-right"].forEach(id => $(id).textContent = "No data");
+    });
+}
 
 function modelCycles(k){
   if (M.models && k && M.models[k]) return M.models[k].cycles || [];
-  return M.cycles && M.cycles.length ? M.cycles
-       : [{id:"current", label:M.cycle||"current", frames:M.frames,
-           run_h:(M.frames||[]).length}];
+  return M.cycles || [];
 }
 
 function boot(){
-  STAMP = encodeURIComponent((M.generated || "") + "|" + (M.data_version || "")
-                             + "|" + (M.render_version || ""));
+  STAMP = encodeURIComponent((M.generated||"") + "|" + (M.data_version||"") + "|" + (M.render_version||""));
   byKey = Object.fromEntries(M.classes.map(c => [c.key, c]));
   byId  = Object.fromEntries(M.classes.map(c => [c.id, c]));
-  // Cloud-type maps come from ONE model at a time - they are categorical fields, and
-  // averaging class ids across models would be meaningless. The POV is where the models
-  // actually combine.
+  SITES = M.site_coords || SITES_FALLBACK;
+  CONV = M.conv_dbz || (M.thresholds||{}).convective_dbz || 40;
+  POVBY = {}; ((M.pov||{}).frames||[]).forEach(p => { POVBY[p.valid] = p; });
   MK = M.model_key || (M.models ? Object.keys(M.models)[0] : null);
   CYC = modelCycles(MK);
-  $("generated").textContent = "built " + M.generated;
+  staleness();
+  drawModels(); drawLegends(); drawAbout(); drawPads();
+  fetch(bust("basemap.json")).then(r => r.ok ? r.json() : null).then(b => { BASE = b; drawMaps(); }).catch(() => {});
 
-  const t = M.thresholds;
-  $("method").textContent =
-    "Every grid column is split into contiguous cloud layers and the lowest and highest are "
-    + "classified separately, so a shallow deck under cirrus is not read as one deep cloud. "
-    + "Condensate is integrated to a path in g/m², not thresholded as a mixing ratio, because "
-    + "path is what sets opacity. An anvil is identified by where it came from, not by its base "
-    + "temperature: a glaciated layer topping at " + t.glaciated_c + " °C or colder, carrying "
-    + t.anvil_iwp_gm2 + " g/m² of ice or more, with a convective core either inside "
-    + "either joined to it by unbroken ice or, having separated, reachable along the layer's "
-    + "own mean wind within " + t.anvil_tau_h + " h. Attachment is continuity, not distance: "
-    + "the " + t.attach_nm + " nm in the LLCC is the standoff you keep from an attached anvil, "
-    + "not what makes one attached. Cores are " + t.convective_dbz + " dBZ composite or " + t.graupel_gm2
-    + " g/m² of graupel. Each column gets exactly one class — where several apply the more "
-    + "operationally significant one is drawn — so the shares and clear sky sum to 100%.";
-
-  $("bands").innerHTML = ORDER.map(k => {
-    const c = byKey[k]; if(!c) return "";
-    return `<div class="band">
-      <div class="band-top">
-        <span class="chip" style="background:${c.color}"></span>
-        <span class="band-name">${c.name}</span>
-        <span class="band-pct" id="pct-${k}">—</span>
-      </div>
-      <div class="bar"><span id="bar-${k}" style="background:${c.color}"></span></div>
-      <div class="band-note">${NOTES[k]||""}</div>
-    </div>`;
-  }).join("");
-
-  const sites = M.sites || Object.keys((frames()[0]||{}).sites || {});
-  $("pads").innerHTML = sites.map(s => `<div class="pad">
-      <div class="pad-name">${s}</div>
-      <div class="pad-cls"><span class="chip" id="sc-${s}"></span><span id="sn-${s}">—</span></div>
-      <div class="pad-num" id="sv-${s}"></div>
-    </div>`).join("");
-
-  // POV frames are keyed by valid time so they survive a run switch the same way the maps do.
-  POVBY = {};
-  ((M.pov||{}).frames||[]).forEach(p => { POVBY[p.valid] = p; });
-  const havePov = Object.keys(POVBY).length > 0;
-  $("lay-pov").disabled = !havePov;
-  if (!havePov){
-    // The usual reason is a fresh deploy: a data-version bump drops the retained cycles, so
-    // there is only one run on disk and a one-member probability is not a probability.
-    const runs = CYC.length;
-    $("lay-pov").title = runs < 2
-      ? `Only ${runs} run on disk — the probability needs at least two. `
-        + `One more hourly pass and it appears.`
-      : "No POV frames published for these valid times yet.";
-    $("lay-pov").innerHTML = `LLCC POV<small>needs 2+ runs</small>`;
-  }
-  // The dropdown picks whose cloud-type maps are on screen. It does not narrow the POV -
-  // that always pools every model, which is the entire point of running more than one.
-  const mk = M.models ? Object.keys(M.models) : [];
-  if (mk.length > 1){
-    $("source").innerHTML = mk.map(k =>
-      `<option value="${k}"${k===MK?" selected":""}>${M.models[k].name}` +
-      ` · ${(M.models[k].cycles||[]).length} runs</option>`).join("");
-    $("source").disabled = false;
-    $("source").title = "Which model's cloud-type maps to show. The POV pools all of them.";
-    $("source").addEventListener("change", e => {
-      stop(); MK = e.target.value; CYC = modelCycles(MK);
-      drawRuns(); selectCycle(0, validNow());
-    });
-  } else {
-    // One model, or an old manifest with no per-model breakdown. Say WHICH, rather than
-    // echoing the POV membership string - that made a stale page look like a working
-    // selector showing "6 HRRR + 1 RRFS".
-    const only = mk.length === 1 ? M.models[mk[0]].name : (M.model || "HRRR");
-    $("source").innerHTML = `<option>${only} only</option>`;
-    $("source").disabled = true;
-    $("source").title = mk.length
-      ? "Only one model has cycles on disk this pass."
-      : "This manifest has no per-model breakdown - the page or the build is out of date.";
-  }
-  $("pov-scale").innerHTML = ((M.pov||{}).colors||[]).map(c =>
-    `<span style="background:${c}"></span>`).join("");
-  const P = M.pov || {};
-  $("pov-rules").innerHTML = havePov
-    ? "Every mesh point is treated as the flight path and scored against "
-      + (P.standard || "NASA-STD-4010") + ". Evaluated: "
-      + Object.values(P.rule_names || {}).join("; ") + ". "
-      + "<b>Not evaluated</b>, because no forecast field can decide them: "
-      + (P.not_evaluated || []).join("; ")
-      + ". So this is a floor, not a verdict — and where the standard would let a field mill "
-      + "buy relief, this errs toward NO-GO."
-    : "";
-  $("lay-cloud").addEventListener("click", () => setLayer("cloud"));
-  $("lay-pov").addEventListener("click", () => setLayer("pov"));
+  $("lay-pov").disabled = !Object.keys(POVBY).length;
+  if ($("lay-pov").disabled) $("lay-pov").title = "Needs at least two runs reaching the same valid time; the next hourly pass adds one.";
+  $("lay-cloud").addEventListener("click", () => setLeft("cloud"));
+  $("lay-pov").addEventListener("click", () => setLeft("pov"));
+  $("tool-inspect").addEventListener("click", () => setTool("inspect"));
+  $("tool-section").addEventListener("click", () => setTool("section"));
+  $("view-domain").addEventListener("click", () => setView("domain"));
+  $("view-cape").addEventListener("click", () => setView("cape"));
+  $("scrub").addEventListener("input", e => { stop(); show(+e.target.value); });
+  $("play").addEventListener("click", () => timer ? stop() : play());
+  $("smooth").addEventListener("change", drawXS);
+  ["map-left","map-right"].forEach(id => bindMap($(id)));
+  bindXS($("xs"));
+  addEventListener("keydown", onKey);
+  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { drawMaps(); drawXS(); drawTrend(); }, 120); });
 
   loadPov();
   drawRuns();
-  // Open on the newest COMPLETE run. HRRR posts a 48 h cycle over ~100 minutes, so the
-  // freshest cycle is often a 10-hour stub; landing on it shows less of the forecast than
-  // the run before it. The stub is still one click away.
   const firstFull = CYC.findIndex(c => c.complete !== false);
   selectCycle(firstFull >= 0 ? firstFull : 0, null);
-
-  $("scrub").addEventListener("input", e => { stop(); show(+e.target.value); });
-  $("play").addEventListener("click", () => timer ? stop() : start());
-  $("frame").addEventListener("click", onMapClick);
-  $("frame").addEventListener("load", placePin);
-  $("q-clear").addEventListener("click", clearPoint);
-  addEventListener("keydown", e => {
-    if (e.target.tagName === "INPUT") return;
-    if (e.key === "ArrowRight"){ stop(); show(Math.min(i+1, frames().length-1)); }
-    if (e.key === "ArrowLeft"){  stop(); show(Math.max(i-1, 0)); }
-    if (e.key === "ArrowUp"){   e.preventDefault(); stop(); stepCycle(+1); }
-    if (e.key === "ArrowDown"){ e.preventDefault(); stop(); stepCycle(-1); }
-    if (e.key === " "){ e.preventDefault(); timer ? stop() : start(); }
-    if (e.key === "Escape") clearPoint();
-  });
-  let rt; addEventListener("resize", () => { clearTimeout(rt);
-    rt = setTimeout(() => { drawTrend(); moveCursor(i); placePin(); }, 150); });
 }
 
-/* ---- runs ------------------------------------------------------------------ */
+function staleness(){
+  const age = (Date.now() - T(M.generated)) / 6e4;
+  $("runline").textContent = "built " + (M.generated || "?").replace("T", " ");
+  if (isFinite(age) && age > 150){
+    $("banner").hidden = false;
+    $("banner").textContent = `Last build was ${Math.floor(age/60)} h ${Math.round(age%60)} min ago. `
+      + "The hourly job may be failing; these maps are older than they look.";
+  }
+}
+
+/* ---- controls ------------------------------------------------------------------ */
+function drawModels(){
+  const mk = M.models ? Object.keys(M.models) : [];
+  $("models").innerHTML = (mk.length ? mk : [MK || "hrrr"]).map(k => {
+    const n = M.models ? (M.models[k].cycles||[]).length : CYC.length;
+    const nm = M.models ? M.models[k].name : (M.model || "HRRR");
+    return `<button data-k="${esc(k)}" aria-pressed="${k===MK}" title="${n} runs on disk. The probability pools every model.">${esc(nm)}</button>`;
+  }).join("");
+  $("models").querySelectorAll("button").forEach(b => b.addEventListener("click", () => setModel(b.dataset.k)));
+}
+// Cloud-type maps come from one model at a time - they are categorical, and averaging class
+// ids across models is meaningless. The probability is where the models combine.
+function setModel(k){
+  if (k === MK || !(M.models && M.models[k])) return;
+  stop(); const keep = validNow(); MK = k; CYC = modelCycles(MK);
+  $("models").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x.dataset.k === MK));
+  drawRuns(); selectCycle(0, keep);
+}
 function drawRuns(){
   $("runs").innerHTML = CYC.map((c, n) => {
     const age = n === 0 ? "latest" : "−" + hoursBetween(CYC[0], c) + " h";
-    // Show x/y while a run is still being posted. HRRR trickles a run out over ~50-90 min,
-    // so the newest cycle is normally short a few hours and fills in on later passes.
     const want = c.run_h_expected, have = c.run_h || c.frames.length;
-    const len = (want && have < want) ? have + "/" + want + " h" : have + " h";
-    const note = (want && have < want) ? " title=\"still being posted by NCEP\"" : "";
-    return `<button class="run${(want&&have<want)?" partial":""}" data-n="${n}"${note}
-      aria-pressed="${n===ci}">${c.label}<small>${age} · ${len}</small></button>`;
+    const part = want && have < want;
+    return `<button class="run${part ? " partial" : ""}" data-n="${n}" aria-pressed="${n===ci}"
+      ${part ? 'title="Still being posted upstream; fills in on later passes"' : ""}>${esc(c.label)}<small>${age}, ${part ? have + "/" + want : have} h</small></button>`;
   }).join("");
-  $("runs").querySelectorAll(".run").forEach(b =>
-    b.addEventListener("click", () => { stop(); selectCycle(+b.dataset.n, validNow()); }));
+  $("runs").querySelectorAll(".run").forEach(b => b.addEventListener("click", () => { stop(); selectCycle(+b.dataset.n, validNow()); }));
 }
-function hoursBetween(a, b){
-  const ta = T(a.init), tb = T(b.init);
-  return (isFinite(ta) && isFinite(tb)) ? Math.round((ta - tb) / 3.6e6) : "?";
-}
-function validNow(){ const f = (frames()||[])[i]; return f ? f.valid : null; }
+function hoursBetween(a, b){ const d = (T(a.init) - T(b.init)) / 3.6e6; return isFinite(d) ? Math.round(d) : "?"; }
+function validNow(){ const f = frame(); return f ? f.valid : null; }
+function setPressed(group, id){ $(group).querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.id === id)); }
+function setLeft(k){ if (k === "pov" && $("lay-pov").disabled) return; LEFT = k; setPressed("layers", "lay-" + k); drawLegends(); drawMaps(); }
+function setTool(k){ TOOL = k; setPressed("tools", "tool-" + k); }
+function setView(k){ VIEWK = k; setPressed("views", "view-" + k); drawMaps(); }
 
-// Switching runs holds the VALID TIME, not the forecast hour - that is the whole point of a
-// dprog/dt view. Falls back to the nearest hour when a run doesn't reach it.
 function selectCycle(n, keepValid){
-  ci = Math.max(0, Math.min(CYC.length-1, n));
+  ci = Math.max(0, Math.min(CYC.length - 1, n));
   const fr = frames();
-  const mname = (M.models && M.models[MK]) ? M.models[MK].name : (M.model || "HRRR");
-  $("cycle").textContent = mname + " " + (cur().date ? cur().date + " " : "") + cur().label;
-  $("scrub").max = fr.length - 1;
+  $("scrub").max = Math.max(0, fr.length - 1);
   let idx = 0;
-  if (keepValid){
-    const hit = fr.findIndex(f => f.valid === keepValid);
-    idx = hit >= 0 ? hit : nearestValid(fr, keepValid);
-  }
-  fr.forEach(f => { const im = new Image(); im.src = bust(f.image); });
+  if (keepValid){ const hit = fr.findIndex(f => f.valid === keepValid); idx = hit >= 0 ? hit : nearestValid(fr, keepValid); }
   loadGrids(cur());
-  $("runs").querySelectorAll(".run").forEach(b =>
-    b.setAttribute("aria-pressed", (+b.dataset.n === ci) ? "true" : "false"));
+  $("runs").querySelectorAll(".run").forEach(b => b.setAttribute("aria-pressed", (+b.dataset.n === ci) ? "true" : "false"));
   drawTrend();
   show(idx);
 }
-function stepCycle(d){ selectCycle(ci + d, validNow()); }
-function nearestValid(fr, v){
-  let best = 0, gap = Infinity;
-  fr.forEach((f,n) => { const g = Math.abs(T(f.valid) - T(v)); if (g < gap){ gap = g; best = n; } });
-  return best;
+function nearestValid(fr, v){ let best = 0, gap = Infinity;
+  fr.forEach((f, n) => { const g = Math.abs(T(f.valid) - T(v)); if (g < gap){ gap = g; best = n; } }); return best; }
+
+function show(n){
+  if (!frames().length) return;
+  i = Math.max(0, Math.min(frames().length - 1, n));
+  const f = frame(), c = cur();
+  const mname = (M.models && M.models[MK]) ? M.models[MK].name : (M.model || "HRRR");
+  $("valid").textContent = f.valid_label || f.valid_short;
+  $("when").textContent = f.valid_label || f.valid_short;
+  $("fh").textContent = `F${String(f.fh).padStart(2,"0")} of the ${mname} ${c.label} run`;
+  $("runline").textContent = `${mname} ${c.date || ""} ${c.label}, F${String(f.fh).padStart(2,"0")}  ·  built ${(M.generated||"").replace("T"," ")}`;
+  $("scrub").value = i;
+  drawMaps(); drawShares(); drawPadsFrame(); moveCursor();
+  if (QP) drawQuery();
+  loadXS(f).then(drawXS);
+  prefetchXS();
+}
+function play(){ $("play").textContent = "Pause"; timer = setInterval(() => show((i + 1) % frames().length), 800); }
+function stop(){ if (timer) clearInterval(timer); timer = null; $("play").textContent = "Play"; }
+function onKey(e){
+  if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) return;
+  if (e.key === "ArrowRight"){ stop(); show(i + 1); }
+  else if (e.key === "ArrowLeft"){ stop(); show(i - 1); }
+  else if (e.key === "ArrowUp"){ e.preventDefault(); stop(); selectCycle(ci + 1, validNow()); }
+  else if (e.key === "ArrowDown"){ e.preventDefault(); stop(); selectCycle(ci - 1, validNow()); }
+  else if (e.key === " "){ e.preventDefault(); timer ? stop() : play(); }
+  else if (e.key === "x" || e.key === "X") setTool("section");
+  else if (e.key === "i" || e.key === "I") setTool("inspect");
+  else if (e.key === "Escape"){ QP = null; XS = {a:null, b:null}; clearQuery(); drawMaps(); drawXS(); }
 }
 
-/* ---- packed grids ---------------------------------------------------------- */
+/* ---- data --------------------------------------------------------------------- */
 function loadPov(){
   Object.values(POVBY).forEach(p => {
-    if (p.data && !(p.valid in POVBUF)){
-      POVBUF[p.valid] = null;
-      fetch(bust(p.data)).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
-        .then(b => { POVBUF[p.valid] = new Uint8Array(b); if (QP) drawQuery(); })
-        .catch(() => { delete POVBUF[p.valid]; });
-    }
+    if (!p.data || p.valid in POVBUF) return;
+    POVBUF[p.valid] = null;
+    fetch(bust(p.data)).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+      .then(b => { POVBUF[p.valid] = new Uint8Array(b); IMG = {}; drawMaps(); if (QP) drawQuery(); drawXS(); })
+      .catch(() => { delete POVBUF[p.valid]; });
   });
 }
-
 function loadGrids(c){
   if (!M.query) return;
   c.frames.forEach(f => {
@@ -534,277 +512,504 @@ function loadGrids(c){
     if (!f.data || k in BUF) return;
     BUF[k] = null;
     fetch(bust(f.data)).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
-      .then(b => { BUF[k] = new Uint8Array(b); if (QP) drawQuery(); })
+      .then(b => { BUF[k] = new Uint8Array(b);
+        if (cur() && cur().id === c.id && frame() && frame().fh === f.fh){ drawMaps(); drawShares(); drawPadsFrame(); drawXS(); }
+        if (QP) drawQuery(); })
       .catch(() => { delete BUF[k]; });
   });
 }
-const PLANE = {CLASS:0, TOP_KFT:1, TOP_C:2, IWP:3, DEPTH:4, DBZ:5, AGE:6, THICK:7};
-function plane(buf, p, cell){ return buf[p * M.query.nx * M.query.ny + cell]; }
-function decIwp(v){ return Math.pow(10, v * Math.log10(1 + M.query.iwp_max) / 255) - 1; }
+function bufNow(){ const c = cur(), f = frame(); return (c && f) ? BUF[c.id + ":" + f.fh] : null; }
+const NCELL = () => M.query.nx * M.query.ny;
+const plane = (buf, p, cell) => buf[p * NCELL() + cell];
+const hasPlane = (buf, p) => buf && buf.length >= (p + 1) * NCELL();
+const decIwp = v => Math.pow(10, v * Math.log10(1 + M.query.iwp_max) / 255) - 1;
 
-/* ---- click ----------------------------------------------------------------- */
-// The PNG is Mercator with the axes filling the figure, so longitude is linear across the
-// width but latitude is not: y is linear in ln(tan(pi/4 + lat/2)), inverted here.
-const psi = deg => Math.log(Math.tan(Math.PI/4 + deg*Math.PI/360));
-function onMapClick(ev){
-  const q = M.query; if (!q) return;
-  const r = ev.currentTarget.getBoundingClientRect();
-  const fx = Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width));
-  const fy = Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height));
-  const d = M.domain, p0 = psi(d.lat_min), p1 = psi(d.lat_max);
-  const lon = d.lon_min + fx * (d.lon_max - d.lon_min);
-  const lat = (2 * Math.atan(Math.exp(p1 - fy * (p1 - p0))) - Math.PI/2) * 180/Math.PI;
-  const jj = Math.round((lat - q.lat0) / q.dlat), ii = Math.round((lon - q.lon0) / q.dlon);
-  if (jj < 0 || ii < 0 || jj >= q.ny || ii >= q.nx) return;
-  QP = {lat, lon, j: jj, i: ii};
-  placePin(); drawQuery();
+function loadXS(f){
+  if (!f || !f.xs) return Promise.resolve(null);
+  const k = MK + ":" + f.xs;
+  if (k in XSBUF) return Promise.resolve(XSBUF[k]);
+  XSBUF[k] = null;
+  if (typeof DecompressionStream === "undefined"){ XSBUF[k] = "unsupported"; return Promise.resolve(XSBUF[k]); }
+  return fetch(bust(f.xs)).then(r => r.ok ? r : Promise.reject(r.status))
+    .then(r => new Response(r.body.pipeThrough(new DecompressionStream("gzip"))).arrayBuffer())
+    .then(b => (XSBUF[k] = new Uint8Array(b)))
+    .catch(() => { delete XSBUF[k]; return null; });
 }
-function clearPoint(){
-  QP = null; $("pin").hidden = true; $("q-clear").hidden = true;
-  $("q-full").hidden = true; $("q-empty").hidden = false;
-  $("q-where").textContent = "No point selected";
-}
-// The ring is the actual 10 nm radius, drawn so the circle the numbers describe is visible
-// rather than implied. Mercator is conformal, so at this scale it is a true circle.
-function placePin(){
-  if (!QP){ $("pin").hidden = true; return; }
-  const img = $("frame"), ir = img.getBoundingClientRect();
-  const fr = img.parentElement.getBoundingClientRect();
-  const d = M.domain, p0 = psi(d.lat_min), p1 = psi(d.lat_max);
-  const p = $("pin");
-  p.style.left = (ir.left - fr.left + ((QP.lon-d.lon_min)/(d.lon_max-d.lon_min)) * ir.width) + "px";
-  p.style.top  = (ir.top  - fr.top  + ((p1-psi(QP.lat))/(p1-p0)) * ir.height) + "px";
-  const degLon = (RADIUS_NM * 1.852) / (111.32 * Math.cos(QP.lat * Math.PI/180));
-  const px = ir.width * degLon / (d.lon_max - d.lon_min);
-  const ring = $("ring");
-  ring.style.width = ring.style.height = (2*px) + "px";
-  p.hidden = false;
-}
+function prefetchXS(){ if (!XS.b) return; for (let d = 1; d <= 2; d++){ const f = frames()[(i + d) % frames().length]; if (f) loadXS(f); } }
 
-function drawQuery(){
-  const q = M.query, f = frames()[i], buf = BUF[cur().id + ":" + f.fh];
-  $("q-empty").hidden = true; $("q-full").hidden = false; $("q-clear").hidden = false;
-  $("q-where").textContent =
-    Math.abs(QP.lat).toFixed(3) + (QP.lat<0?"S ":"N ") +
-    Math.abs(QP.lon).toFixed(3) + (QP.lon<0?"W":"E");
-  if (!buf){ $("q-hint").textContent = "loading this hour…"; drawDpdt(); return; }
-  $("q-hint").textContent = cur().label + " run, F" + String(f.fh).padStart(2,"0")
-                          + " · valid " + (f.valid_label || f.valid_short);
-
-  const cell = QP.j * q.nx + QP.i;
-  const c = byId[plane(buf, PLANE.CLASS, cell)] || byKey.clear;
-  $("q-cls").innerHTML = `<span class="chip" style="background:${c.color}"></span>${c.name}`;
-
-  const topK = plane(buf, PLANE.TOP_KFT, cell)/4, topC = plane(buf, PLANE.TOP_C, cell)-100;
-  const iwp = decIwp(plane(buf, PLANE.IWP, cell)), dep = plane(buf, PLANE.DEPTH, cell)/4;
-  const dbz = plane(buf, PLANE.DBZ, cell);
-  const ageRaw = plane(buf, PLANE.AGE, cell);
-  let rows = c.key === "clear" ? [["Column","no condensate"]] : [
-    ["Cloud top", topK.toFixed(1) + " kft"],
-    ["Top temp", topC.toFixed(0) + " °C"],
-    ["Ice path", iwp < 1 ? "<1 g/m²" : iwp.toFixed(0) + " g/m²"],
-    ["Low layer", dep < 0.3 ? "—" : dep.toFixed(1) + " kft deep"],
-    ["Composite", dbz < 1 ? "<1 dBZ" : dbz + " dBZ"],
-    // Time since this ice left a convective core, followed along the flow and carried
-    // forward between forecast hours. "no source" is what separates cirrus from anvil.
-    ["Outflow age", ageRaw >= 255 ? "no source" : (ageRaw/10).toFixed(1) + " h"],
-  ];
-  const thick = plane(buf, PLANE.THICK, cell) / 4;
-  if (thick >= 0.3) rows.push(["Thick layer", thick.toFixed(1) + " kft in 0/−20 °C"]);
-  const pv = POVBUF[f.valid];
-  if (pv){
-    const pct = pv[cell];
-    rows.unshift(["LLCC POV", pct + "%  (" + (POVBY[f.valid].members||[]).length + " members)"]);
+/* ---- classification for display ------------------------------------------------ */
+function dispKey(buf, cell){
+  const k = (byId[plane(buf, PLANE.CLASS, cell)] || {}).key || "clear";
+  if (k === "cumulus" || k === "tcu"){
+    if (plane(buf, PLANE.DBZ, cell) >= CONV) return "core";
+    const t = (hasPlane(buf, PLANE.CU_TOP) ? plane(buf, PLANE.CU_TOP, cell) : plane(buf, PLANE.TOP_C, cell)) - 100;
+    return t > 0 ? "cu_warm" : t > -10 ? "cu_0_10" : t > -20 ? "cu_10_20" : "cu_20";
   }
-  $("q-facts").innerHTML = rows.map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+  return {stratiform:"layer", anvil_att:"anvil_att", anvil_det:"anvil_det", cirrus:"cirrus"}[k] || "clear";
+}
+const RGB_DISP = Object.fromEntries(DISP.map(d => [d.k, hex(d.c)]));
 
-  // The circle is centred on the pin, not on any pad - the LLCC rules are written as
-  // distances from a hazard, so the question at a point is what surrounds that point.
-  const t = tally(buf, QP.j, QP.i);
-  const seen = ORDER.filter(k => t.n[k]).sort((a,b) => t.n[b] - t.n[a]);
-  $("q-stack").innerHTML = seen.map(k =>
-    `<span style="width:${(100*t.n[k]/t.tot).toFixed(2)}%;background:${byKey[k].color}"></span>`).join("");
-  $("q-mix").innerHTML = seen.map(k =>
-    `<span class="chip" style="background:${byKey[k].color}"></span>
-     <b>${byKey[k].name}</b><i>${(100*t.n[k]/t.tot).toFixed(1)}%</i>`).join("")
-    + `<span class="chip" style="background:#FFFFFF;box-shadow:0 0 0 1px var(--rule) inset"></span>
-       <b>Clear</b><i>${(100*(t.n.clear||0)/t.tot).toFixed(1)}%</i>`;
+/* ---- map geometry ----------------------------------------------------------------- */
+function viewBox(){
+  const d = M.domain;
+  if (VIEWK === "cape"){
+    const dl = CAPE_HALF_NM * NM / 111.32;
+    const lat0 = CAPE_CENTER[0] - dl, lat1 = CAPE_CENTER[0] + dl;
+    const asp = aspectOf(d.lat_min, d.lat_max, d.lon_min, d.lon_max);
+    const half = 0.5 * asp * (lat1 - lat0) / Math.cos(CAPE_CENTER[0] * Math.PI/180);
+    return {lat0, lat1, lon0: CAPE_CENTER[1] - half, lon1: CAPE_CENTER[1] + half};
+  }
+  return {lat0:d.lat_min, lat1:d.lat_max, lon0:d.lon_min, lon1:d.lon_max};
+}
+function aspectOf(la0, la1, lo0, lo1){ return ((lo1 - lo0) * Math.cos((la0 + la1) / 2 * Math.PI/180)) / (la1 - la0); }
+function geo(cv){
+  const v = viewBox(), W = cv.clientWidth || (cv.parentElement && cv.parentElement.clientWidth) || 480;
+  const asp = aspectOf(v.lat0, v.lat1, v.lon0, v.lon1), H = W / asp;
+  return {v, W, H,
+    X: lon => (lon - v.lon0) / (v.lon1 - v.lon0) * W,
+    Y: lat => (v.lat1 - lat) / (v.lat1 - v.lat0) * H,
+    lon: x => v.lon0 + x / W * (v.lon1 - v.lon0),
+    lat: y => v.lat1 - y / H * (v.lat1 - v.lat0),
+    kmPerPx: (v.lon1 - v.lon0) * 111.32 * Math.cos((v.lat0 + v.lat1) / 2 * Math.PI/180) / W};
+}
+
+function layerImage(kind){
+  const q = M.query, buf = bufNow(), f = frame();
+  const key = kind + "|" + MK + "|" + (cur()||{}).id + "|" + (f||{}).fh;
+  if (IMG[key]) return IMG[key];
+  let src = buf;
+  if (kind === "pov"){ src = f && POVBUF[f.valid]; if (!src) return null; }
+  else if (!buf) return null;
+  const nx = q.nx, ny = q.ny, cv = document.createElement("canvas");
+  cv.width = nx; cv.height = ny;
+  const ctx = cv.getContext("2d"), im = ctx.createImageData(nx, ny), px = im.data;
+  for (let j = 0; j < ny; j++){
+    const row = (ny - 1 - j) * nx;
+    for (let ii = 0; ii < nx; ii++){
+      const cell = j * nx + ii, o = (row + ii) * 4;
+      let rgba = null;
+      if (kind === "cloud"){ const k = dispKey(buf, cell); if (k !== "clear"){ const c = RGB_DISP[k]; rgba = [c[0], c[1], c[2], k === "cirrus" ? 190 : 255]; } }
+      else if (kind === "dbz"){ const d = plane(buf, PLANE.DBZ, cell); if (d >= 1){ const c = dbzRGBA(d); rgba = c && [c[0], c[1], c[2], 255]; } }
+      else if (kind === "pov"){ const p = src[cell]; if (p >= 5){ const c = hex(povColor(p)); rgba = [c[0], c[1], c[2], 235]; } }
+      if (rgba){ px[o] = rgba[0]; px[o+1] = rgba[1]; px[o+2] = rgba[2]; px[o+3] = rgba[3]; }
+    }
+  }
+  ctx.putImageData(im, 0, 0);
+  return (IMG[key] = cv);
+}
+
+function drawMaps(){
+  if (!M || !M.query) return;
+  drawMap($("map-left"), LEFT === "pov" ? "pov" : "cloud", $("wait-left"));
+  drawMap($("map-right"), "dbz", $("wait-right"));
+  $("h-left").textContent = LEFT === "pov" ? "Violation probability" : "Cloud class";
+  $("n-left").textContent = LEFT === "pov" ? povNote() : "what the column is";
+}
+function povNote(){
+  const f = frame(), p = f && POVBY[f.valid];
+  if (!p) return "no probability at this hour: fewer than two runs reach it";
+  const by = p.by_model ? Object.entries(p.by_model).map(([k, v]) => `${v} ${k}`).join(" + ") : p.members.length + " members";
+  const n = p.members.length;
+  return by + (n < 4 ? `, so it can only read ${Array.from({length:n+1}, (_, k) => Math.round(100*k/n)).join("/")}%` : "");
+}
+
+function drawMap(cv, kind, wait){
+  const g = geo(cv), dpr = DPR();
+  cv.width = Math.round(g.W * dpr); cv.height = Math.round(g.H * dpr);
+  if (cv.style) cv.style.height = g.H + "px";
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, g.W, g.H);
+  const img = layerImage(kind), q = M.query;
+  if (wait){ wait.hidden = !!img;
+    wait.textContent = kind === "pov" ? "No probability for this valid time" : "Loading grids"; }
+  if (img){
+    ctx.imageSmoothingEnabled = false;   // categorical: never blend classes into fake ones
+    const x0 = g.X(q.lon0 - q.dlon/2), x1 = g.X(q.lon0 + (q.nx - 0.5) * q.dlon);
+    const y0 = g.Y(q.lat0 + (q.ny - 0.5) * q.dlat), y1 = g.Y(q.lat0 - q.dlat/2);
+    ctx.drawImage(img, x0, y0, x1 - x0, y1 - y0);
+  }
+  // coastline
+  if (BASE && BASE.lines){
+    ctx.strokeStyle = "rgba(170,196,228,.75)"; ctx.lineWidth = 0.9; ctx.beginPath();
+    BASE.lines.forEach(L => L.forEach(([lo, la], k) => k ? ctx.lineTo(g.X(lo), g.Y(la)) : ctx.moveTo(g.X(lo), g.Y(la))));
+    ctx.stroke();
+  }
+  // range rings about the LLCC observing site
+  const xm = SITES.KXMR || SITES_FALLBACK.KXMR;
+  ctx.setLineDash([3, 4]); ctx.strokeStyle = "rgba(79,214,227,.35)"; ctx.lineWidth = 1;
+  ctx.fillStyle = "rgba(79,214,227,.55)"; ctx.font = "11px Saira, sans-serif";
+  [10, 20].forEach(nm => { const r = nm * NM / g.kmPerPx; ctx.beginPath();
+    ctx.arc(g.X(xm[1]), g.Y(xm[0]), r, 0, 2*Math.PI); ctx.stroke();
+    ctx.fillText(nm + " nmi", g.X(xm[1]) + r*0.72 + 3, g.Y(xm[0]) - r*0.70); });
+  ctx.setLineDash([]);
+  // pads
+  ctx.strokeStyle = "#E8EEF6"; ctx.lineWidth = 1.2;
+  Object.entries(SITES).forEach(([nm, [la, lo]]) => {
+    const x = g.X(lo), y = g.Y(la); ctx.beginPath();
+    ctx.moveTo(x - 3, y); ctx.lineTo(x + 3, y); ctx.moveTo(x, y - 3); ctx.lineTo(x, y + 3); ctx.stroke();
+    if (VIEWK === "cape"){ ctx.fillStyle = "rgba(232,238,246,.85)"; ctx.fillText(nm, x + 5, y + 4); }
+  });
+  // section line
+  const A = XS.a, B = XS.b || DRAG;
+  if (A && B){
+    ctx.strokeStyle = "#FFB547"; ctx.lineWidth = 1.8; ctx.setLineDash([7, 4]); ctx.beginPath();
+    ctx.moveTo(g.X(A.lon), g.Y(A.lat)); ctx.lineTo(g.X(B.lon), g.Y(B.lat)); ctx.stroke(); ctx.setLineDash([]);
+  }
+  [[A, "A"], [XS.b, "B"]].forEach(([p, t]) => { if (!p) return;
+    ctx.fillStyle = "#FFB547"; ctx.beginPath(); ctx.arc(g.X(p.lon), g.Y(p.lat), 4, 0, 2*Math.PI); ctx.fill();
+    ctx.font = "600 12px Saira, sans-serif"; ctx.fillText(t, g.X(p.lon) + 6, g.Y(p.lat) - 6); });
+  if (XSHOVER){ ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 1.5; ctx.beginPath();
+    ctx.arc(g.X(XSHOVER.lon), g.Y(XSHOVER.lat), 5, 0, 2*Math.PI); ctx.stroke(); }
+  // inspect pin with its 10 nmi ring
+  if (QP){
+    const x = g.X(QP.lon), y = g.Y(QP.lat), r = RADIUS_NM * NM / g.kmPerPx;
+    ctx.strokeStyle = "rgba(255,181,71,.85)"; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 2*Math.PI); ctx.stroke();
+    ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 8, y); ctx.lineTo(x + 8, y); ctx.moveTo(x, y - 8); ctx.lineTo(x, y + 8); ctx.stroke();
+  }
+}
+
+function bindMap(cv){
+  const pt = ev => { const r = cv.getBoundingClientRect(), g = geo(cv);
+    const x = ev.clientX - r.left, y = ev.clientY - r.top;
+    return {x, y, lat: g.lat(y * g.H / (r.height || g.H)), lon: g.lon(x * g.W / (r.width || g.W))}; };
+  cv.addEventListener("pointerdown", ev => { cv._down = pt(ev); if (cv.setPointerCapture && ev.pointerId != null) try { cv.setPointerCapture(ev.pointerId); } catch(_){} });
+  cv.addEventListener("pointermove", ev => {
+    if (!cv._down || TOOL !== "section") return;
+    const p = pt(ev); if (Math.hypot(p.x - cv._down.x, p.y - cv._down.y) < 8) return;
+    XS = {a: cv._down, b: null}; DRAG = p; drawMaps(); });
+  cv.addEventListener("pointerup", ev => {
+    const d = cv._down; cv._down = null; if (!d) return;
+    const p = pt(ev), moved = Math.hypot(p.x - d.x, p.y - d.y) >= 8;
+    DRAG = null;
+    if (TOOL === "section"){
+      if (moved) setSection(d, p);
+      else if (!XS.a || XS.b) { XS = {a: p, b: null}; drawMaps(); drawXS(); }
+      else setSection(XS.a, p);
+    } else { setPoint(p); }
+  });
+}
+function inDomain(p){ const d = M.domain; return p.lat >= d.lat_min && p.lat <= d.lat_max && p.lon >= d.lon_min && p.lon <= d.lon_max; }
+function setPoint(p){ if (!inDomain(p)) return; const q = M.query;
+  const j = Math.round((p.lat - q.lat0) / q.dlat), ii = Math.round((p.lon - q.lon0) / q.dlon);
+  if (j < 0 || ii < 0 || j >= q.ny || ii >= q.nx) return;
+  QP = {lat: p.lat, lon: p.lon, j, i: ii}; drawMaps(); drawQuery(); }
+function setSection(a, b){
+  const clamp = p => { const d = M.domain; return {lat: Math.min(d.lat_max, Math.max(d.lat_min, p.lat)), lon: Math.min(d.lon_max, Math.max(d.lon_min, p.lon))}; };
+  XS = {a: clamp(a), b: clamp(b)};
+  drawMaps();
+  const wrap = $("xsbody"); if (wrap.classList){ wrap.classList.remove("sweep"); void wrap.offsetWidth; wrap.classList.add("sweep"); }
+  loadXS(frame()).then(drawXS); prefetchXS();
+}
+
+/* ---- cross-section ---------------------------------------------------------------- */
+function distKm(a, b){ const R = 6371, r = Math.PI/180;
+  const dl = (b.lat - a.lat) * r, dn = (b.lon - a.lon) * r;
+  const h = Math.sin(dl/2)**2 + Math.cos(a.lat*r) * Math.cos(b.lat*r) * Math.sin(dn/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(h)); }
+
+// Everything the section needs along the line, sampled once per draw.
+function sampleLine(n){
+  const q = M.query, A = XS.a, B = XS.b, out = [];
+  for (let s = 0; s < n; s++){
+    const t = n === 1 ? 0 : s / (n - 1);
+    const lat = A.lat + t * (B.lat - A.lat), lon = A.lon + t * (B.lon - A.lon);
+    out.push({t, lat, lon, fj: (lat - q.lat0) / q.dlat, fi: (lon - q.lon0) / q.dlon});
+  }
+  return out;
+}
+
+function drawXS(){
+  const has = XS.a && XS.b;
+  $("xs-empty").hidden = !!has; $("xs").hidden = !has; $("xs-foot").hidden = !has;
+  if (!has){ $("xs-note").textContent = XS.a ? "now click the end point" : "no line drawn"; return; }
+  const f = frame(), cv = $("xs");
+  const dkm = distKm(XS.a, XS.b), dnm = dkm / NM;
+  $("xs-note").textContent = `A to B, ${dnm.toFixed(1)} nmi, ${f.valid_short} valid`;
+  const xsmeta = (M.query && M.query.xs) || {nz:33, dz_km:0.5, top_km:16};
+  const vol = f.xs ? XSBUF[MK + ":" + f.xs] : undefined;
+
+  const W = Math.max(320, cv.clientWidth || cv.parentElement.clientWidth || 900);
+  const H = Math.round(Math.min(380, Math.max(240, W * 0.30)));
+  const dpr = DPR();
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  if (cv.style) cv.style.height = H + "px";
+  const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+  const PL = 46, PR = 50, STRIP = 7, PT = 4 + 3 * (STRIP + 2) + 6, PB = 34;
+  const pw = W - PL - PR, phh = H - PT - PB, top = xsmeta.top_km || 16;
+  const Yz = z => PT + phh - z / top * phh;
+  ctx.fillStyle = "#0C1A2E"; ctx.fillRect(PL, PT, pw, phh);
+  ctx.font = "11px Saira, sans-serif";
+
+  const ns = Math.max(2, Math.round(pw));
+  const S = sampleLine(ns);
+  const q = M.query, nx = q.nx, ny = q.ny, nz = xsmeta.nz, dz = xsmeta.dz_km, NC = nx * ny;
+  const smooth = $("smooth").checked;
+
+  if (vol && vol !== "unsupported" && vol.length >= nz * NC){
+    // Paint the plot area at device resolution. Smooth: bilinear in the horizontal, linear
+    // in the vertical, on dBZ (no echo treated as -15 so edges fade rather than ring).
+    const iw = Math.round(pw * dpr), ih = Math.round(phh * dpr);
+    const im = ctx.createImageData(iw, ih), px = im.data;
+    const val = (k, j, ii) => { if (j < 0 || ii < 0 || j >= ny || ii >= nx || k < 0 || k >= nz) return [-15, 0];
+      const b = vol[k * NC + j * nx + ii]; const c = b & 127; return [c ? c - 1 : -15, b >> 7]; };
+    for (let X = 0; X < iw; X++){
+      const s = S[Math.min(ns - 1, Math.floor(X / dpr))];
+      for (let Yp = 0; Yp < ih; Yp++){
+        const z = (1 - (Yp + 0.5) / ih) * top, fk = z / dz;
+        let d, cl;
+        if (!smooth){ const r = val(Math.round(fk), Math.round(s.fj), Math.round(s.fi)); d = r[0]; cl = r[1]; }
+        else {
+          const k0 = Math.floor(fk), wk = fk - k0, j0 = Math.floor(s.fj), wj = s.fj - j0, i0 = Math.floor(s.fi), wi = s.fi - i0;
+          let dsum = 0, csum = 0;
+          for (const [dk, a] of [[0, 1 - wk], [1, wk]]) for (const [dj, b] of [[0, 1 - wj], [1, wj]]) for (const [di, c] of [[0, 1 - wi], [1, wi]]){
+            const w = a * b * c; if (!w) continue; const r = val(k0 + dk, j0 + dj, i0 + di); dsum += w * r[0]; csum += w * r[1]; }
+          d = dsum; cl = csum >= 0.5 ? 1 : 0;
+        }
+        const o = (Yp * iw + X) * 4;
+        if (d >= 0){ const c = dbzRGBA(d); px[o] = c[0]; px[o+1] = c[1]; px[o+2] = c[2]; px[o+3] = 255; }
+        else if (cl){ px[o] = 120; px[o+1] = 146; px[o+2] = 182; px[o+3] = 70; }
+      }
+    }
+    ctx.putImageData(im, PL * dpr, PT * dpr);
+    $("xs-src").textContent = f.xs_src ? "Reflectivity " + f.xs_src + "; faint fill is cloud with no echo" : "";
+  } else {
+    ctx.fillStyle = "#8399B6"; ctx.textAlign = "center";
+    ctx.fillText(!f.xs ? "No section data for this hour: it was built before sections existed. Newer runs have it."
+      : vol === "unsupported" ? "This browser cannot decompress the section data (needs DecompressionStream)."
+      : "Loading section…", PL + pw / 2, PT + phh / 2);
+    ctx.textAlign = "left"; $("xs-src").textContent = "";
+  }
+
+  // height grid and axes
+  ctx.strokeStyle = "rgba(131,153,182,.18)"; ctx.lineWidth = 1; ctx.fillStyle = "#8399B6";
+  for (let z = 0; z <= top + 1e-6; z += 2){ const y = Math.round(Yz(z)) + 0.5;
+    ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(PL + pw, y); ctx.stroke();
+    ctx.textAlign = "right"; ctx.fillText(z + " km", PL - 6, y + 4); }
+  ctx.textAlign = "left";
+  for (let kf = 0; kf * 0.3048 <= top; kf += 10){ ctx.fillText(kf + " kft", PL + pw + 6, Yz(kf * 0.3048) + 4); }
+  // isotherms from this run's column at XMR
+  const iso = f.iso || {};
+  ctx.setLineDash([5, 4]); ctx.strokeStyle = "rgba(255,255,255,.75)";
+  Object.entries(iso).forEach(([tc, km]) => { if (km == null) return; const y = Math.round(Yz(km)) + 0.5;
+    ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(PL + pw, y); ctx.stroke();
+    ctx.fillStyle = "#FFFFFF"; ctx.fillText((+tc > 0 ? "+" : +tc < 0 ? "−" : "") + Math.abs(+tc) + " °C", PL + 4, y - 3); });
+  ctx.setLineDash([]);
+  $("xs-iso").textContent = Object.keys(iso).length
+    ? `Isotherms: ${(M.models && M.models[MK] ? M.models[MK].name : "")} ${cur().label} run at ${M.iso_site || "KXMR"}, valid ${f.valid_short}` : "";
+
+  // distance axis, A/B, pads near the line
+  const ticks = dnm > 60 ? 20 : dnm > 25 ? 10 : 5;
+  ctx.fillStyle = "#8399B6"; ctx.textAlign = "center";
+  for (let d = 0; d <= dnm + 1e-6; d += ticks){ const x = PL + d / dnm * pw; ctx.fillText(d + " nmi", x, H - PB + 15); }
+  ctx.fillStyle = "#FFB547"; ctx.font = "600 13px Saira, sans-serif";
+  ctx.fillText("A", PL, H - 4); ctx.fillText("B", PL + pw, H - 4);
+  ctx.font = "11px Saira, sans-serif";
+  const ax = XS.a, bx = XS.b, cosl = Math.cos((ax.lat + bx.lat) / 2 * Math.PI/180);
+  const vx = (bx.lon - ax.lon) * cosl, vy = bx.lat - ax.lat, L2 = vx*vx + vy*vy;
+  // Pads within 1.5 nmi of the line get a marker; labels that would collide are merged, since
+  // the pad cluster is a few nmi across and a line through it passes several at once.
+  const near = [];
+  Object.entries(SITES).forEach(([nm, [la, lo]]) => {
+    const wx = (lo - ax.lon) * cosl, wy = la - ax.lat, t = (wx*vx + wy*vy) / (L2 || 1);
+    if (t < 0 || t > 1) return;
+    const off = Math.abs(wx*vy - wy*vx) / Math.sqrt(L2 || 1) * 111.32 / NM;
+    if (off <= 1.5) near.push({nm, x: PL + t * pw});
+  });
+  near.sort((a, b) => a.x - b.x);
+  const groups = [];
+  near.forEach(p => { const g = groups[groups.length - 1];
+    if (g && p.x - g.x1 < 46){ g.names.push(p.nm); g.x1 = p.x; } else groups.push({x0: p.x, x1: p.x, names: [p.nm]}); });
+  ctx.fillStyle = "#E8EEF6";
+  near.forEach(p => { const y = PT + phh; ctx.beginPath(); ctx.moveTo(p.x, y - 7); ctx.lineTo(p.x - 4, y); ctx.lineTo(p.x + 4, y); ctx.fill(); });
+  groups.forEach(g => ctx.fillText(g.names.length > 2 ? `${g.names[0]} +${g.names.length - 1}` : g.names.join(", "),
+                                   (g.x0 + g.x1) / 2, PT + phh + 27));
+  ctx.textAlign = "left";
+
+  // strips: this run's NO-GO, cloud class, ensemble POV
+  const buf = bufNow(), pov = POVBUF[f.valid];
+  const nearest = s => { const j = Math.round(s.fj), ii = Math.round(s.fi);
+    return (j < 0 || ii < 0 || j >= ny || ii >= nx) ? -1 : j * nx + ii; };
+  for (let X = 0; X < pw; X++){
+    const s = S[Math.min(ns - 1, X)], cell = nearest(s); if (cell < 0) continue;
+    if (buf && hasPlane(buf, PLANE.NOGO)){ ctx.fillStyle = plane(buf, PLANE.NOGO, cell) ? "#FF4D5E" : "#1E7A5C"; ctx.fillRect(PL + X, 4, 1, STRIP); }
+    if (buf){ const k = dispKey(buf, cell); ctx.fillStyle = k === "clear" ? "#16253F" : DISPBY[k].c; ctx.fillRect(PL + X, 4 + STRIP + 2, 1, STRIP); }
+    if (pov){ ctx.fillStyle = pov[cell] >= 5 ? povColor(pov[cell]) : "#16253F"; ctx.fillRect(PL + X, 4 + 2 * (STRIP + 2), 1, STRIP); }
+  }
+  $("xs-povkey").hidden = !pov;
+  ctx.strokeStyle = "rgba(131,153,182,.5)"; ctx.strokeRect(PL + 0.5, PT + 0.5, pw - 1, phh - 1);
+  cv._geom = {PL, PT, pw, phh, top, S, ns, dnm, vol, nz, dz, NC, nx, ny};
+}
+
+function bindXS(cv){
+  cv.addEventListener("pointermove", ev => {
+    const g = cv._geom; if (!g) return;
+    const r = cv.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top;
+    if (x < g.PL || x > g.PL + g.pw || y < g.PT || y > g.PT + g.phh){ if (XSHOVER){ XSHOVER = null; drawMaps(); } $("xs-read").textContent = ""; return; }
+    const s = g.S[Math.min(g.ns - 1, Math.max(0, Math.round(x - g.PL)))];
+    const z = (1 - (y - g.PT) / g.phh) * g.top;
+    XSHOVER = {lat: s.lat, lon: s.lon}; drawMaps();
+    let txt = `${(s.t * g.dnm).toFixed(1)} nmi, ${z.toFixed(1)} km (${(z / 0.3048).toFixed(0)} kft)`;
+    if (g.vol && g.vol.length){
+      const j = Math.round(s.fj), ii = Math.round(s.fi), k = Math.round(z / g.dz);
+      if (j >= 0 && ii >= 0 && j < g.ny && ii < g.nx && k < g.nz){
+        const b = g.vol[k * g.NC + j * g.nx + ii], c = b & 127;
+        txt += `: ${c ? (c - 1) + " dBZ" : "no echo"}${b >> 7 ? ", in cloud" : ""}`; }
+    }
+    $("xs-read").textContent = txt;
+  });
+  cv.addEventListener("pointerleave", () => { XSHOVER = null; $("xs-read").textContent = ""; drawMaps(); });
+}
+
+/* ---- readout ---------------------------------------------------------------------- */
+function clearQuery(){ $("q-full").hidden = true; $("q-empty").hidden = false; $("q-where").textContent = "No point selected"; }
+function drawQuery(){
+  if (!QP) return clearQuery();
+  const q = M.query, f = frame(), buf = bufNow();
+  $("q-empty").hidden = true; $("q-full").hidden = false;
+  $("q-where").textContent = `${Math.abs(QP.lat).toFixed(3)}°${QP.lat < 0 ? "S" : "N"}  ${Math.abs(QP.lon).toFixed(3)}°${QP.lon < 0 ? "W" : "E"}`;
+  if (!buf){ $("q-hint").textContent = "loading this hour…"; drawDpdt(); return; }
+  $("q-hint").textContent = `${cur().label} run, F${String(f.fh).padStart(2, "0")}, valid ${f.valid_label || f.valid_short}`;
+  const cell = QP.j * q.nx + QP.i, dk = dispKey(buf, cell);
+  const d = DISPBY[dk];
+  $("q-cls").innerHTML = d ? `<span class="chip" style="background:${d.c}"></span>${d.name}` : `<span class="chip" style="background:#16253F"></span>Clear`;
+  const topK = plane(buf, PLANE.TOP_KFT, cell) / 4, topC = plane(buf, PLANE.TOP_C, cell) - 100;
+  const rows = [];
+  const pv = POVBUF[f.valid];
+  if (pv) rows.push(["Violation probability", `${pv[cell]}% of ${(POVBY[f.valid].members || []).length} members`]);
+  if (hasPlane(buf, PLANE.NOGO)){
+    const bits = plane(buf, PLANE.NOGO, cell), names = (M.pov || {}).rule_names || {}, rb = (M.pov || {}).rule_bits || {};
+    const hit = Object.entries(rb).filter(([k, n]) => bits & (1 << n)).map(([k]) => names[k] || k);
+    rows.push(["This run", hit.length ? `<span class="nogo">NO-GO: ${hit.map(esc).join("; ")}</span>` : "no rule tripped"]);
+  }
+  if (dk === "clear") rows.push(["Column", "no condensate"]);
+  else {
+    rows.push(["Column top", `${topK.toFixed(1)} kft, ${topC.toFixed(0)} °C`]);
+    if (dk.startsWith("cu") || dk === "core"){
+      const ct = (hasPlane(buf, PLANE.CU_TOP) ? plane(buf, PLANE.CU_TOP, cell) : plane(buf, PLANE.TOP_C, cell)) - 100;
+      rows.push(["Cumulus top", `${ct.toFixed(0)} °C`]);
+    }
+    const iwp = decIwp(plane(buf, PLANE.IWP, cell)), dep = plane(buf, PLANE.DEPTH, cell) / 4;
+    rows.push(["Ice path", iwp < 1 ? "under 1 g/m²" : iwp.toFixed(0) + " g/m²"]);
+    rows.push(["Low layer", dep < 0.3 ? "none" : dep.toFixed(1) + " kft deep"]);
+    const age = plane(buf, PLANE.AGE, cell);
+    rows.push(["Outflow age", age >= 255 ? "no convective source" : (age / 10).toFixed(1) + " h since a core"]);
+    const th = plane(buf, PLANE.THICK, cell) / 4;
+    if (th >= 0.3) rows.push(["Thick layer", th.toFixed(1) + " kft in the 0 to −20 °C band"]);
+  }
+  const dbz = plane(buf, PLANE.DBZ, cell);
+  rows.push(["Composite", dbz < 1 ? "no echo (below 0 dBZ)" : dbz + " dBZ"]);
+  $("q-facts").innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+
+  const t = tally(buf, QP.j, QP.i, QP.lat);
+  const seen = DISP.map(x => x.k).filter(k => t.n[k]).sort((a, b) => t.n[b] - t.n[a]);
+  $("q-bar").innerHTML = seen.map(k => `<span style="width:${(100 * t.n[k] / t.tot).toFixed(2)}%;background:${DISPBY[k].c}"></span>`).join("");
+  $("q-mix").innerHTML = seen.map(k => `<span class="chip" style="background:${DISPBY[k].c}"></span><b>${DISPBY[k].name}</b><em>${(100 * t.n[k] / t.tot).toFixed(1)}%</em>`).join("")
+    + `<span class="chip" style="background:#16253F;box-shadow:inset 0 0 0 1px var(--wire-2)"></span><b>Clear</b><em>${(100 * (t.n.clear || 0) / t.tot).toFixed(1)}%</em>`;
   drawDpdt();
 }
-
-function tally(buf, j0, i0){
-  const q = M.query;
-  const kmLat = q.dlat * 111.32, kmLon = q.dlon * 111.32 * Math.cos(QP.lat*Math.PI/180);
-  const R = RADIUS_NM * 1.852;
-  const rj = Math.ceil(R/kmLat), ri = Math.ceil(R/kmLon);
-  const n = {}; let tot = 0;
-  for (let dj = -rj; dj <= rj; dj++){
-    const jj = j0 + dj; if (jj < 0 || jj >= q.ny) continue;
-    for (let di = -ri; di <= ri; di++){
-      const ii = i0 + di; if (ii < 0 || ii >= q.nx) continue;
-      if (Math.hypot(dj*kmLat, di*kmLon) > R) continue;
-      const k = (byId[plane(buf, PLANE.CLASS, jj*q.nx + ii)]||{}).key;
-      n[k] = (n[k]||0) + 1; tot++;
-    }
-  }
+function tally(buf, j0, i0, lat){
+  const q = M.query, kmLat = q.dlat * 111.32, kmLon = q.dlon * 111.32 * Math.cos(lat * Math.PI/180);
+  const R = RADIUS_NM * NM, rj = Math.ceil(R / kmLat), ri = Math.ceil(R / kmLon), n = {}; let tot = 0;
+  for (let dj = -rj; dj <= rj; dj++){ const jj = j0 + dj; if (jj < 0 || jj >= q.ny) continue;
+    for (let di = -ri; di <= ri; di++){ const ii = i0 + di; if (ii < 0 || ii >= q.nx) continue;
+      if (Math.hypot(dj * kmLat, di * kmLon) > R) continue;
+      const k = dispKey(buf, jj * q.nx + ii); n[k] = (n[k] || 0) + 1; tot++; } }
   return {n, tot: tot || 1};
 }
-
-/* ---- dprog/dt -------------------------------------------------------------- */
-// Every run on disk, at the SAME valid time and the same point. Successive runs agreeing is
-// the signal worth having; a class that appears only in the newest run is one the model has
-// not committed to yet.
 function drawDpdt(){
-  const target = validNow(); if (!target){ $("dpdt").innerHTML = ""; return; }
+  const target = validNow(); if (!target || !QP){ $("dpdt").innerHTML = ""; return; }
   const q = M.query, seen = [];
   $("dpdt").innerHTML = CYC.map((c, n) => {
-    const cyc = `<div class="cyc${n===ci?" now":""}">${c.label}</div>`;
-    const f = c.frames.find(f => f.valid === target);
-    if (!f) return cyc + `<div class="miss">run ends before this</div>`;
-    const buf = BUF[c.id + ":" + f.fh];
-    if (!buf){ if (!(c.id+":"+f.fh in BUF)) loadGrids(c);
-               return cyc + `<div class="miss">loading…</div>`; }
-    const cell = QP.j*q.nx + QP.i;
-    const id = plane(buf, PLANE.CLASS, cell);
-    seen.push(id);
-    const cl = byId[id] || byKey.clear;
-    const t = tally(buf, QP.j, QP.i);
-    const cov = 100 * (1 - (t.n.clear||0)/t.tot);
-    return cyc + `<div><span class="chip" style="background:${cl.color}"></span></div>
-      <div class="nm">${cl.name}
-        <span style="color:var(--ink-3);font-weight:400">F${String(f.fh).padStart(2,"0")}
-        · ${cov.toFixed(0)}%</span></div>`;
+    const lab = `<div class="c${n === ci ? " now" : ""}">${esc(c.label)}</div>`;
+    const f = c.frames.find(x => x.valid === target);
+    if (!f) return lab + `<div></div><div class="small">run ends before this</div>`;
+    const b = BUF[c.id + ":" + f.fh];
+    if (!b){ if (!((c.id + ":" + f.fh) in BUF)) loadGrids(c); return lab + `<div></div><div class="small">loading…</div>`; }
+    const k = dispKey(b, QP.j * q.nx + QP.i); seen.push(k);
+    const d = DISPBY[k];
+    return lab + `<span class="chip" style="background:${d ? d.c : "#16253F"}"></span><div>${d ? d.name : "Clear"} <span class="small">F${String(f.fh).padStart(2, "0")}</span></div>`;
   }).join("");
-  $("dpdt-note").textContent = seen.length < 2 ? ""
-    : (new Set(seen).size === 1
-        ? "Runs agree here — the forecast has settled."
-        : "Runs disagree here; the newest is not automatically the right one.");
+  $("dpdt-note").textContent = seen.length < 2 ? "" : new Set(seen).size === 1
+    ? "Every run agrees here." : "Runs disagree here; the newest is not automatically the right one.";
 }
 
-/* ---- frame ----------------------------------------------------------------- */
-function setLayer(k){
-  if (k === "pov" && $("lay-pov").disabled) return;
-  LAYER = k;
-  $("lay-cloud").setAttribute("aria-pressed", k === "cloud");
-  $("lay-pov").setAttribute("aria-pressed", k === "pov");
-  $("povbox").hidden = k !== "pov";
-  show(i);
+/* ---- legends, shares, pads, trend ---------------------------------------------------- */
+function drawLegends(){
+  $("leg-left").innerHTML = LEFT === "pov"
+    ? `<div class="scale">${POV_DARK.slice(1).map(c => `<span style="background:${c}"></span>`).join("")}</div>
+       <div class="ticks">${(((M.pov||{}).bounds)||[0,5,20,40,60,80,95]).slice(1, 8).map(b => `<span>${Math.round(b)}%</span>`).join("")}</div>`
+    : `<div class="legend">${DISP.map(d => `<span><i style="background:${d.c}"></i>${d.name}</span>`).join("")}</div>`;
+  $("leg-right").innerHTML = `<div class="scale">${DBZ_STOPS.map(([, c]) => `<span style="background:${c}"></span>`).join("")}</div>
+    <div class="ticks">${[0,10,20,30,40,50,60,70].map(v => `<span>${v}</span>`).join("")}<span>dBZ</span></div>`;
 }
-
-function show(n){
-  i = n; const f = frames()[n];
-  const p = POVBY[f.valid];
-  // In POV the frame is matched by VALID TIME, not by index - the POV set is built from the
-  // newest run but stays aligned when an older run is selected.
-  // If a valid time has no POV frame, stay on the POV layer and say so. Silently reverting
-  // to cloud type made the button look broken, when the real answer is that this hour is not
-  // yet covered by two runs.
-  const usePov = LAYER === "pov" && p;
-  if (LAYER === "pov" && !p){
-    $("pov-src").innerHTML = "<b>No POV at " + (f.valid_label || f.valid_short) + "</b> — "
-      + "fewer than two runs reach this hour. Showing cloud type.";
-  }
-  $("frame").src = bust(usePov ? p.image : f.image);
-  $("frame").alt = (usePov ? "LLCC violation probability valid " : "Cloud type classification valid ") + f.valid;
-  if (usePov){
-    const n = p.members.length;
-    // A 2-member probability can only read 0, 50 or 100%. Say so rather than letting the
-    // colour scale imply a precision that is not there.
-    const bym = p.by_model ? Object.entries(p.by_model).map(([k,v]) => `${v} ${k}`).join(" + ")
-                           : n + " members";
-    $("pov-src").innerHTML = bym + " — " + p.members.join(", ")
-      + (n < 4 ? ` — only ${n} runs on disk, so this can only read `
-                 + Array.from({length: n + 1}, (_, k) => Math.round(100 * k / n)).join("/")
-                 + "%. It refines as the ensemble fills." : "");
-  }
-  $("loading").style.display = "none";
-  // Spell the valid time out. "12/22Z" beside a run button reading "10Z" looked like a
-  // second cycle label rather than a day-of-month.
-  $("valid").textContent = f.valid_label || f.valid_short;
-  $("fh").textContent = "F" + String(f.fh).padStart(2,"0");
-  $("scrub").value = n;
-
-  const total = Object.values(f.counts).reduce((a,b) => a+b, 0) || 1;
-  ORDER.forEach(k => {
-    if(!$("pct-"+k)) return;
-    const pct = 100 * (f.counts[k]||0) / total;
-    $("pct-"+k).textContent = pct > 0 && pct < 0.05 ? "<0.1%" : pct.toFixed(1) + "%";
-    $("bar-"+k).style.width = Math.min(100, Math.sqrt(pct/100)*100) + "%";
+function drawShares(){
+  const buf = bufNow();
+  if (!buf){ $("shares").innerHTML = '<div class="small">loading this hour…</div>'; return; }
+  const n = {}, N = NCELL();
+  for (let c = 0; c < N; c++){ const k = dispKey(buf, c); n[k] = (n[k] || 0) + 1; }
+  $("shares").innerHTML = DISP.map(d => { const p = 100 * (n[d.k] || 0) / N;
+    return `<div class="row"><span class="chip" style="background:${d.c}"></span><span>${d.name}</span><span>${p > 0 && p < 0.05 ? "<0.1" : p.toFixed(1)}%</span>
+      <div class="bar"><span style="width:${Math.sqrt(p / 100) * 100}%;background:${d.c}"></span></div></div>`; }).join("")
+    + `<div class="row"><span></span><b>Cloud overhead</b><b>${(100 * (1 - (n.clear || 0) / N)).toFixed(1)}%</b></div>`;
+}
+function drawAbout(){
+  const P = M.pov || {};
+  const conv = (P.conventions || []).map(c => `<li>${esc(c)}</li>`).join("");
+  $("pov-about").innerHTML = "Each grid point is treated as the flight path and scored against "
+    + esc(P.standard || "NASA-STD-4010") + " in every member; the probability is the share that violate. "
+    + (conv ? `45 WS conventions applied:<ul class="rules">${conv}</ul>` : "")
+    + "Not evaluated, because no forecast field can decide them: " + esc((P.not_evaluated || []).join("; "))
+    + ". So this is a floor, not a verdict.";
+  const t = M.thresholds || {};
+  $("method").textContent = "Each column is split into contiguous cloud layers; the lowest and highest are classified separately, so a shallow deck under cirrus is not one deep cloud. "
+    + "Condensate is integrated to a path in g/m². An anvil is a glaciated layer topping at " + t.glaciated_c + " °C or colder with " + t.anvil_iwp_gm2
+    + " g/m² of ice or more that traces back to a convective core (" + t.convective_dbz + " dBZ composite or " + t.graupel_gm2 + " g/m² of graupel); attached means unbroken ice back to a live core. "
+    + "Cross-sections are the same model's reflectivity and cloud on 0.5 km levels, sampled along your line. Viewer " + VIEWER_VERSION + ".";
+}
+function drawPads(){
+  $("pads").innerHTML = (M.sites || Object.keys(SITES)).map(s => `<div class="pad"><div class="n">${esc(s)}</div>
+    <div class="k"><span class="chip" id="pc-${esc(s)}"></span><span id="pn-${esc(s)}">—</span></div><div class="x" id="pv-${esc(s)}"></div></div>`).join("");
+}
+function drawPadsFrame(){
+  const f = frame(), buf = bufNow(), q = M.query;
+  Object.entries(f.sites || {}).forEach(([s, d]) => {
+    if (!$("pn-" + s)) return;
+    let k = null;
+    if (buf && SITES[s]){ const j = Math.round((SITES[s][0] - q.lat0) / q.dlat), ii = Math.round((SITES[s][1] - q.lon0) / q.dlon);
+      if (j >= 0 && ii >= 0 && j < q.ny && ii < q.nx) k = dispKey(buf, j * q.nx + ii); }
+    const disp = k ? DISPBY[k] : null;
+    $("pc-" + s).style.background = disp ? disp.c : (k === "clear" ? "#16253F" : (CLASS_DARK[d.key] || "#16253F"));
+    $("pn-" + s).textContent = disp ? disp.name.replace("Cumulus topping", "Cu").replace("Cumulus, top", "Cu, top") : (byKey[d.key] || {}).name || d.key;
+    $("pv-" + s).textContent = d.top_kft == null ? "no cloud" : `${d.top_kft.toFixed(1)} kft, ${d.top_c.toFixed(0)} °C` + (d.dbz >= 1 ? `, ${d.dbz.toFixed(0)} dBZ` : "");
   });
-  $("covered").textContent = (100 * (1 - (f.counts.clear||0)/total)).toFixed(1) + "%";
-
-  Object.entries(f.sites || {}).forEach(([s,d]) => {
-    const c = byKey[d.key]; if(!$("sn-"+s)) return;
-    $("sc-"+s).style.background = c ? c.color : "transparent";
-    $("sn-"+s).textContent = c ? c.name : d.key;
-    $("sv-"+s).textContent = d.top_kft == null ? "no cloud"
-      : `${d.top_kft.toFixed(1)} kft / ${d.top_c.toFixed(0)} °C`
-        + (d.iwp >= 5 ? ` · ${d.iwp.toFixed(0)} g/m²` : "")
-        + (d.dbz >= 5 ? ` · ${d.dbz.toFixed(0)} dBZ` : "");
-  });
-  if (QP) drawQuery();
-  moveCursor(n);
 }
-
-function start(){ $("play").textContent = "PAUSE";
-  timer = setInterval(() => show((i+1) % frames().length), 700); }
-function stop(){ if(timer) clearInterval(timer); timer = null; $("play").textContent = "PLAY"; }
-
-/* ---- trend ----------------------------------------------------------------- */
 let TX = null;
-function moveCursor(n){
-  const c = $("trend").querySelector(".cursor");
-  if (c && TX) c.setAttribute("x", (TX(n) - 0.5).toFixed(1));
-}
+function moveCursor(){ const c = $("trend").querySelector && $("trend").querySelector(".cursor"); if (c && TX) c.setAttribute("x", (TX(i) - 0.5).toFixed(1)); }
 function drawTrend(){
-  const svg = $("trend"), fr = frames(), n = fr.length;
-  // Drawn in PIXEL space with the default preserveAspectRatio. A 100-unit viewBox stretched
-  // across ~1000 px with preserveAspectRatio="none" smears every glyph 10x horizontally.
-  const W = Math.max(320, Math.round(svg.clientWidth || svg.getBoundingClientRect().width || 640));
-  const H = 92, PL = 36, PR = 10, PT = 10, PB = 20;
-  const share = fr.map(f => {
-    const tot = Object.values(f.counts).reduce((a,b)=>a+b,0) || 1;
-    return Object.fromEntries(ORDER.map(k => [k, 100*(f.counts[k]||0)/tot]));
-  });
-  const peak = Math.max(1, ...share.map(s => Math.max(...ORDER.map(k => s[k]))));
-  const x = j => PL + (n<2 ? 0 : (j/(n-1))*(W-PL-PR));
-  const y = v => H - PB - (v/peak)*(H-PT-PB);
+  const svg = $("trend"), fr = frames(), n = fr.length; if (!n) return;
+  const W = Math.max(320, Math.round(svg.clientWidth || 640)), H = 96, PL = 38, PR = 10, PT = 8, PB = 20;
+  const keys = ["cirrus","anvil_det","anvil_att","tcu","cumulus","stratiform"];
+  const share = fr.map(f => { const tot = Object.values(f.counts).reduce((a, b) => a + b, 0) || 1;
+    return Object.fromEntries(keys.map(k => [k, 100 * (f.counts[k] || 0) / tot])); });
+  const peak = Math.max(1, ...share.map(s => Math.max(...keys.map(k => s[k]))));
+  const x = j => PL + (n < 2 ? 0 : j / (n - 1) * (W - PL - PR)), y = v => H - PB - v / peak * (H - PT - PB);
   TX = x;
   let out = "";
-  [0, peak/2, peak].forEach(v => {
-    out += `<line x1="${PL}" y1="${y(v).toFixed(1)}" x2="${W-PR}" y2="${y(v).toFixed(1)}"
-             stroke="#C3C8BC" stroke-width="${v===0?0.9:0.5}"/>`
-        +  `<text x="${PL-6}" y="${(y(v)+3).toFixed(1)}" font-size="9" fill="#5D6A6E"
-             font-family="IBM Plex Mono, monospace" text-anchor="end">${v.toFixed(peak<10?1:0)}%</text>`;
-  });
-  ORDER.forEach(k => {
-    if(!byKey[k]) return;
-    const d = share.map((s,j) => `${j?"L":"M"}${x(j).toFixed(1)},${y(s[k]).toFixed(1)}`).join("");
-    out += `<path d="${d}" fill="none" stroke="${byKey[k].color}" stroke-width="1.7"
-             stroke-linejoin="round" stroke-linecap="round"/>`;
-  });
-  out += `<rect class="cursor" x="${(x(0)-0.5).toFixed(1)}" y="${PT-4}" width="1"
-           height="${H-PB-PT+4}" fill="#14181B" opacity=".5"/>`;
-  // Hour-only ticks, spaced by available pixels rather than frame count - a 48 h run has 48
-  // of them. The date appears only where the UTC day rolls over, which is the one place it
-  // is actually needed and cannot be mistaken for a cycle.
-  const step = Math.max(1, Math.ceil(n / Math.max(2, Math.floor((W-PL-PR)/40))));
-  const dayOf = f => (f.valid||"").slice(0,10);
-  fr.forEach((f,j) => {
-    if (j && dayOf(f) !== dayOf(fr[j-1])){
-      out += `<line x1="${x(j).toFixed(1)}" y1="${PT-4}" x2="${x(j).toFixed(1)}" y2="${H-PB}"
-               stroke="#14181B" stroke-width=".5" stroke-dasharray="2 2" opacity=".45"/>`
-          +  `<text x="${(x(j)+3).toFixed(1)}" y="${PT+2}" font-size="8.5" fill="#5D6A6E"
-               font-family="IBM Plex Mono, monospace">${(f.valid_label||"").slice(4)}</text>`;
-    }
-    if (j % step === 0 || j === n-1)
-      out += `<text x="${x(j).toFixed(1)}" y="${H-6}" font-size="9.5" fill="#5D6A6E"
-               font-family="IBM Plex Mono, monospace" text-anchor="middle">${f.valid_short}</text>`;
-  });
-  svg.removeAttribute("preserveAspectRatio");
-  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  svg.innerHTML = out;
+  [0, peak / 2, peak].forEach(v => { out += `<line x1="${PL}" y1="${y(v).toFixed(1)}" x2="${W - PR}" y2="${y(v).toFixed(1)}" stroke="#22395B"/>`
+    + `<text x="${PL - 5}" y="${(y(v) + 3).toFixed(1)}" font-size="10" fill="#8399B6" text-anchor="end" font-family="Saira">${v.toFixed(peak < 10 ? 1 : 0)}%</text>`; });
+  keys.forEach(k => { if (!byKey[k]) return;
+    out += `<path d="${share.map((s, j) => `${j ? "L" : "M"}${x(j).toFixed(1)},${y(s[k]).toFixed(1)}`).join("")}" fill="none" stroke="${CLASS_DARK[k]}" stroke-width="1.7" stroke-linejoin="round"/>`; });
+  out += `<rect class="cursor" x="${(x(i) - 0.5).toFixed(1)}" y="${PT - 4}" width="1" height="${H - PB - PT + 4}" fill="#FFB547"/>`;
+  const step = Math.max(1, Math.ceil(n / Math.max(2, Math.floor((W - PL - PR) / 42))));
+  fr.forEach((f, j) => { if (j % step === 0 || j === n - 1) out += `<text x="${x(j).toFixed(1)}" y="${H - 5}" font-size="10" fill="#8399B6" text-anchor="middle" font-family="Saira">${f.valid_short}</text>`; });
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.innerHTML = out;
 }
+
+if (typeof window !== "undefined") window.CS = {start, get state(){ return {M, MK, CYC, ci, i, QP, XS, LEFT, TOOL, BUF, XSBUF, POVBUF}; },
+  setPoint, setSection, setTool, setModel, onKey, setLeft, setView, show, selectCycle, drawXS, loadXS, dispKey};
+start();
 </script>
 </body>
 </html>
