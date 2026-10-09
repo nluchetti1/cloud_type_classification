@@ -15,7 +15,9 @@
     --abyss:#0A1424; --console:#101D33; --console-2:#15264A; --wire:#22395B; --wire-2:#2E4C77;
     --ink:#D9E5F3; --dim:#8399B6; --faint:#5A7194;
     --amber:#FFB547; --signal:#4FD6E3; --nogo:#FF4D5E; --go:#1E7A5C;
-    --r:6px; --rail:330px;
+    --r:6px; --gap:10px;
+    /* Set by layout() from the window, so the desktop view fits one screen. */
+    --mapw:480px; --deckh:auto; --side:600px;
     font-synthesis:none;
   }
   *{box-sizing:border-box}
@@ -23,275 +25,270 @@
   html,body{margin:0; background:var(--abyss); color:var(--ink)}
   body{
     font-family:"Saira",system-ui,sans-serif; font-stretch:92%;
-    font-size:14px; line-height:1.45; font-variant-numeric:tabular-nums;
-    padding:max(14px,env(safe-area-inset-top)) clamp(10px,2vw,22px) max(18px,env(safe-area-inset-bottom));
-    /* A faint plotting grid behind everything - the page reads as an instrument, and the
-       maps and section sit on the same lattice. */
+    font-size:13.5px; line-height:1.4; font-variant-numeric:tabular-nums;
+    padding:max(10px,env(safe-area-inset-top)) clamp(10px,1.4vw,20px) max(14px,env(safe-area-inset-bottom));
     background-image:
       linear-gradient(rgba(79,214,227,.035) 1px, transparent 1px),
       linear-gradient(90deg, rgba(79,214,227,.035) 1px, transparent 1px);
     background-size:28px 28px;
   }
-  .shell{max-width:1500px; margin:0 auto}
+  .shell{max-width:2200px; margin:0 auto}
   button,select,input{font:inherit; color:inherit}
   :focus-visible{outline:2px solid var(--amber); outline-offset:2px}
 
-  /* ---- masthead ---------------------------------------------------------------- */
-  header{display:grid; grid-template-columns:1fr auto; gap:6px 24px; align-items:end;
-         padding-bottom:12px; border-bottom:1px solid var(--wire); margin-bottom:12px}
-  .brand{display:flex; align-items:baseline; gap:16px; flex-wrap:wrap}
-  .wordmark{margin:0; font-weight:300; font-stretch:125%; font-size:clamp(26px,3.4vw,40px);
-            letter-spacing:.08em; line-height:1}
+  /* ---- top bar: three slim rows, ~120 px total ------------------------------------ */
+  header{display:flex; align-items:baseline; gap:8px 18px; flex-wrap:wrap;
+         padding-bottom:7px; border-bottom:1px solid var(--wire); margin-bottom:8px}
+  .wordmark{margin:0; font-weight:300; font-stretch:125%; font-size:26px; letter-spacing:.08em; line-height:1}
   .wordmark b{font-weight:650; color:var(--signal)}
-  .tagline{color:var(--dim); font-stretch:80%; font-size:14px}
-  .clock{text-align:right}
-  .clock .v{font-size:clamp(22px,2.6vw,32px); font-weight:600; font-stretch:105%; line-height:1}
-  .clock .s{color:var(--dim); font-size:12.5px; font-stretch:85%}
-  .banner{grid-column:1/-1; border:1px solid #7A4A12; background:#2A1C08; color:#FFD9A0;
-          border-radius:var(--r); padding:6px 10px; font-size:13px}
+  .tagline{color:var(--dim); font-stretch:80%; font-size:13px}
+  .clock{margin-left:auto; display:flex; align-items:baseline; gap:12px}
+  .clock .v{font-size:22px; font-weight:600; font-stretch:105%; line-height:1}
+  .clock .s{color:var(--dim); font-size:12px; font-stretch:85%}
+  .banner{flex-basis:100%; border:1px solid #7A4A12; background:#2A1C08; color:#FFD9A0;
+          border-radius:var(--r); padding:5px 10px; font-size:13px}
 
-  /* ---- controls ----------------------------------------------------------------- */
-  .controls{display:flex; flex-wrap:wrap; gap:10px 22px; align-items:center; margin-bottom:12px}
-  .ctl{display:flex; align-items:center; gap:8px}
-  .ctl > span{color:var(--dim); font-size:12.5px; font-stretch:80%}
+  .controls{display:flex; flex-wrap:wrap; gap:6px 18px; align-items:center; margin-bottom:6px}
+  .ctl{display:flex; align-items:center; gap:7px}
+  .ctl > span{color:var(--dim); font-size:12px; font-stretch:80%}
   .seg{display:inline-flex; border:1px solid var(--wire-2); border-radius:var(--r); overflow:hidden}
-  .seg button{background:transparent; border:0; padding:4px 11px; cursor:pointer; color:var(--dim);
+  .seg button{background:transparent; border:0; padding:3px 10px; cursor:pointer; color:var(--dim);
               font-stretch:85%; font-weight:500; border-right:1px solid var(--wire)}
   .seg button:last-child{border-right:0}
   .seg button:hover{color:var(--ink); background:var(--console-2)}
   .seg button[aria-pressed=true]{background:var(--amber); color:#1A1305; font-weight:650}
   .seg button:disabled{opacity:.4; cursor:not-allowed}
-  .runs{display:flex; flex-wrap:wrap; gap:6px}
+  .runs{display:flex; flex-wrap:wrap; gap:4px}
   .run{background:var(--console); border:1px solid var(--wire-2); border-radius:var(--r);
-       padding:3px 9px; cursor:pointer; color:var(--ink); font-stretch:85%; font-weight:600}
-  .run small{color:var(--dim); font-weight:400; margin-left:6px}
+       padding:2px 8px; cursor:pointer; color:var(--ink); font-stretch:85%; font-weight:600}
+  .run small{color:var(--dim); font-weight:400; margin-left:4px}
   .run.partial{border-style:dashed}
   .run[aria-pressed=true]{border-color:var(--amber); box-shadow:inset 0 0 0 1px var(--amber)}
 
-  /* ---- deck ------------------------------------------------------------------- */
-  .deck{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) var(--rail);
-        gap:12px; align-items:start}
+  .transport{display:flex; gap:12px; align-items:center; padding:5px 10px; margin-bottom:var(--gap);
+             background:var(--console); border:1px solid var(--wire); border-radius:var(--r)}
+  .play{background:var(--amber); color:#1A1305; border:0; border-radius:var(--r);
+        padding:3px 14px; font-weight:700; cursor:pointer; min-width:70px}
+  .transport input[type=range]{flex:1; accent-color:var(--amber); min-width:120px}
+  .transport .when{font-weight:650; font-size:15px; white-space:nowrap}
+  .transport .fh{color:var(--dim); font-size:12.5px; white-space:nowrap}
+  .tview .seg{flex-wrap:nowrap} .tview .seg button{white-space:nowrap}
+
+  /* ---- deck ----------------------------------------------------------------------
+     wide (>= 1180 px): [map][map][side]. The maps are sized so the whole deck fits the
+     window height; the side column takes the rest of the width and holds the section on
+     top and the readout below it, the readout scrolling inside itself.
+     mid: maps side by side, section and readout full width below.
+     narrow: one column. */
+  .deck{display:grid; gap:var(--gap); align-items:start}
+  body.wide .deck{grid-template-columns:var(--mapw) var(--mapw) minmax(0,1fr); grid-template-rows:auto 1fr}
+  body.wide .side{grid-column:3; grid-row:1 / span 2}
+  body.wide .under{grid-column:1 / 3}
+  body.mid .under, body.narrow .under{grid-column:1 / -1}
+  body.mid .deck{grid-template-columns:repeat(2, minmax(0, var(--mapw))); justify-content:center}
+  body.narrow .deck{grid-template-columns:minmax(0,1fr)}
   .panel{background:var(--console); border:1px solid var(--wire); border-radius:var(--r);
          position:relative; min-width:0}
-  .ph{display:flex; align-items:baseline; gap:10px; padding:7px 10px 5px}
-  .ph h2{margin:0; font-size:15px; font-weight:650; font-stretch:95%}
-  .ph .note{margin-left:auto; color:var(--dim); font-size:12px; font-stretch:80%; text-align:right}
-  .mapwrap{position:relative; margin:0 6px; line-height:0}
+  .ph{display:flex; align-items:baseline; gap:10px; padding:5px 9px 4px}
+  .ph h2{margin:0; font-size:14px; font-weight:650; font-stretch:95%}
+  .ph .note{margin-left:auto; color:var(--dim); font-size:11.5px; font-stretch:80%; text-align:right}
+  .mapwrap{position:relative; margin:0 5px; line-height:0}
   .mapwrap canvas{display:block; width:100%; touch-action:none; cursor:crosshair;
                   border-radius:3px; background:#0C1A2E}
   .mapwrap .wait{position:absolute; inset:0; display:grid; place-items:center; line-height:1.4;
                  color:var(--dim); font-size:13px; pointer-events:none}
-  .legend{display:flex; flex-wrap:wrap; gap:3px 12px; padding:7px 10px 9px; font-size:12.5px;
-          font-stretch:85%; color:var(--dim)}
-  .legend i{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px;
+  .legend{display:flex; flex-wrap:wrap; gap:1px 10px; padding:5px 9px 6px; font-size:11.5px;
+          font-stretch:80%; color:var(--dim)}
+  .legend i{display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px;
             vertical-align:-1px}
-  .scale{display:flex; height:9px; margin:7px 10px 2px; border-radius:2px; overflow:hidden}
+  .scale{display:flex; height:8px; margin:6px 9px 2px; border-radius:2px; overflow:hidden}
   .scale span{flex:1}
-  .ticks{display:flex; justify-content:space-between; padding:0 10px 8px; color:var(--dim);
-         font-size:11.5px}
+  .ticks{display:flex; justify-content:space-between; padding:0 9px 6px; color:var(--dim); font-size:11px}
 
-  .transport{grid-column:1/3; display:flex; gap:14px; align-items:center; padding:8px 12px}
-  .play{background:var(--amber); color:#1A1305; border:0; border-radius:var(--r);
-        padding:6px 16px; font-weight:700; cursor:pointer; min-width:78px}
-  .transport input[type=range]{flex:1; accent-color:var(--amber); min-width:120px}
-  .transport .when{font-weight:650; font-size:17px; white-space:nowrap}
-  .transport .fh{color:var(--dim); font-size:13px}
+  .side{display:flex; flex-direction:column; gap:var(--gap); min-width:0; min-height:0}
+  body.wide .side{height:var(--deckh)}
+  body.mid .side, body.narrow .side{grid-column:1/-1}
 
   /* ---- section ------------------------------------------------------------------ */
-  .xs{grid-column:1/3}
-  .xs .ph label{display:flex; gap:6px; align-items:center; color:var(--dim); font-size:12.5px;
-                cursor:pointer}
+  .xs{flex:none}
+  .xs .ph label{display:flex; gap:6px; align-items:center; color:var(--dim); font-size:12px; cursor:pointer}
   .xs .ph input{accent-color:var(--amber)}
-  .xsbody{position:relative; margin:0 6px; min-height:120px}
+  .xsbody{position:relative; margin:0 5px}
   .xsbody canvas{display:block; width:100%; border-radius:3px}
-  .xs-empty{padding:26px 16px 30px; color:var(--dim); line-height:1.6; max-width:70ch}
+  .xs-empty{padding:14px 12px 16px; color:var(--dim); line-height:1.55}
   .xs-empty strong{color:var(--ink); font-weight:600}
-  .xsfoot{display:flex; flex-wrap:wrap; gap:4px 18px; padding:6px 10px 9px; font-size:12px;
-          color:var(--dim); font-stretch:85%}
-  .xsfoot i{display:inline-block; width:12px; height:6px; margin-right:5px; vertical-align:1px}
-  .xsread{min-height:1.4em}
-  /* The one orchestrated moment: a new cut sweeps in left to right, like a scope trace. */
+  .xsfoot{display:flex; flex-wrap:wrap; gap:2px 14px; padding:4px 9px 6px; font-size:11.5px;
+          color:var(--dim); font-stretch:82%}
+  .xsfoot i{display:inline-block; width:11px; height:6px; margin-right:4px; vertical-align:1px}
+  .xsread{min-height:1.3em; color:var(--ink)}
   .sweep{animation:sweep .7s cubic-bezier(.2,.7,.2,1) both}
   @keyframes sweep{from{clip-path:inset(0 100% 0 0)} to{clip-path:inset(0 0 0 0)}}
   @media (prefers-reduced-motion:reduce){ .sweep{animation:none} }
 
-  /* ---- rail --------------------------------------------------------------------- */
-  .rail{grid-column:3; grid-row:1 / span 3; position:sticky; top:10px;
-        max-height:calc(100vh - 20px); overflow:auto; padding:10px 12px}
-  .rail h3{margin:14px 0 6px; font-size:13px; font-weight:650; font-stretch:90%; color:var(--dim)}
-  .rail h3:first-child{margin-top:0}
-  .where{font-weight:650; font-size:15px}
-  .hint{color:var(--dim); font-size:13px}
-  .cls{display:flex; align-items:center; gap:8px; font-size:16px; font-weight:650; margin:4px 0}
-  .chip{width:12px; height:12px; border-radius:2px; flex:none; display:inline-block}
-  dl.facts{display:grid; grid-template-columns:auto 1fr; gap:2px 12px; margin:6px 0 0;
-           font-size:13.5px}
+  /* ---- readout: two columns inside the side column when it is wide enough ---------- */
+  .rail{flex:1 1 auto; min-height:0; overflow:auto; padding:8px 11px;
+        display:grid; grid-template-columns:minmax(0,1fr); gap:0 18px; align-content:start}
+  .rail.two{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
+  .rail .col{min-width:0}
+  .rail h3{margin:11px 0 5px; font-size:12.5px; font-weight:650; font-stretch:90%; color:var(--dim)}
+  .rail .col > h3:first-child{margin-top:0}
+  .where{font-weight:650; font-size:14.5px}
+  .hint{color:var(--dim); font-size:12.5px}
+  .cls{display:flex; align-items:center; gap:8px; font-size:15px; font-weight:650; margin:3px 0}
+  .chip{width:11px; height:11px; border-radius:2px; flex:none; display:inline-block}
+  dl.facts{display:grid; grid-template-columns:auto 1fr; gap:1px 10px; margin:5px 0 0; font-size:13px}
   dl.facts dt{color:var(--dim)}
   dl.facts dd{margin:0}
   .nogo{color:var(--nogo)}
-  .mixbar{display:flex; height:8px; margin:6px 0; border-radius:2px; overflow:hidden;
-          background:var(--console-2)}
-  .mix{display:grid; grid-template-columns:auto 1fr auto; gap:2px 8px; font-size:13px;
-       align-items:center}
+  .mixbar{display:flex; height:7px; margin:5px 0; border-radius:2px; overflow:hidden; background:var(--console-2)}
+  .mix{display:grid; grid-template-columns:auto 1fr auto; gap:1px 8px; font-size:12.5px; align-items:center}
   .mix b{font-weight:500}
   .mix em{font-style:normal; color:var(--dim)}
-  .dpdt{display:grid; grid-template-columns:auto auto 1fr; gap:3px 8px; font-size:13px;
-        align-items:center}
+  .dpdt{display:grid; grid-template-columns:auto auto 1fr; gap:2px 8px; font-size:12.5px; align-items:center}
   .dpdt .c{color:var(--dim)}
   .dpdt .c.now{color:var(--amber); font-weight:650}
-  .shares .row{display:grid; grid-template-columns:14px 1fr auto; gap:6px; align-items:center;
-               font-size:13px; padding:3px 0}
+  .shares .row{display:grid; grid-template-columns:12px 1fr auto; gap:6px; align-items:center;
+               font-size:12.5px; padding:2px 0}
   .shares .bar{grid-column:2/4; height:3px; background:var(--console-2); border-radius:2px}
   .shares .bar span{display:block; height:100%; border-radius:2px}
-  .small{font-size:12px; color:var(--dim); line-height:1.5}
+  .small{font-size:11.5px; color:var(--dim); line-height:1.45}
   .rules li{margin:2px 0}
   .rules{padding-left:16px; margin:4px 0}
 
-  /* ---- lower ------------------------------------------------------------------- */
-  .lower{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) var(--rail); gap:12px;
-         margin-top:12px}
-  .pads{grid-column:1/3; display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-        gap:6px}
-  .pad{background:var(--console); padding:6px 9px; border:1px solid var(--wire); border-radius:var(--r)}
-  .pad .n{color:var(--dim); font-size:12px; font-stretch:80%}
-  .pad .k{display:flex; gap:6px; align-items:center; font-weight:600; font-size:13px}
-  .pad .x{color:var(--dim); font-size:12px}
-  .trend{grid-column:1/3; padding:8px 10px}
-  .trend svg{width:100%; height:96px; display:block}
-  footer{margin-top:14px; color:var(--dim); font-size:13px; max-width:90ch; line-height:1.6}
-
-  @media (max-width:1150px){
-    .deck,.lower{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-    .rail{grid-column:1/3; grid-row:auto; position:static; max-height:none}
-  }
-  @media (max-width:720px){
-    .deck,.lower{grid-template-columns:minmax(0,1fr)}
-    .transport,.xs,.rail,.pads,.trend{grid-column:1}
-    header{grid-template-columns:1fr}
-    .clock{text-align:left}
-  }
+  /* ---- under the maps: pads and the run trend, filling the height the maps leave ----- */
+  .under{display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:var(--gap); align-items:start; min-width:0}
+  body.narrow .under{grid-template-columns:minmax(0,1fr)}
+  .pads{display:grid; grid-template-columns:repeat(auto-fill,minmax(176px,1fr)); gap:5px; align-content:start}
+  .pad{background:var(--console); padding:4px 8px; border:1px solid var(--wire); border-radius:var(--r);
+       display:grid; grid-template-columns:auto 1fr; gap:0 8px; align-items:baseline}
+  .pad .n{color:var(--ink); font-size:12px; font-weight:650; font-stretch:85%}
+  .pad .k{display:flex; gap:5px; align-items:center; font-size:11.5px; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .pad .x{grid-column:1/-1}
+  .pad .x{color:var(--dim); font-size:11px}
+  .trend{padding:6px 9px}
+  .trend svg{width:100%; height:90px; display:block}
+  .tview{margin-left:8px}
+  .ph .seg button{padding:2px 9px; font-size:12.5px}
+  footer{margin-top:12px; color:var(--dim); font-size:12.5px; max-width:100ch; line-height:1.55}
+  body.narrow header .tagline{flex-basis:100%; order:3}
 </style>
 </head>
 <body>
 <div class="shell">
 
 <header>
-  <div class="brand">
-    <h1 class="wordmark">cloud<b>scope</b></h1>
-    <div class="tagline" id="tagline">Model cloud type and LLCC outlook over the Florida spaceport corridor</div>
-  </div>
-  <div class="clock">
-    <div class="v" id="valid">—</div>
-    <div class="s" id="runline">loading manifest</div>
-  </div>
+  <h1 class="wordmark">cloud<b>scope</b></h1>
+  <div class="tagline" id="tagline">Model cloud type and LLCC outlook, Florida spaceport corridor</div>
+  <div class="clock"><div class="v" id="valid">—</div><div class="s" id="runline">loading manifest</div></div>
   <div class="banner" id="banner" hidden></div>
 </header>
 
 <div class="controls">
   <div class="ctl"><span>Model</span><div class="seg" id="models"></div></div>
   <div class="ctl"><span>Run</span><div class="runs" id="runs"></div></div>
-  <div class="ctl"><span>Left map</span>
-    <div class="seg" id="layers">
-      <button id="lay-cloud" aria-pressed="true">Cloud class</button>
-      <button id="lay-pov" aria-pressed="false">Violation probability</button>
-    </div>
-  </div>
   <div class="ctl"><span>Click to</span>
     <div class="seg" id="tools">
       <button id="tool-inspect" aria-pressed="true" title="Read out the column under a point (I)">Inspect a point</button>
       <button id="tool-section" aria-pressed="false" title="Click A then B, or drag, to cut a cross-section (X)">Cut a section</button>
     </div>
   </div>
-  <div class="ctl"><span>View</span>
+</div>
+
+<div class="transport">
+  <button class="play" id="play" aria-label="Play or pause the forecast loop">Play</button>
+  <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Forecast hour">
+  <span class="when" id="when">—</span><span class="fh" id="fh"></span>
+  <div class="ctl tview"><span>View</span>
     <div class="seg" id="views">
-      <button id="view-domain" aria-pressed="true">Corridor</button>
+      <button id="view-corridor" aria-pressed="true" title="27-30 N, centred on the Cape">Corridor</button>
+      <button id="view-full" aria-pressed="false" title="Everything the model run covers here, 26.5-30.5 N">Full domain</button>
       <button id="view-cape" aria-pressed="false">Cape, 25 nmi</button>
     </div>
   </div>
 </div>
 
-<main class="deck">
+<main class="deck" id="deck">
   <section class="panel" aria-labelledby="h-left">
-    <div class="ph"><h2 id="h-left">Cloud class</h2><span class="note" id="n-left">what the column is</span></div>
+    <div class="ph"><div class="seg" id="layers" role="group" aria-label="Left map">
+        <button id="lay-cloud" aria-pressed="true">Cloud class</button>
+        <button id="lay-pov" aria-pressed="false">Violation probability</button>
+      </div><span class="note" id="n-left">what the column is</span></div>
     <div class="mapwrap"><canvas id="map-left" aria-label="Cloud class map. Click to inspect a point or cut a section."></canvas>
       <div class="wait" id="wait-left">Loading grids</div></div>
     <div id="leg-left"></div>
   </section>
   <section class="panel" aria-labelledby="h-right">
-    <div class="ph"><h2 id="h-right">Simulated reflectivity</h2><span class="note">model composite, scale from 0 dBZ</span></div>
+    <div class="ph"><h2 id="h-right">Simulated reflectivity</h2><span class="note">model composite, from 0 dBZ</span></div>
     <div class="mapwrap"><canvas id="map-right" aria-label="Simulated composite reflectivity map."></canvas>
       <div class="wait" id="wait-right">Loading grids</div></div>
     <div id="leg-right"></div>
   </section>
 
-  <aside class="panel rail" aria-label="Readout">
-    <h3>Point readout</h3>
-    <div class="where" id="q-where">No point selected</div>
-    <div id="q-empty" class="hint">Choose “Inspect a point” and click either map for the column
-      beneath it, the cloud mix within 10 nmi, which rules this run trips there, and how the
-      last few runs have handled it.</div>
-    <div id="q-full" hidden>
-      <div class="cls" id="q-cls"></div>
-      <div class="small" id="q-hint"></div>
-      <dl class="facts" id="q-facts"></dl>
-      <h3>Within 10 nmi</h3>
-      <div class="mixbar" id="q-bar"></div>
-      <div class="mix" id="q-mix"></div>
-      <h3>Same point, same valid time, every run</h3>
-      <div class="dpdt" id="dpdt"></div>
-      <div class="small" id="dpdt-note"></div>
-    </div>
+  <div class="side" id="side">
+    <section class="panel xs" aria-labelledby="h-xs">
+      <div class="ph"><h2 id="h-xs">Vertical cross-section</h2>
+        <label><input type="checkbox" id="smooth" checked> Smooth</label>
+        <span class="note" id="xs-note">no line drawn</span></div>
+      <div class="xsbody" id="xsbody">
+        <div class="xs-empty" id="xs-empty"><strong>Cut a section.</strong> Pick “Cut a section”
+          (or press X), then click a start and an end point on either map, or drag between them.
+          It follows the loop as you scrub and play.</div>
+        <canvas id="xs" hidden></canvas>
+      </div>
+      <div class="xsfoot" id="xs-foot" hidden>
+        <span><i style="background:var(--nogo)"></i>Strip 1: this run's NO-GO</span>
+        <span><i style="background:#3A7BF2"></i>Strip 2: cloud class</span>
+        <span id="xs-povkey"><i style="background:#B03A7E"></i>Strip 3: ensemble probability</span>
+        <span id="xs-iso"></span>
+        <span id="xs-src"></span>
+        <span class="xsread" id="xs-read"></span>
+      </div>
+    </section>
 
-    <h3>Share of the corridor</h3>
-    <div class="shares" id="shares"></div>
-    <div class="small">Percent of 3 km columns in the domain. Bars are square-root scaled so a
-      sliver stays visible; read the number.</div>
-
-    <h3>How the probability is scored</h3>
-    <div class="small" id="pov-about"></div>
-  </aside>
-
-  <div class="panel transport">
-    <button class="play" id="play" aria-label="Play or pause the forecast loop">Play</button>
-    <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Forecast hour">
-    <span class="when" id="when">—</span><span class="fh" id="fh"></span>
+    <aside class="panel rail" id="rail" aria-label="Readout">
+      <div class="col">
+        <h3>Point readout</h3>
+        <div class="where" id="q-where">No point selected</div>
+        <div id="q-empty" class="hint">Choose “Inspect a point” and click either map for the column
+          beneath it, the cloud mix within 10 nmi, which rules this run trips there, and how the
+          last few runs handled it.</div>
+        <div id="q-full" hidden>
+          <div class="cls" id="q-cls"></div>
+          <div class="small" id="q-hint"></div>
+          <dl class="facts" id="q-facts"></dl>
+          <h3>Within 10 nmi</h3>
+          <div class="mixbar" id="q-bar"></div>
+          <div class="mix" id="q-mix"></div>
+          <h3>Same point, same valid time, every run</h3>
+          <div class="dpdt" id="dpdt"></div>
+          <div class="small" id="dpdt-note"></div>
+        </div>
+      </div>
+      <div class="col">
+        <h3>Share of the model domain</h3>
+        <div class="shares" id="shares"></div>
+        <div class="small">Percent of 3 km columns in the model domain; bars square-root scaled.</div>
+        <h3>How the probability is scored</h3>
+        <div class="small" id="pov-about"></div>
+      </div>
+    </aside>
   </div>
 
-  <section class="panel xs" aria-labelledby="h-xs">
-    <div class="ph"><h2 id="h-xs">Vertical cross-section</h2>
-      <label><input type="checkbox" id="smooth" checked> Smooth</label>
-      <span class="note" id="xs-note">no line drawn</span></div>
-    <div class="xsbody" id="xsbody">
-      <div class="xs-empty" id="xs-empty"><strong>Cut a section.</strong> Pick “Cut a section”,
-        then click a start point and an end point on either map, or drag from one to the other.
-        The section follows the forecast as you scrub and play.</div>
-      <canvas id="xs" hidden></canvas>
+  <div class="under" id="under">
+    <div class="pads" id="pads"></div>
+    <div class="panel trend">
+      <div class="small">Model-domain share by class through the run</div>
+      <svg id="trend" role="img" aria-label="Share of the domain by cloud class across forecast hours"></svg>
     </div>
-    <div class="xsfoot" id="xs-foot" hidden>
-      <span><i style="background:var(--nogo)"></i>Top strip: this run's NO-GO along the line</span>
-      <span><i style="background:#3A7BF2"></i>Second strip: cloud class</span>
-      <span id="xs-povkey"><i style="background:#B03A7E"></i>Third strip: ensemble violation probability</span>
-      <span id="xs-iso"></span>
-      <span id="xs-src"></span>
-      <span class="xsread" id="xs-read"></span>
-    </div>
-  </section>
+  </div>
 </main>
-
-<div class="lower">
-  <div class="pads" id="pads"></div>
-  <div class="panel trend">
-    <div class="small">Corridor share by class through the run</div>
-    <svg id="trend" role="img" aria-label="Share of the domain by cloud class across forecast hours"></svg>
-  </div>
-</div>
 
 <footer id="method"></footer>
 </div>
 
 <script>
 "use strict";
-const VIEWER_VERSION = "v9-console";
+const VIEWER_VERSION = "v9.3-console";
 
 /* ---- constants ---------------------------------------------------------------- */
 // Fallbacks for manifests written before site coordinates were published.
@@ -300,6 +297,9 @@ const SITES_FALLBACK = {"LC-39A":[28.6084,-80.6043],"LC-39B":[28.6272,-80.6208],
   "SLC-20":[28.5085,-80.5546],"LZ-1":[28.4857,-80.5444],"SLC-36":[28.4707,-80.5379],
   "SLC-46":[28.4584,-80.5271],"KTTS":[28.6150,-80.6944],"KXMR":[28.4675,-80.5664]};
 const CAPE_CENTER = [28.55, -80.60], CAPE_HALF_NM = 25;
+// Every view shares one map shape, so switching views never reflows the page. The corridor
+// (27-30 N, the domain's full width) is nearly square; the full domain is letterboxed into it.
+const CORRIDOR = {lat0: 27.0, lat1: 30.0};
 const RADIUS_NM = 10, NM = 1.852;
 
 // Display classes. The server's cumulus/TCU split is re-cut here by the TOP TEMPERATURE of
@@ -331,7 +331,7 @@ const PLANE = {CLASS:0, TOP_KFT:1, TOP_C:2, IWP:3, DEPTH:4, DBZ:5, AGE:6, THICK:
 let M = null, MK = null, CYC = [], ci = 0, i = 0, timer = null;
 let byKey = {}, byId = {}, POVBY = {}, SITES = {}, BASE = null;
 let BUF = {}, POVBUF = {}, XSBUF = {}, IMG = {};
-let LEFT = "cloud", TOOL = "inspect", VIEWK = "domain";
+let LEFT = "cloud", TOOL = "inspect", VIEWK = "corridor", XSH = 260;
 let QP = null, XS = {a:null, b:null}, XSHOVER = null, DRAG = null;
 let STAMP = "", CONV = 40;
 const $ = id => document.getElementById(id);
@@ -391,7 +391,8 @@ function boot(){
   $("lay-pov").addEventListener("click", () => setLeft("pov"));
   $("tool-inspect").addEventListener("click", () => setTool("inspect"));
   $("tool-section").addEventListener("click", () => setTool("section"));
-  $("view-domain").addEventListener("click", () => setView("domain"));
+  $("view-corridor").addEventListener("click", () => setView("corridor"));
+  $("view-full").addEventListener("click", () => setView("full"));
   $("view-cape").addEventListener("click", () => setView("cape"));
   $("scrub").addEventListener("input", e => { stop(); show(+e.target.value); });
   $("play").addEventListener("click", () => timer ? stop() : play());
@@ -399,7 +400,10 @@ function boot(){
   ["map-left","map-right"].forEach(id => bindMap($(id)));
   bindXS($("xs"));
   addEventListener("keydown", onKey);
-  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { drawMaps(); drawXS(); drawTrend(); }, 120); });
+  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { layout(); drawMaps(); drawXS(); drawTrend(); }, 120); });
+  layout();
+  // Fallback fonts are wider; once Saira arrives the control rows can change height.
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layout(); drawMaps(); drawXS(); drawTrend(); });
 
   loadPov();
   drawRuns();
@@ -440,8 +444,10 @@ function drawRuns(){
     const age = n === 0 ? "latest" : "−" + hoursBetween(CYC[0], c) + " h";
     const want = c.run_h_expected, have = c.run_h || c.frames.length;
     const part = want && have < want;
+    // Compact: the label, plus hours only while a run is still filling in. Age and length
+    // are in the tooltip.
     return `<button class="run${part ? " partial" : ""}" data-n="${n}" aria-pressed="${n===ci}"
-      ${part ? 'title="Still being posted upstream; fills in on later passes"' : ""}>${esc(c.label)}<small>${age}, ${part ? have + "/" + want : have} h</small></button>`;
+      title="${age}, ${have}${want ? "/" + want : ""} h${part ? " (still being posted upstream; fills in on later passes)" : ""}">${esc(c.label)}${part ? `<small>${have}/${want}</small>` : ""}</button>`;
   }).join("");
   $("runs").querySelectorAll(".run").forEach(b => b.addEventListener("click", () => { stop(); selectCycle(+b.dataset.n, validNow()); }));
 }
@@ -508,7 +514,7 @@ function loadPov(){
 function loadGrids(c){
   if (!M.query) return;
   c.frames.forEach(f => {
-    const k = c.id + ":" + f.fh;
+    const k = gkey(c, f);
     if (!f.data || k in BUF) return;
     BUF[k] = null;
     fetch(bust(f.data)).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
@@ -518,7 +524,12 @@ function loadGrids(c){
       .catch(() => { delete BUF[k]; });
   });
 }
-function bufNow(){ const c = cur(), f = frame(); return (c && f) ? BUF[c.id + ":" + f.fh] : null; }
+// Grid cache key. MUST include the model: RRFS cycles are 3-hourly and every one shares its
+// start time with an HRRR cycle, so a key of run + hour handed RRFS the HRRR grids - maps,
+// strips and readout all showed HRRR under the RRFS button. (The server always kept them
+// apart; cols_{model}_... - this was only the page's cache.)
+const gkey = (c, f) => (c.model || MK) + ":" + c.id + ":" + f.fh;
+function bufNow(){ const c = cur(), f = frame(); return (c && f) ? BUF[gkey(c, f)] : null; }
 const NCELL = () => M.query.nx * M.query.ny;
 const plane = (buf, p, cell) => buf[p * NCELL() + cell];
 const hasPlane = (buf, p) => buf && buf.length >= (p + 1) * NCELL();
@@ -526,7 +537,7 @@ const decIwp = v => Math.pow(10, v * Math.log10(1 + M.query.iwp_max) / 255) - 1;
 
 function loadXS(f){
   if (!f || !f.xs) return Promise.resolve(null);
-  const k = MK + ":" + f.xs;
+  const k = f.xs;                       // the path already names the model
   if (k in XSBUF) return Promise.resolve(XSBUF[k]);
   XSBUF[k] = null;
   if (typeof DecompressionStream === "undefined"){ XSBUF[k] = "unsupported"; return Promise.resolve(XSBUF[k]); }
@@ -549,22 +560,57 @@ function dispKey(buf, cell){
 }
 const RGB_DISP = Object.fromEntries(DISP.map(d => [d.k, hex(d.c)]));
 
-/* ---- map geometry ----------------------------------------------------------------- */
-function viewBox(){
-  const d = M.domain;
-  if (VIEWK === "cape"){
-    const dl = CAPE_HALF_NM * NM / 111.32;
-    const lat0 = CAPE_CENTER[0] - dl, lat1 = CAPE_CENTER[0] + dl;
-    const asp = aspectOf(d.lat_min, d.lat_max, d.lon_min, d.lon_max);
-    const half = 0.5 * asp * (lat1 - lat0) / Math.cos(CAPE_CENTER[0] * Math.PI/180);
-    return {lat0, lat1, lon0: CAPE_CENTER[1] - half, lon1: CAPE_CENTER[1] + half};
+/* ---- layout --------------------------------------------------------------------- */
+// Desktop: size the maps from the window HEIGHT so maps, section and readout all fit on one
+// screen; the side column gets whatever width is left. Below 1180 px the maps go side by
+// side with everything else stacked under them; below 720 px it is one column.
+function layout(){
+  const deck = $("deck"), shell = deck.parentElement || deck, body = document.body;
+  const W = shell.clientWidth || 1200, Hwin = (typeof innerHeight === "number" && innerHeight) || 900;
+  const mode = W >= 1180 ? "wide" : W >= 720 ? "mid" : "narrow";
+  ["wide", "mid", "narrow"].forEach(m => body.classList.remove(m)); body.classList.add(mode);
+  const set = (k, v) => { if (document.documentElement.style.setProperty) document.documentElement.style.setProperty(k, v); };
+  const gap = 10, asp = M ? mapAspect() : 1;
+  const top = (deck.getBoundingClientRect().top || 0) + ((typeof scrollY === "number") ? scrollY : 0);
+  const avail = Math.max(440, Math.floor(Hwin - top - 12));
+  for (let pass = 0; pass < 2; pass++){          // twice: legend height depends on map width
+    const leg = Math.max(($("leg-left").offsetHeight || 0), ($("leg-right").offsetHeight || 0), 40);
+    const chrome = 30 + leg + 8;
+    if (mode === "wide"){
+      const sideMin = Math.min(800, Math.max(480, 0.34 * W));
+      const mapw = Math.max(300, Math.floor(Math.min((avail - chrome) * asp + 10, (W - sideMin - 2 * gap) / 2)));
+      const side = W - 2 * mapw - 2 * gap;
+      set("--mapw", mapw + "px"); set("--deckh", avail + "px");
+      XSH = Math.round(Math.min(340, Math.max(190, Math.min(avail * 0.38, side * 0.5))));
+      $("rail").classList[side >= 600 ? "add" : "remove"]("two");
+    } else if (mode === "mid"){
+      const mapw = Math.floor(Math.min((W - gap) / 2, (Hwin - top - chrome - 12) * asp + 10));
+      set("--mapw", Math.max(280, mapw) + "px"); set("--deckh", "auto");
+      XSH = Math.round(Math.min(340, Math.max(220, W * 0.26)));
+      $("rail").classList[W >= 900 ? "add" : "remove"]("two");
+    } else {
+      set("--deckh", "auto"); XSH = 240; $("rail").classList.remove("two");
+    }
   }
-  return {lat0:d.lat_min, lat1:d.lat_max, lon0:d.lon_min, lon1:d.lon_max};
+}
+
+/* ---- map geometry ----------------------------------------------------------------- */
+function mapAspect(){ const d = M.domain;
+  return aspectOf(Math.max(d.lat_min, CORRIDOR.lat0), Math.min(d.lat_max, CORRIDOR.lat1), d.lon_min, d.lon_max); }
+function viewBox(){
+  const d = M.domain, asp = mapAspect();
+  // a box of the map's aspect, centred on (clat, clon), spanning dlat of latitude
+  const box = (clat, clon, dlat) => { const half = 0.5 * asp * dlat / Math.cos(clat * Math.PI/180);
+    return {lat0: clat - dlat/2, lat1: clat + dlat/2, lon0: clon - half, lon1: clon + half}; };
+  if (VIEWK === "cape") return box(CAPE_CENTER[0], CAPE_CENTER[1], 2 * CAPE_HALF_NM * NM / 111.32);
+  if (VIEWK === "full") return box((d.lat_min + d.lat_max) / 2, (d.lon_min + d.lon_max) / 2, d.lat_max - d.lat_min);
+  const la0 = Math.max(d.lat_min, CORRIDOR.lat0), la1 = Math.min(d.lat_max, CORRIDOR.lat1);
+  return {lat0: la0, lat1: la1, lon0: d.lon_min, lon1: d.lon_max};
 }
 function aspectOf(la0, la1, lo0, lo1){ return ((lo1 - lo0) * Math.cos((la0 + la1) / 2 * Math.PI/180)) / (la1 - la0); }
 function geo(cv){
   const v = viewBox(), W = cv.clientWidth || (cv.parentElement && cv.parentElement.clientWidth) || 480;
-  const asp = aspectOf(v.lat0, v.lat1, v.lon0, v.lon1), H = W / asp;
+  const H = W / mapAspect();
   return {v, W, H,
     X: lon => (lon - v.lon0) / (v.lon1 - v.lon0) * W,
     Y: lat => (v.lat1 - lat) / (v.lat1 - v.lat0) * H,
@@ -602,7 +648,6 @@ function drawMaps(){
   if (!M || !M.query) return;
   drawMap($("map-left"), LEFT === "pov" ? "pov" : "cloud", $("wait-left"));
   drawMap($("map-right"), "dbz", $("wait-right"));
-  $("h-left").textContent = LEFT === "pov" ? "Violation probability" : "Cloud class";
   $("n-left").textContent = LEFT === "pov" ? povNote() : "what the column is";
 }
 function povNote(){
@@ -728,10 +773,10 @@ function drawXS(){
   const dkm = distKm(XS.a, XS.b), dnm = dkm / NM;
   $("xs-note").textContent = `A to B, ${dnm.toFixed(1)} nmi, ${f.valid_short} valid`;
   const xsmeta = (M.query && M.query.xs) || {nz:33, dz_km:0.5, top_km:16};
-  const vol = f.xs ? XSBUF[MK + ":" + f.xs] : undefined;
+  const vol = f.xs ? XSBUF[f.xs] : undefined;
 
   const W = Math.max(320, cv.clientWidth || cv.parentElement.clientWidth || 900);
-  const H = Math.round(Math.min(380, Math.max(240, W * 0.30)));
+  const H = XSH;
   const dpr = DPR();
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
   if (cv.style) cv.style.height = H + "px";
@@ -800,7 +845,7 @@ function drawXS(){
     ? `Isotherms: ${(M.models && M.models[MK] ? M.models[MK].name : "")} ${cur().label} run at ${M.iso_site || "KXMR"}, valid ${f.valid_short}` : "";
 
   // distance axis, A/B, pads near the line
-  const ticks = dnm > 60 ? 20 : dnm > 25 ? 10 : 5;
+  const ticks = dnm / Math.max(1, pw / 70) > 10 ? 20 : dnm / Math.max(1, pw / 70) > 5 ? 10 : 5;
   ctx.fillStyle = "#8399B6"; ctx.textAlign = "center";
   for (let d = 0; d <= dnm + 1e-6; d += ticks){ const x = PL + d / dnm * pw; ctx.fillText(d + " nmi", x, H - PB + 15); }
   ctx.fillStyle = "#FFB547"; ctx.font = "600 13px Saira, sans-serif";
@@ -925,8 +970,8 @@ function drawDpdt(){
     const lab = `<div class="c${n === ci ? " now" : ""}">${esc(c.label)}</div>`;
     const f = c.frames.find(x => x.valid === target);
     if (!f) return lab + `<div></div><div class="small">run ends before this</div>`;
-    const b = BUF[c.id + ":" + f.fh];
-    if (!b){ if (!((c.id + ":" + f.fh) in BUF)) loadGrids(c); return lab + `<div></div><div class="small">loading…</div>`; }
+    const b = BUF[gkey(c, f)];
+    if (!b){ if (!(gkey(c, f) in BUF)) loadGrids(c); return lab + `<div></div><div class="small">loading…</div>`; }
     const k = dispKey(b, QP.j * q.nx + QP.i); seen.push(k);
     const d = DISPBY[k];
     return lab + `<span class="chip" style="background:${d ? d.c : "#16253F"}"></span><div>${d ? d.name : "Clear"} <span class="small">F${String(f.fh).padStart(2, "0")}</span></div>`;
@@ -1008,7 +1053,7 @@ function drawTrend(){
 }
 
 if (typeof window !== "undefined") window.CS = {start, get state(){ return {M, MK, CYC, ci, i, QP, XS, LEFT, TOOL, BUF, XSBUF, POVBUF}; },
-  setPoint, setSection, setTool, setModel, onKey, setLeft, setView, show, selectCycle, drawXS, loadXS, dispKey};
+  setPoint, setSection, setTool, setModel, onKey, bufNow, setLeft, setView, show, selectCycle, drawXS, loadXS, dispKey};
 start();
 </script>
 </body>
