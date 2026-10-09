@@ -6,7 +6,7 @@ on:
     # against a run that has had ~70 minutes to post rather than one still being written.
     # Actions cron is best-effort and often slips 10-25 minutes; the lag is what makes that
     # slip harmless, so don't remove one without reconsidering the other.
-    - cron: "10 * * * *"
+    #- cron: "10 * * * *"
   workflow_dispatch:
     inputs:
       force:
