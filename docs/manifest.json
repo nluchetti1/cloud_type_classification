@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-31T15:11Z",
+ "generated": "2026-10-31T16:04Z",
  "render_version": "2026.10.09-xs",
  "data_version": "2026.08.26-multimodel",
  "model": "HRRR",
@@ -10,6 +10,440 @@
    "dx_km": 3.0,
    "cycles": [
     {
+     "id": "2026103115",
+     "model": "hrrr",
+     "label": "15Z",
+     "date": "20261031",
+     "hour": "15",
+     "init": "2026-10-31T15:00Z",
+     "render_version": "2026.10.09-xs",
+     "run_h": 4,
+     "run_h_expected": 18,
+     "complete": false,
+     "frames": [
+      {
+       "fh": 1,
+       "valid": "2026-10-31T16:00Z",
+       "valid_short": "16Z",
+       "valid_label": "16Z Sat 31 Oct",
+       "image": "maps/cloudtype_hrrr_2026103115z_f01.png",
+       "data": "data/cols_hrrr_2026103115z_f01.bin",
+       "counts": {
+        "clear": 23731,
+        "stratiform": 66,
+        "cumulus": 32,
+        "tcu": 0,
+        "anvil_att": 0,
+        "anvil_det": 0,
+        "cirrus": 0
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-20": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LZ-1": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-36": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-46": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KTTS": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103115z_f01.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.85,
+        "0": 4.77,
+        "-5": 5.6,
+        "-10": 6.25,
+        "-20": 7.51
+       }
+      },
+      {
+       "fh": 2,
+       "valid": "2026-10-31T17:00Z",
+       "valid_short": "17Z",
+       "valid_label": "17Z Sat 31 Oct",
+       "image": "maps/cloudtype_hrrr_2026103115z_f02.png",
+       "data": "data/cols_hrrr_2026103115z_f02.bin",
+       "counts": {
+        "clear": 23629,
+        "stratiform": 161,
+        "cumulus": 39,
+        "tcu": 0,
+        "anvil_att": 0,
+        "anvil_det": 0,
+        "cirrus": 0
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-20": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LZ-1": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-36": {
+         "key": "stratiform",
+         "top_kft": 3.6,
+         "top_c": 17.3,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-46": {
+         "key": "stratiform",
+         "top_kft": 3.6,
+         "top_c": 17.3,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KTTS": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103115z_f02.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.87,
+        "0": 4.76,
+        "-5": 5.59,
+        "-10": 6.24,
+        "-20": 7.53
+       }
+      },
+      {
+       "fh": 3,
+       "valid": "2026-10-31T18:00Z",
+       "valid_short": "18Z",
+       "valid_label": "18Z Sat 31 Oct",
+       "image": "maps/cloudtype_hrrr_2026103115z_f03.png",
+       "data": "data/cols_hrrr_2026103115z_f03.bin",
+       "counts": {
+        "clear": 23497,
+        "stratiform": 239,
+        "cumulus": 93,
+        "tcu": 0,
+        "anvil_att": 0,
+        "anvil_det": 0,
+        "cirrus": 0
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-20": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LZ-1": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-36": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-46": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KTTS": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103115z_f03.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.84,
+        "0": 4.74,
+        "-5": 5.56,
+        "-10": 6.25,
+        "-20": 7.59
+       }
+      },
+      {
+       "fh": 4,
+       "valid": "2026-10-31T19:00Z",
+       "valid_short": "19Z",
+       "valid_label": "19Z Sat 31 Oct",
+       "image": "maps/cloudtype_hrrr_2026103115z_f04.png",
+       "data": "data/cols_hrrr_2026103115z_f04.bin",
+       "counts": {
+        "clear": 23036,
+        "stratiform": 457,
+        "cumulus": 336,
+        "tcu": 0,
+        "anvil_att": 0,
+        "anvil_det": 0,
+        "cirrus": 0
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-20": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LZ-1": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-36": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-46": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KTTS": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103115z_f04.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.76,
+        "0": 4.66,
+        "-5": 5.5,
+        "-10": 6.22,
+        "-20": 7.58
+       }
+      }
+     ]
+    },
+    {
      "id": "2026103114",
      "model": "hrrr",
      "label": "14Z",
@@ -17,9 +451,9 @@
      "hour": "14",
      "init": "2026-10-31T14:00Z",
      "render_version": "2026.10.09-xs",
-     "run_h": 4,
+     "run_h": 18,
      "run_h_expected": 18,
-     "complete": false,
+     "complete": true,
      "frames": [
       {
        "fh": 1,
@@ -439,6 +873,1476 @@
         "-5": 5.58,
         "-10": 6.26,
         "-20": 7.58
+       }
+      },
+      {
+       "fh": 5,
+       "valid": "2026-10-31T19:00Z",
+       "valid_short": "19Z",
+       "valid_label": "19Z Sat 31 Oct",
+       "image": "maps/cloudtype_hrrr_2026103114z_f05.png",
+       "data": "data/cols_hrrr_2026103114z_f05.bin",
+       "counts": {
+        "clear": 20157,
+        "stratiform": 1809,
+        "cumulus": 1774,
+        "tcu": 5,
+        "anvil_att": 0,
+        "anvil_det": 0,
+        "cirrus": 84
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-20": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LZ-1": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-36": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-46": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KTTS": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103114z_f05.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.7,
+        "0": 4.66,
+        "-5": 5.51,
+        "-10": 6.22,
+        "-20": 7.57
+       }
+      },
+      {
+       "fh": 6,
+       "valid": "2026-10-31T20:00Z",
+       "valid_short": "20Z",
+       "valid_label": "20Z Sat 31 Oct",
+       "image": "maps/cloudtype_hrrr_2026103114z_f06.png",
+       "data": "data/cols_hrrr_2026103114z_f06.bin",
+       "counts": {
+        "clear": 19793,
+        "stratiform": 1613,
+        "cumulus": 2133,
+        "tcu": 9,
+        "anvil_att": 0,
+        "anvil_det": 83,
+        "cirrus": 198
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-20": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -5.1
+        },
+        "LZ-1": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -9.7
+        },
+        "SLC-36": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -2.5
+        },
+        "SLC-46": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -2.5
+        },
+        "KTTS": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -3.3
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103114z_f06.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.64,
+        "0": 4.63,
+        "-5": 5.5,
+        "-10": 6.22,
+        "-20": 7.58
+       }
+      },
+      {
+       "fh": 7,
+       "valid": "2026-10-31T21:00Z",
+       "valid_short": "21Z",
+       "valid_label": "21Z Sat 31 Oct",
+       "image": "maps/cloudtype_hrrr_2026103114z_f07.png",
+       "data": "data/cols_hrrr_2026103114z_f07.bin",
+       "counts": {
+        "clear": 18439,
+        "stratiform": 2843,
+        "cumulus": 2085,
+        "tcu": 70,
+        "anvil_att": 11,
+        "anvil_det": 3,
+        "cirrus": 378
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -8.6
+        },
+        "SLC-20": {
+         "key": "cumulus",
+         "top_kft": 6.8,
+         "top_c": 11.2,
+         "iwp": 0.0,
+         "dbz": 13.6
+        },
+        "LZ-1": {
+         "key": "cumulus",
+         "top_kft": 6.8,
+         "top_c": 11.2,
+         "iwp": 0.0,
+         "dbz": 9.8
+        },
+        "SLC-36": {
+         "key": "cumulus",
+         "top_kft": 6.8,
+         "top_c": 11.1,
+         "iwp": 0.0,
+         "dbz": 4.5
+        },
+        "SLC-46": {
+         "key": "cumulus",
+         "top_kft": 6.8,
+         "top_c": 11.1,
+         "iwp": 0.0,
+         "dbz": 4.5
+        },
+        "KTTS": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "cumulus",
+         "top_kft": 8.6,
+         "top_c": 8.8,
+         "iwp": 0.0,
+         "dbz": 10.2
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103114z_f07.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.7,
+        "0": 4.66,
+        "-5": 5.5,
+        "-10": 6.22,
+        "-20": 7.57
+       }
+      },
+      {
+       "fh": 8,
+       "valid": "2026-10-31T22:00Z",
+       "valid_short": "22Z",
+       "valid_label": "22Z Sat 31 Oct",
+       "image": "maps/cloudtype_hrrr_2026103114z_f08.png",
+       "data": "data/cols_hrrr_2026103114z_f08.bin",
+       "counts": {
+        "clear": 15704,
+        "stratiform": 5117,
+        "cumulus": 2113,
+        "tcu": 63,
+        "anvil_att": 37,
+        "anvil_det": 12,
+        "cirrus": 783
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-20": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LZ-1": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-36": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-46": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KTTS": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103114z_f08.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.68,
+        "0": 4.61,
+        "-5": 5.45,
+        "-10": 6.18,
+        "-20": 7.54
+       }
+      },
+      {
+       "fh": 9,
+       "valid": "2026-10-31T23:00Z",
+       "valid_short": "23Z",
+       "valid_label": "23Z Sat 31 Oct",
+       "image": "maps/cloudtype_hrrr_2026103114z_f09.png",
+       "data": "data/cols_hrrr_2026103114z_f09.bin",
+       "counts": {
+        "clear": 13044,
+        "stratiform": 6219,
+        "cumulus": 2075,
+        "tcu": 6,
+        "anvil_att": 101,
+        "anvil_det": 19,
+        "cirrus": 2365
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-20": {
+         "key": "stratiform",
+         "top_kft": 24.9,
+         "top_c": -20.3,
+         "iwp": 5.1,
+         "dbz": -10.0
+        },
+        "LZ-1": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-36": {
+         "key": "stratiform",
+         "top_kft": 24.9,
+         "top_c": -20.3,
+         "iwp": 5.1,
+         "dbz": -10.0
+        },
+        "SLC-46": {
+         "key": "stratiform",
+         "top_kft": 24.9,
+         "top_c": -20.3,
+         "iwp": 5.1,
+         "dbz": -10.0
+        },
+        "KTTS": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.2,
+         "iwp": 10.2,
+         "dbz": -10.0
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103114z_f09.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.79,
+        "0": 4.66,
+        "-5": 5.45,
+        "-10": 6.17,
+        "-20": 7.54
+       }
+      },
+      {
+       "fh": 10,
+       "valid": "2026-11-01T00:00Z",
+       "valid_short": "00Z",
+       "valid_label": "00Z Sun 01 Nov",
+       "image": "maps/cloudtype_hrrr_2026103114z_f10.png",
+       "data": "data/cols_hrrr_2026103114z_f10.bin",
+       "counts": {
+        "clear": 12249,
+        "stratiform": 6841,
+        "cumulus": 1996,
+        "tcu": 13,
+        "anvil_att": 102,
+        "anvil_det": 0,
+        "cirrus": 2628
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.4,
+         "iwp": 10.2,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.3,
+         "iwp": 15.3,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.3,
+         "iwp": 20.4,
+         "dbz": -7.7
+        },
+        "SLC-20": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.2,
+         "iwp": 35.7,
+         "dbz": -6.2
+        },
+        "LZ-1": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.2,
+         "iwp": 35.7,
+         "dbz": -5.1
+        },
+        "SLC-36": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.2,
+         "iwp": 30.6,
+         "dbz": -5.9
+        },
+        "SLC-46": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.2,
+         "iwp": 30.6,
+         "dbz": -5.9
+        },
+        "KTTS": {
+         "key": "stratiform",
+         "top_kft": 24.9,
+         "top_c": -20.5,
+         "iwp": 5.1,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.2,
+         "iwp": 20.4,
+         "dbz": -7.4
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103114z_f10.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.84,
+        "0": 4.66,
+        "-5": 5.43,
+        "-10": 6.17,
+        "-20": 7.53
+       }
+      },
+      {
+       "fh": 11,
+       "valid": "2026-11-01T01:00Z",
+       "valid_short": "01Z",
+       "valid_label": "01Z Sun 01 Nov",
+       "image": "maps/cloudtype_hrrr_2026103114z_f11.png",
+       "data": "data/cols_hrrr_2026103114z_f11.bin",
+       "counts": {
+        "clear": 11173,
+        "stratiform": 6438,
+        "cumulus": 1738,
+        "tcu": 12,
+        "anvil_att": 292,
+        "anvil_det": 0,
+        "cirrus": 4176
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.4,
+         "iwp": 25.5,
+         "dbz": -7.3
+        },
+        "LC-39B": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.3,
+         "iwp": 20.4,
+         "dbz": -8.5
+        },
+        "SLC-41": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.4,
+         "iwp": 25.5,
+         "dbz": -8.7
+        },
+        "SLC-40": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.3,
+         "iwp": 10.2,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-20": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LZ-1": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-36": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-46": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KTTS": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.3,
+         "iwp": 15.3,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103114z_f11.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.83,
+        "0": 4.64,
+        "-5": 5.43,
+        "-10": 6.19,
+        "-20": 7.54
+       }
+      },
+      {
+       "fh": 12,
+       "valid": "2026-11-01T02:00Z",
+       "valid_short": "02Z",
+       "valid_label": "02Z Sun 01 Nov",
+       "image": "maps/cloudtype_hrrr_2026103114z_f12.png",
+       "data": "data/cols_hrrr_2026103114z_f12.bin",
+       "counts": {
+        "clear": 10811,
+        "stratiform": 5435,
+        "cumulus": 1869,
+        "tcu": 4,
+        "anvil_att": 518,
+        "anvil_det": 43,
+        "cirrus": 5149
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-20": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LZ-1": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-36": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-46": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KTTS": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103114z_f12.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.78,
+        "0": 4.63,
+        "-5": 5.43,
+        "-10": 6.17,
+        "-20": 7.53
+       }
+      },
+      {
+       "fh": 13,
+       "valid": "2026-11-01T03:00Z",
+       "valid_short": "03Z",
+       "valid_label": "03Z Sun 01 Nov",
+       "image": "maps/cloudtype_hrrr_2026103114z_f13.png",
+       "data": "data/cols_hrrr_2026103114z_f13.bin",
+       "counts": {
+        "clear": 11094,
+        "stratiform": 5922,
+        "cumulus": 1862,
+        "tcu": 2,
+        "anvil_att": 470,
+        "anvil_det": 2290,
+        "cirrus": 2189
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-20": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LZ-1": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-36": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-46": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KTTS": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103114z_f13.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.78,
+        "0": 4.62,
+        "-5": 5.41,
+        "-10": 6.17,
+        "-20": 7.51
+       }
+      },
+      {
+       "fh": 14,
+       "valid": "2026-11-01T04:00Z",
+       "valid_short": "04Z",
+       "valid_label": "04Z Sun 01 Nov",
+       "image": "maps/cloudtype_hrrr_2026103114z_f14.png",
+       "data": "data/cols_hrrr_2026103114z_f14.bin",
+       "counts": {
+        "clear": 11456,
+        "stratiform": 5680,
+        "cumulus": 1674,
+        "tcu": 4,
+        "anvil_att": 1162,
+        "anvil_det": 1363,
+        "cirrus": 2490
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-20": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LZ-1": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-36": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-46": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KTTS": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.7,
+         "iwp": 20.4,
+         "dbz": -8.6
+        },
+        "KXMR": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103114z_f14.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.73,
+        "0": 4.6,
+        "-5": 5.4,
+        "-10": 6.15,
+        "-20": 7.47
+       }
+      },
+      {
+       "fh": 15,
+       "valid": "2026-11-01T05:00Z",
+       "valid_short": "05Z",
+       "valid_label": "05Z Sun 01 Nov",
+       "image": "maps/cloudtype_hrrr_2026103114z_f15.png",
+       "data": "data/cols_hrrr_2026103114z_f15.bin",
+       "counts": {
+        "clear": 11167,
+        "stratiform": 5832,
+        "cumulus": 1408,
+        "tcu": 75,
+        "anvil_att": 1143,
+        "anvil_det": 1341,
+        "cirrus": 2863
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.9,
+         "iwp": 15.3,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -28.9,
+         "iwp": 15.3,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-20": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LZ-1": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-36": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-46": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KTTS": {
+         "key": "stratiform",
+         "top_kft": 24.9,
+         "top_c": -21.2,
+         "iwp": 5.1,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103114z_f15.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.72,
+        "0": 4.61,
+        "-5": 5.42,
+        "-10": 6.17,
+        "-20": 7.45
+       }
+      },
+      {
+       "fh": 16,
+       "valid": "2026-11-01T06:00Z",
+       "valid_short": "06Z",
+       "valid_label": "06Z Sun 01 Nov",
+       "image": "maps/cloudtype_hrrr_2026103114z_f16.png",
+       "data": "data/cols_hrrr_2026103114z_f16.bin",
+       "counts": {
+        "clear": 10570,
+        "stratiform": 5813,
+        "cumulus": 1031,
+        "tcu": 3,
+        "anvil_att": 2057,
+        "anvil_det": 839,
+        "cirrus": 3516
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "stratiform",
+         "top_kft": 28.0,
+         "top_c": -29.2,
+         "iwp": 10.2,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -29.1,
+         "iwp": 91.8,
+         "dbz": -0.8
+        },
+        "SLC-20": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -29.1,
+         "iwp": 86.7,
+         "dbz": -1.0
+        },
+        "LZ-1": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -29.1,
+         "iwp": 132.6,
+         "dbz": 1.5
+        },
+        "SLC-36": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -29.0,
+         "iwp": 91.8,
+         "dbz": -0.2
+        },
+        "SLC-46": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -29.0,
+         "iwp": 91.8,
+         "dbz": -0.2
+        },
+        "KTTS": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "stratiform",
+         "top_kft": 28.1,
+         "top_c": -29.1,
+         "iwp": 61.2,
+         "dbz": -2.7
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103114z_f16.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.74,
+        "0": 4.61,
+        "-5": 5.4,
+        "-10": 6.14,
+        "-20": 7.41
+       }
+      },
+      {
+       "fh": 17,
+       "valid": "2026-11-01T07:00Z",
+       "valid_short": "07Z",
+       "valid_label": "07Z Sun 01 Nov",
+       "image": "maps/cloudtype_hrrr_2026103114z_f17.png",
+       "data": "data/cols_hrrr_2026103114z_f17.bin",
+       "counts": {
+        "clear": 8248,
+        "stratiform": 5886,
+        "cumulus": 1262,
+        "tcu": 11,
+        "anvil_att": 2608,
+        "anvil_det": 895,
+        "cirrus": 4919
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "LC-39B": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-41": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "SLC-40": {
+         "key": "stratiform",
+         "top_kft": 28.0,
+         "top_c": -28.9,
+         "iwp": 5.1,
+         "dbz": -10.0
+        },
+        "SLC-37B": {
+         "key": "stratiform",
+         "top_kft": 28.0,
+         "top_c": -28.9,
+         "iwp": 15.3,
+         "dbz": -10.0
+        },
+        "SLC-20": {
+         "key": "stratiform",
+         "top_kft": 28.0,
+         "top_c": -28.9,
+         "iwp": 5.1,
+         "dbz": -10.0
+        },
+        "LZ-1": {
+         "key": "stratiform",
+         "top_kft": 28.0,
+         "top_c": -28.9,
+         "iwp": 10.2,
+         "dbz": -10.0
+        },
+        "SLC-36": {
+         "key": "cirrus",
+         "top_kft": 40.4,
+         "top_c": -59.0,
+         "iwp": 5.1,
+         "dbz": -10.0
+        },
+        "SLC-46": {
+         "key": "cirrus",
+         "top_kft": 40.4,
+         "top_c": -59.0,
+         "iwp": 5.1,
+         "dbz": -10.0
+        },
+        "KTTS": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        },
+        "KXMR": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": -10.0
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103114z_f17.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.73,
+        "0": 4.6,
+        "-5": 5.43,
+        "-10": 6.16,
+        "-20": 7.41
+       }
+      },
+      {
+       "fh": 18,
+       "valid": "2026-11-01T08:00Z",
+       "valid_short": "08Z",
+       "valid_label": "08Z Sun 01 Nov",
+       "image": "maps/cloudtype_hrrr_2026103114z_f18.png",
+       "data": "data/cols_hrrr_2026103114z_f18.bin",
+       "counts": {
+        "clear": 5707,
+        "stratiform": 6933,
+        "cumulus": 1303,
+        "tcu": 1,
+        "anvil_att": 3459,
+        "anvil_det": 957,
+        "cirrus": 5469
+       },
+       "sites": {
+        "LC-39A": {
+         "key": "clear",
+         "top_kft": null,
+         "top_c": null,
+         "iwp": 0.0,
+         "dbz": 1.6
+        },
+        "LC-39B": {
+         "key": "cirrus",
+         "top_kft": 40.3,
+         "top_c": -59.2,
+         "iwp": 5.1,
+         "dbz": 2.6
+        },
+        "SLC-41": {
+         "key": "cumulus",
+         "top_kft": 5.2,
+         "top_c": 13.9,
+         "iwp": 0.0,
+         "dbz": 16.6
+        },
+        "SLC-40": {
+         "key": "cumulus",
+         "top_kft": 35.6,
+         "top_c": -46.7,
+         "iwp": 5.1,
+         "dbz": 16.5
+        },
+        "SLC-37B": {
+         "key": "cirrus",
+         "top_kft": 35.6,
+         "top_c": -46.7,
+         "iwp": 5.1,
+         "dbz": -1.1
+        },
+        "SLC-20": {
+         "key": "cirrus",
+         "top_kft": 35.6,
+         "top_c": -46.7,
+         "iwp": 5.1,
+         "dbz": -10.0
+        },
+        "LZ-1": {
+         "key": "cirrus",
+         "top_kft": 35.6,
+         "top_c": -46.7,
+         "iwp": 5.1,
+         "dbz": -10.0
+        },
+        "SLC-36": {
+         "key": "cirrus",
+         "top_kft": 35.6,
+         "top_c": -46.7,
+         "iwp": 5.1,
+         "dbz": -10.0
+        },
+        "SLC-46": {
+         "key": "cirrus",
+         "top_kft": 35.6,
+         "top_c": -46.7,
+         "iwp": 5.1,
+         "dbz": -10.0
+        },
+        "KTTS": {
+         "key": "cirrus",
+         "top_kft": 40.3,
+         "top_c": -59.2,
+         "iwp": 10.2,
+         "dbz": -1.6
+        },
+        "KXMR": {
+         "key": "cirrus",
+         "top_kft": 35.6,
+         "top_c": -46.7,
+         "iwp": 5.1,
+         "dbz": -10.0
+        }
+       },
+       "xs": "xs/xs_hrrr_2026103114z_f18.xsz",
+       "xs_src": "diagnosed from rain, snow and graupel",
+       "iso": {
+        "5": 3.75,
+        "0": 4.61,
+        "-5": 5.42,
+        "-10": 6.15,
+        "-20": 7.4
        }
       }
      ]
@@ -11208,1910 +13112,6 @@
        }
       }
      ]
-    },
-    {
-     "id": "2026103109",
-     "model": "hrrr",
-     "label": "09Z",
-     "date": "20261031",
-     "hour": "09",
-     "init": "2026-10-31T09:00Z",
-     "render_version": "2026.10.09-xs",
-     "run_h": 18,
-     "run_h_expected": 18,
-     "complete": true,
-     "frames": [
-      {
-       "fh": 1,
-       "valid": "2026-10-31T10:00Z",
-       "valid_short": "10Z",
-       "valid_label": "10Z Sat 31 Oct",
-       "image": "maps/cloudtype_hrrr_2026103109z_f01.png",
-       "data": "data/cols_hrrr_2026103109z_f01.bin",
-       "counts": {
-        "clear": 20882,
-        "stratiform": 1847,
-        "cumulus": 1100,
-        "tcu": 0,
-        "anvil_att": 0,
-        "anvil_det": 0,
-        "cirrus": 0
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-20": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LZ-1": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-36": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-46": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KTTS": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KXMR": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f01.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.85,
-        "0": 4.74,
-        "-5": 5.58,
-        "-10": 6.3,
-        "-20": 7.64
-       }
-      },
-      {
-       "fh": 2,
-       "valid": "2026-10-31T11:00Z",
-       "valid_short": "11Z",
-       "valid_label": "11Z Sat 31 Oct",
-       "image": "maps/cloudtype_hrrr_2026103109z_f02.png",
-       "data": "data/cols_hrrr_2026103109z_f02.bin",
-       "counts": {
-        "clear": 21544,
-        "stratiform": 1184,
-        "cumulus": 1101,
-        "tcu": 0,
-        "anvil_att": 0,
-        "anvil_det": 0,
-        "cirrus": 0
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-20": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LZ-1": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-36": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-46": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KTTS": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KXMR": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f02.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.86,
-        "0": 4.77,
-        "-5": 5.6,
-        "-10": 6.32,
-        "-20": 7.64
-       }
-      },
-      {
-       "fh": 3,
-       "valid": "2026-10-31T12:00Z",
-       "valid_short": "12Z",
-       "valid_label": "12Z Sat 31 Oct",
-       "image": "maps/cloudtype_hrrr_2026103109z_f03.png",
-       "data": "data/cols_hrrr_2026103109z_f03.bin",
-       "counts": {
-        "clear": 21523,
-        "stratiform": 1417,
-        "cumulus": 886,
-        "tcu": 0,
-        "anvil_att": 0,
-        "anvil_det": 0,
-        "cirrus": 3
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-20": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LZ-1": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-36": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-46": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KTTS": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KXMR": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f03.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.81,
-        "0": 4.7,
-        "-5": 5.57,
-        "-10": 6.29,
-        "-20": 7.61
-       }
-      },
-      {
-       "fh": 4,
-       "valid": "2026-10-31T13:00Z",
-       "valid_short": "13Z",
-       "valid_label": "13Z Sat 31 Oct",
-       "image": "maps/cloudtype_hrrr_2026103109z_f04.png",
-       "data": "data/cols_hrrr_2026103109z_f04.bin",
-       "counts": {
-        "clear": 20997,
-        "stratiform": 2083,
-        "cumulus": 731,
-        "tcu": 0,
-        "anvil_att": 0,
-        "anvil_det": 0,
-        "cirrus": 18
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-20": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LZ-1": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-36": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-46": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KTTS": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KXMR": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f04.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.76,
-        "0": 4.65,
-        "-5": 5.55,
-        "-10": 6.27,
-        "-20": 7.6
-       }
-      },
-      {
-       "fh": 5,
-       "valid": "2026-10-31T14:00Z",
-       "valid_short": "14Z",
-       "valid_label": "14Z Sat 31 Oct",
-       "image": "maps/cloudtype_hrrr_2026103109z_f05.png",
-       "data": "data/cols_hrrr_2026103109z_f05.bin",
-       "counts": {
-        "clear": 19514,
-        "stratiform": 3069,
-        "cumulus": 1136,
-        "tcu": 0,
-        "anvil_att": 0,
-        "anvil_det": 0,
-        "cirrus": 110
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-20": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LZ-1": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-36": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-46": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KTTS": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KXMR": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f05.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.83,
-        "0": 4.69,
-        "-5": 5.57,
-        "-10": 6.27,
-        "-20": 7.57
-       }
-      },
-      {
-       "fh": 6,
-       "valid": "2026-10-31T15:00Z",
-       "valid_short": "15Z",
-       "valid_label": "15Z Sat 31 Oct",
-       "image": "maps/cloudtype_hrrr_2026103109z_f06.png",
-       "data": "data/cols_hrrr_2026103109z_f06.bin",
-       "counts": {
-        "clear": 18285,
-        "stratiform": 4210,
-        "cumulus": 1256,
-        "tcu": 3,
-        "anvil_att": 0,
-        "anvil_det": 0,
-        "cirrus": 75
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "stratiform",
-         "top_kft": 5.2,
-         "top_c": 14.7,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -0.7
-        },
-        "SLC-20": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -0.4
-        },
-        "LZ-1": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": 18.8
-        },
-        "SLC-36": {
-         "key": "stratiform",
-         "top_kft": 3.6,
-         "top_c": 17.3,
-         "iwp": 0.0,
-         "dbz": 17.8
-        },
-        "SLC-46": {
-         "key": "stratiform",
-         "top_kft": 3.6,
-         "top_c": 17.3,
-         "iwp": 0.0,
-         "dbz": 17.8
-        },
-        "KTTS": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KXMR": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": 11.1
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f06.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.81,
-        "0": 4.73,
-        "-5": 5.62,
-        "-10": 6.29,
-        "-20": 7.56
-       }
-      },
-      {
-       "fh": 7,
-       "valid": "2026-10-31T16:00Z",
-       "valid_short": "16Z",
-       "valid_label": "16Z Sat 31 Oct",
-       "image": "maps/cloudtype_hrrr_2026103109z_f07.png",
-       "data": "data/cols_hrrr_2026103109z_f07.bin",
-       "counts": {
-        "clear": 17771,
-        "stratiform": 4990,
-        "cumulus": 1061,
-        "tcu": 2,
-        "anvil_att": 0,
-        "anvil_det": 0,
-        "cirrus": 5
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "cumulus",
-         "top_kft": 5.2,
-         "top_c": 14.5,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "cumulus",
-         "top_kft": 28.1,
-         "top_c": -27.3,
-         "iwp": 5.1,
-         "dbz": 21.1
-        },
-        "SLC-41": {
-         "key": "cumulus",
-         "top_kft": 5.2,
-         "top_c": 14.5,
-         "iwp": 0.0,
-         "dbz": 6.9
-        },
-        "SLC-40": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-20": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LZ-1": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-36": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-46": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KTTS": {
-         "key": "cumulus",
-         "top_kft": 28.1,
-         "top_c": -27.3,
-         "iwp": 5.1,
-         "dbz": 22.7
-        },
-        "KXMR": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f07.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.88,
-        "0": 4.74,
-        "-5": 5.58,
-        "-10": 6.27,
-        "-20": 7.55
-       }
-      },
-      {
-       "fh": 8,
-       "valid": "2026-10-31T17:00Z",
-       "valid_short": "17Z",
-       "valid_label": "17Z Sat 31 Oct",
-       "image": "maps/cloudtype_hrrr_2026103109z_f08.png",
-       "data": "data/cols_hrrr_2026103109z_f08.bin",
-       "counts": {
-        "clear": 17214,
-        "stratiform": 5509,
-        "cumulus": 1059,
-        "tcu": 14,
-        "anvil_att": 0,
-        "anvil_det": 0,
-        "cirrus": 33
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.1,
-         "iwp": 10.2,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.1,
-         "iwp": 10.2,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.1,
-         "iwp": 10.2,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.1,
-         "iwp": 15.3,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.1,
-         "iwp": 25.5,
-         "dbz": -9.6
-        },
-        "SLC-20": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.1,
-         "iwp": 30.6,
-         "dbz": -9.1
-        },
-        "LZ-1": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.1,
-         "iwp": 25.5,
-         "dbz": -8.7
-        },
-        "SLC-36": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.1,
-         "iwp": 15.3,
-         "dbz": -10.0
-        },
-        "SLC-46": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.1,
-         "iwp": 15.3,
-         "dbz": -10.0
-        },
-        "KTTS": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KXMR": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.1,
-         "iwp": 15.3,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f08.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.84,
-        "0": 4.7,
-        "-5": 5.52,
-        "-10": 6.23,
-        "-20": 7.56
-       }
-      },
-      {
-       "fh": 9,
-       "valid": "2026-10-31T18:00Z",
-       "valid_short": "18Z",
-       "valid_label": "18Z Sat 31 Oct",
-       "image": "maps/cloudtype_hrrr_2026103109z_f09.png",
-       "data": "data/cols_hrrr_2026103109z_f09.bin",
-       "counts": {
-        "clear": 15558,
-        "stratiform": 6819,
-        "cumulus": 1168,
-        "tcu": 3,
-        "anvil_att": 0,
-        "anvil_det": 0,
-        "cirrus": 281
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "stratiform",
-         "top_kft": 31.7,
-         "top_c": -36.2,
-         "iwp": 10.2,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "stratiform",
-         "top_kft": 31.7,
-         "top_c": -36.2,
-         "iwp": 20.4,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "stratiform",
-         "top_kft": 31.7,
-         "top_c": -36.2,
-         "iwp": 10.2,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "stratiform",
-         "top_kft": 31.7,
-         "top_c": -36.2,
-         "iwp": 10.2,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.1,
-         "iwp": 20.4,
-         "dbz": -10.0
-        },
-        "SLC-20": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.0,
-         "iwp": 25.5,
-         "dbz": -7.6
-        },
-        "LZ-1": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.0,
-         "iwp": 61.2,
-         "dbz": -3.6
-        },
-        "SLC-36": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.0,
-         "iwp": 25.5,
-         "dbz": -8.4
-        },
-        "SLC-46": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.0,
-         "iwp": 25.5,
-         "dbz": -8.4
-        },
-        "KTTS": {
-         "key": "cumulus",
-         "top_kft": 31.7,
-         "top_c": -36.3,
-         "iwp": 142.8,
-         "dbz": -0.8
-        },
-        "KXMR": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.0,
-         "iwp": 10.2,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f09.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.84,
-        "0": 4.68,
-        "-5": 5.49,
-        "-10": 6.22,
-        "-20": 7.57
-       }
-      },
-      {
-       "fh": 10,
-       "valid": "2026-10-31T19:00Z",
-       "valid_short": "19Z",
-       "valid_label": "19Z Sat 31 Oct",
-       "image": "maps/cloudtype_hrrr_2026103109z_f10.png",
-       "data": "data/cols_hrrr_2026103109z_f10.bin",
-       "counts": {
-        "clear": 14118,
-        "stratiform": 7745,
-        "cumulus": 1203,
-        "tcu": 14,
-        "anvil_att": 41,
-        "anvil_det": 31,
-        "cirrus": 677
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-20": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LZ-1": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-36": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.1,
-         "iwp": 5.1,
-         "dbz": -10.0
-        },
-        "SLC-46": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.1,
-         "iwp": 5.1,
-         "dbz": -10.0
-        },
-        "KTTS": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KXMR": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f10.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.82,
-        "0": 4.63,
-        "-5": 5.43,
-        "-10": 6.2,
-        "-20": 7.58
-       }
-      },
-      {
-       "fh": 11,
-       "valid": "2026-10-31T20:00Z",
-       "valid_short": "20Z",
-       "valid_label": "20Z Sat 31 Oct",
-       "image": "maps/cloudtype_hrrr_2026103109z_f11.png",
-       "data": "data/cols_hrrr_2026103109z_f11.bin",
-       "counts": {
-        "clear": 13387,
-        "stratiform": 7671,
-        "cumulus": 1628,
-        "tcu": 0,
-        "anvil_att": 0,
-        "anvil_det": 32,
-        "cirrus": 1111
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-20": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LZ-1": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-36": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-46": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KTTS": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KXMR": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f11.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.82,
-        "0": 4.62,
-        "-5": 5.43,
-        "-10": 6.22,
-        "-20": 7.58
-       }
-      },
-      {
-       "fh": 12,
-       "valid": "2026-10-31T21:00Z",
-       "valid_short": "21Z",
-       "valid_label": "21Z Sat 31 Oct",
-       "image": "maps/cloudtype_hrrr_2026103109z_f12.png",
-       "data": "data/cols_hrrr_2026103109z_f12.bin",
-       "counts": {
-        "clear": 13672,
-        "stratiform": 6036,
-        "cumulus": 1951,
-        "tcu": 1,
-        "anvil_att": 27,
-        "anvil_det": 480,
-        "cirrus": 1662
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.3,
-         "iwp": 20.4,
-         "dbz": -9.2
-        },
-        "LC-39B": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.3,
-         "iwp": 20.4,
-         "dbz": -9.1
-        },
-        "SLC-41": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.3,
-         "iwp": 10.2,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -5.3
-        },
-        "SLC-20": {
-         "key": "cumulus",
-         "top_kft": 3.6,
-         "top_c": 17.2,
-         "iwp": 0.0,
-         "dbz": 6.4
-        },
-        "LZ-1": {
-         "key": "cumulus",
-         "top_kft": 5.2,
-         "top_c": 14.4,
-         "iwp": 0.0,
-         "dbz": 4.6
-        },
-        "SLC-36": {
-         "key": "cumulus",
-         "top_kft": 6.8,
-         "top_c": 11.5,
-         "iwp": 0.0,
-         "dbz": 29.1
-        },
-        "SLC-46": {
-         "key": "cumulus",
-         "top_kft": 6.8,
-         "top_c": 11.5,
-         "iwp": 0.0,
-         "dbz": 29.1
-        },
-        "KTTS": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KXMR": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": 21.2
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f12.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.82,
-        "0": 4.64,
-        "-5": 5.43,
-        "-10": 6.19,
-        "-20": 7.53
-       }
-      },
-      {
-       "fh": 13,
-       "valid": "2026-10-31T22:00Z",
-       "valid_short": "22Z",
-       "valid_label": "22Z Sat 31 Oct",
-       "image": "maps/cloudtype_hrrr_2026103109z_f13.png",
-       "data": "data/cols_hrrr_2026103109z_f13.bin",
-       "counts": {
-        "clear": 12147,
-        "stratiform": 5827,
-        "cumulus": 2470,
-        "tcu": 11,
-        "anvil_att": 786,
-        "anvil_det": 177,
-        "cirrus": 2411
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -46.8,
-         "iwp": 35.7,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -46.8,
-         "iwp": 40.8,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -46.8,
-         "iwp": 25.5,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -46.8,
-         "iwp": 25.5,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "stratiform",
-         "top_kft": 31.6,
-         "top_c": -36.5,
-         "iwp": 5.1,
-         "dbz": -10.0
-        },
-        "SLC-20": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LZ-1": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-36": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-46": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KTTS": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -46.8,
-         "iwp": 81.6,
-         "dbz": -6.5
-        },
-        "KXMR": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f13.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.85,
-        "0": 4.63,
-        "-5": 5.41,
-        "-10": 6.17,
-        "-20": 7.53
-       }
-      },
-      {
-       "fh": 14,
-       "valid": "2026-10-31T23:00Z",
-       "valid_short": "23Z",
-       "valid_label": "23Z Sat 31 Oct",
-       "image": "maps/cloudtype_hrrr_2026103109z_f14.png",
-       "data": "data/cols_hrrr_2026103109z_f14.bin",
-       "counts": {
-        "clear": 9717,
-        "stratiform": 6825,
-        "cumulus": 3214,
-        "tcu": 4,
-        "anvil_att": 731,
-        "anvil_det": 315,
-        "cirrus": 3023
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "stratiform",
-         "top_kft": 31.6,
-         "top_c": -36.4,
-         "iwp": 20.4,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "stratiform",
-         "top_kft": 31.6,
-         "top_c": -36.4,
-         "iwp": 30.6,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "stratiform",
-         "top_kft": 31.6,
-         "top_c": -36.3,
-         "iwp": 20.4,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -47.1,
-         "iwp": 40.8,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "anvil_det",
-         "top_kft": 35.7,
-         "top_c": -47.1,
-         "iwp": 86.7,
-         "dbz": -5.8
-        },
-        "SLC-20": {
-         "key": "anvil_det",
-         "top_kft": 35.7,
-         "top_c": -47.1,
-         "iwp": 219.2,
-         "dbz": -0.4
-        },
-        "LZ-1": {
-         "key": "anvil_det",
-         "top_kft": 35.7,
-         "top_c": -47.1,
-         "iwp": 193.7,
-         "dbz": -0.6
-        },
-        "SLC-36": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -47.1,
-         "iwp": 367.1,
-         "dbz": 2.9
-        },
-        "SLC-46": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -47.1,
-         "iwp": 367.1,
-         "dbz": 2.9
-        },
-        "KTTS": {
-         "key": "anvil_det",
-         "top_kft": 35.7,
-         "top_c": -47.2,
-         "iwp": 117.3,
-         "dbz": -3.8
-        },
-        "KXMR": {
-         "key": "anvil_det",
-         "top_kft": 35.7,
-         "top_c": -47.1,
-         "iwp": 448.7,
-         "dbz": 4.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f14.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.83,
-        "0": 4.62,
-        "-5": 5.4,
-        "-10": 6.14,
-        "-20": 7.46
-       }
-      },
-      {
-       "fh": 15,
-       "valid": "2026-11-01T00:00Z",
-       "valid_short": "00Z",
-       "valid_label": "00Z Sun 01 Nov",
-       "image": "maps/cloudtype_hrrr_2026103109z_f15.png",
-       "data": "data/cols_hrrr_2026103109z_f15.bin",
-       "counts": {
-        "clear": 9674,
-        "stratiform": 7982,
-        "cumulus": 2929,
-        "tcu": 13,
-        "anvil_att": 634,
-        "anvil_det": 142,
-        "cirrus": 2455
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -47.3,
-         "iwp": 20.4,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -47.3,
-         "iwp": 15.3,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -47.3,
-         "iwp": 15.3,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -47.3,
-         "iwp": 20.4,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -47.3,
-         "iwp": 15.3,
-         "dbz": -10.0
-        },
-        "SLC-20": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -47.2,
-         "iwp": 20.4,
-         "dbz": -10.0
-        },
-        "LZ-1": {
-         "key": "stratiform",
-         "top_kft": 31.6,
-         "top_c": -36.4,
-         "iwp": 10.2,
-         "dbz": -10.0
-        },
-        "SLC-36": {
-         "key": "stratiform",
-         "top_kft": 31.6,
-         "top_c": -36.4,
-         "iwp": 5.1,
-         "dbz": -10.0
-        },
-        "SLC-46": {
-         "key": "stratiform",
-         "top_kft": 31.6,
-         "top_c": -36.4,
-         "iwp": 5.1,
-         "dbz": -10.0
-        },
-        "KTTS": {
-         "key": "cirrus",
-         "top_kft": 35.7,
-         "top_c": -47.2,
-         "iwp": 35.7,
-         "dbz": -10.0
-        },
-        "KXMR": {
-         "key": "stratiform",
-         "top_kft": 31.6,
-         "top_c": -36.4,
-         "iwp": 10.2,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f15.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.86,
-        "0": 4.63,
-        "-5": 5.36,
-        "-10": 6.09,
-        "-20": 7.47
-       }
-      },
-      {
-       "fh": 16,
-       "valid": "2026-11-01T01:00Z",
-       "valid_short": "01Z",
-       "valid_label": "01Z Sun 01 Nov",
-       "image": "maps/cloudtype_hrrr_2026103109z_f16.png",
-       "data": "data/cols_hrrr_2026103109z_f16.bin",
-       "counts": {
-        "clear": 9811,
-        "stratiform": 7544,
-        "cumulus": 3301,
-        "tcu": 7,
-        "anvil_att": 277,
-        "anvil_det": 50,
-        "cirrus": 2839
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "stratiform",
-         "top_kft": 24.9,
-         "top_c": -20.8,
-         "iwp": 5.1,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "stratiform",
-         "top_kft": 24.9,
-         "top_c": -20.8,
-         "iwp": 10.2,
-         "dbz": -7.1
-        },
-        "SLC-40": {
-         "key": "stratiform",
-         "top_kft": 24.9,
-         "top_c": -20.8,
-         "iwp": 10.2,
-         "dbz": -7.1
-        },
-        "SLC-37B": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.3,
-         "iwp": 40.8,
-         "dbz": -4.6
-        },
-        "SLC-20": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.3,
-         "iwp": 20.4,
-         "dbz": -7.6
-        },
-        "LZ-1": {
-         "key": "cumulus",
-         "top_kft": 28.1,
-         "top_c": -27.3,
-         "iwp": 35.7,
-         "dbz": -3.8
-        },
-        "SLC-36": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.4,
-         "iwp": 20.4,
-         "dbz": -7.6
-        },
-        "SLC-46": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.4,
-         "iwp": 20.4,
-         "dbz": -7.6
-        },
-        "KTTS": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KXMR": {
-         "key": "stratiform",
-         "top_kft": 24.9,
-         "top_c": -20.7,
-         "iwp": 5.1,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f16.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.76,
-        "0": 4.6,
-        "-5": 5.34,
-        "-10": 6.09,
-        "-20": 7.48
-       }
-      },
-      {
-       "fh": 17,
-       "valid": "2026-11-01T02:00Z",
-       "valid_short": "02Z",
-       "valid_label": "02Z Sun 01 Nov",
-       "image": "maps/cloudtype_hrrr_2026103109z_f17.png",
-       "data": "data/cols_hrrr_2026103109z_f17.bin",
-       "counts": {
-        "clear": 10333,
-        "stratiform": 6913,
-        "cumulus": 3218,
-        "tcu": 9,
-        "anvil_att": 424,
-        "anvil_det": 5,
-        "cirrus": 2927
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.8,
-         "iwp": 5.1,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.7,
-         "iwp": 5.1,
-         "dbz": -10.0
-        },
-        "SLC-20": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.8,
-         "iwp": 5.1,
-         "dbz": -10.0
-        },
-        "LZ-1": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.7,
-         "iwp": 5.1,
-         "dbz": -10.0
-        },
-        "SLC-36": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-46": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KTTS": {
-         "key": "stratiform",
-         "top_kft": 28.1,
-         "top_c": -27.8,
-         "iwp": 5.1,
-         "dbz": -10.0
-        },
-        "KXMR": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f17.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.81,
-        "0": 4.61,
-        "-5": 5.34,
-        "-10": 6.08,
-        "-20": 7.53
-       }
-      },
-      {
-       "fh": 18,
-       "valid": "2026-11-01T03:00Z",
-       "valid_short": "03Z",
-       "valid_label": "03Z Sun 01 Nov",
-       "image": "maps/cloudtype_hrrr_2026103109z_f18.png",
-       "data": "data/cols_hrrr_2026103109z_f18.bin",
-       "counts": {
-        "clear": 10986,
-        "stratiform": 7331,
-        "cumulus": 2581,
-        "tcu": 5,
-        "anvil_att": 171,
-        "anvil_det": 1,
-        "cirrus": 2754
-       },
-       "sites": {
-        "LC-39A": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LC-39B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-41": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-40": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-37B": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-20": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "LZ-1": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-36": {
-         "key": "stratiform",
-         "top_kft": 5.2,
-         "top_c": 14.3,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "SLC-46": {
-         "key": "stratiform",
-         "top_kft": 5.2,
-         "top_c": 14.3,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KTTS": {
-         "key": "clear",
-         "top_kft": null,
-         "top_c": null,
-         "iwp": 0.0,
-         "dbz": -10.0
-        },
-        "KXMR": {
-         "key": "stratiform",
-         "top_kft": 5.2,
-         "top_c": 14.3,
-         "iwp": 0.0,
-         "dbz": -10.0
-        }
-       },
-       "xs": "xs/xs_hrrr_2026103109z_f18.xsz",
-       "xs_src": "diagnosed from rain, snow and graupel",
-       "iso": {
-        "5": 3.82,
-        "0": 4.63,
-        "-5": 5.38,
-        "-10": 6.1,
-        "-20": 7.51
-       }
-      }
-     ]
     }
    ]
   },
@@ -20738,7 +20738,7 @@
    ]
   }
  },
- "cycle": "20261031 14Z",
+ "cycle": "20261031 15Z",
  "domain": {
   "lat_min": 26.5,
   "lat_max": 30.5,
@@ -20937,16 +20937,14 @@
     "image": "pov/pov_20261031T1000Z.png",
     "data": "pov/pov_20261031T1000Z.bin",
     "members": [
-     "HRRR 09Z",
      "RRFS 09Z",
      "RRFS 06Z",
      "RRFS 03Z"
     ],
     "by_model": {
-     "HRRR": 1,
      "RRFS": 3
     },
-    "mean_pov": 0.11
+    "mean_pov": 0.0
    },
    {
     "valid": "2026-10-31T11:00Z",
@@ -20956,16 +20954,15 @@
     "data": "pov/pov_20261031T1100Z.bin",
     "members": [
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 09Z",
      "RRFS 06Z",
      "RRFS 03Z"
     ],
     "by_model": {
-     "HRRR": 2,
+     "HRRR": 1,
      "RRFS": 3
     },
-    "mean_pov": 0.42
+    "mean_pov": 0.18
    },
    {
     "valid": "2026-10-31T12:00Z",
@@ -20976,16 +20973,15 @@
     "members": [
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 09Z",
      "RRFS 06Z",
      "RRFS 03Z"
     ],
     "by_model": {
-     "HRRR": 3,
+     "HRRR": 2,
      "RRFS": 3
     },
-    "mean_pov": 0.81
+    "mean_pov": 0.74
    },
    {
     "valid": "2026-10-31T13:00Z",
@@ -20997,17 +20993,16 @@
      "HRRR 12Z",
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 12Z",
      "RRFS 09Z",
      "RRFS 06Z",
      "RRFS 03Z"
     ],
     "by_model": {
-     "HRRR": 4,
+     "HRRR": 3,
      "RRFS": 4
     },
-    "mean_pov": 1.1
+    "mean_pov": 1.09
    },
    {
     "valid": "2026-10-31T14:00Z",
@@ -21020,14 +21015,13 @@
      "HRRR 12Z",
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 12Z",
      "RRFS 09Z",
      "RRFS 06Z",
      "RRFS 03Z"
     ],
     "by_model": {
-     "HRRR": 5,
+     "HRRR": 4,
      "RRFS": 4
     },
     "mean_pov": 1.18
@@ -21044,7 +21038,30 @@
      "HRRR 12Z",
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
+     "RRFS 12Z",
+     "RRFS 09Z",
+     "RRFS 06Z",
+     "RRFS 03Z"
+    ],
+    "by_model": {
+     "HRRR": 5,
+     "RRFS": 4
+    },
+    "mean_pov": 0.58
+   },
+   {
+    "valid": "2026-10-31T16:00Z",
+    "valid_short": "16Z",
+    "valid_label": "16Z Sat 31 Oct",
+    "image": "pov/pov_20261031T1600Z.png",
+    "data": "pov/pov_20261031T1600Z.bin",
+    "members": [
+     "HRRR 15Z",
+     "HRRR 14Z",
+     "HRRR 13Z",
+     "HRRR 12Z",
+     "HRRR 11Z",
+     "HRRR 10Z",
      "RRFS 12Z",
      "RRFS 09Z",
      "RRFS 06Z",
@@ -21057,42 +21074,18 @@
     "mean_pov": 0.66
    },
    {
-    "valid": "2026-10-31T16:00Z",
-    "valid_short": "16Z",
-    "valid_label": "16Z Sat 31 Oct",
-    "image": "pov/pov_20261031T1600Z.png",
-    "data": "pov/pov_20261031T1600Z.bin",
-    "members": [
-     "HRRR 14Z",
-     "HRRR 13Z",
-     "HRRR 12Z",
-     "HRRR 11Z",
-     "HRRR 10Z",
-     "HRRR 09Z",
-     "RRFS 12Z",
-     "RRFS 09Z",
-     "RRFS 06Z",
-     "RRFS 03Z"
-    ],
-    "by_model": {
-     "HRRR": 6,
-     "RRFS": 4
-    },
-    "mean_pov": 0.7
-   },
-   {
     "valid": "2026-10-31T17:00Z",
     "valid_short": "17Z",
     "valid_label": "17Z Sat 31 Oct",
     "image": "pov/pov_20261031T1700Z.png",
     "data": "pov/pov_20261031T1700Z.bin",
     "members": [
+     "HRRR 15Z",
      "HRRR 14Z",
      "HRRR 13Z",
      "HRRR 12Z",
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 12Z",
      "RRFS 09Z",
      "RRFS 06Z",
@@ -21102,7 +21095,7 @@
      "HRRR": 6,
      "RRFS": 4
     },
-    "mean_pov": 0.9
+    "mean_pov": 0.83
    },
    {
     "valid": "2026-10-31T18:00Z",
@@ -21111,12 +21104,12 @@
     "image": "pov/pov_20261031T1800Z.png",
     "data": "pov/pov_20261031T1800Z.bin",
     "members": [
+     "HRRR 15Z",
      "HRRR 14Z",
      "HRRR 13Z",
      "HRRR 12Z",
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 12Z",
      "RRFS 09Z",
      "RRFS 06Z",
@@ -21126,7 +21119,7 @@
      "HRRR": 6,
      "RRFS": 4
     },
-    "mean_pov": 1.88
+    "mean_pov": 1.69
    },
    {
     "valid": "2026-10-31T19:00Z",
@@ -21135,21 +21128,22 @@
     "image": "pov/pov_20261031T1900Z.png",
     "data": "pov/pov_20261031T1900Z.bin",
     "members": [
+     "HRRR 15Z",
+     "HRRR 14Z",
      "HRRR 13Z",
      "HRRR 12Z",
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 12Z",
      "RRFS 09Z",
      "RRFS 06Z",
      "RRFS 03Z"
     ],
     "by_model": {
-     "HRRR": 5,
+     "HRRR": 6,
      "RRFS": 4
     },
-    "mean_pov": 3.11
+    "mean_pov": 2.71
    },
    {
     "valid": "2026-10-31T20:00Z",
@@ -21158,11 +21152,11 @@
     "image": "pov/pov_20261031T2000Z.png",
     "data": "pov/pov_20261031T2000Z.bin",
     "members": [
+     "HRRR 14Z",
      "HRRR 13Z",
      "HRRR 12Z",
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 12Z",
      "RRFS 09Z",
      "RRFS 06Z",
@@ -21172,7 +21166,7 @@
      "HRRR": 5,
      "RRFS": 4
     },
-    "mean_pov": 3.06
+    "mean_pov": 3.08
    },
    {
     "valid": "2026-10-31T21:00Z",
@@ -21181,11 +21175,11 @@
     "image": "pov/pov_20261031T2100Z.png",
     "data": "pov/pov_20261031T2100Z.bin",
     "members": [
+     "HRRR 14Z",
      "HRRR 13Z",
      "HRRR 12Z",
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 12Z",
      "RRFS 09Z",
      "RRFS 06Z",
@@ -21195,7 +21189,7 @@
      "HRRR": 5,
      "RRFS": 4
     },
-    "mean_pov": 3.85
+    "mean_pov": 3.86
    },
    {
     "valid": "2026-10-31T22:00Z",
@@ -21204,11 +21198,11 @@
     "image": "pov/pov_20261031T2200Z.png",
     "data": "pov/pov_20261031T2200Z.bin",
     "members": [
+     "HRRR 14Z",
      "HRRR 13Z",
      "HRRR 12Z",
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 12Z",
      "RRFS 09Z",
      "RRFS 06Z"
@@ -21217,7 +21211,7 @@
      "HRRR": 5,
      "RRFS": 3
     },
-    "mean_pov": 5.39
+    "mean_pov": 5.29
    },
    {
     "valid": "2026-10-31T23:00Z",
@@ -21226,11 +21220,11 @@
     "image": "pov/pov_20261031T2300Z.png",
     "data": "pov/pov_20261031T2300Z.bin",
     "members": [
+     "HRRR 14Z",
      "HRRR 13Z",
      "HRRR 12Z",
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 12Z",
      "RRFS 09Z",
      "RRFS 06Z"
@@ -21239,7 +21233,7 @@
      "HRRR": 5,
      "RRFS": 3
     },
-    "mean_pov": 5.63
+    "mean_pov": 5.0
    },
    {
     "valid": "2026-11-01T00:00Z",
@@ -21248,11 +21242,11 @@
     "image": "pov/pov_20261101T0000Z.png",
     "data": "pov/pov_20261101T0000Z.bin",
     "members": [
+     "HRRR 14Z",
      "HRRR 13Z",
      "HRRR 12Z",
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 12Z",
      "RRFS 09Z",
      "RRFS 06Z"
@@ -21261,7 +21255,7 @@
      "HRRR": 5,
      "RRFS": 3
     },
-    "mean_pov": 6.13
+    "mean_pov": 5.26
    },
    {
     "valid": "2026-11-01T01:00Z",
@@ -21270,11 +21264,11 @@
     "image": "pov/pov_20261101T0100Z.png",
     "data": "pov/pov_20261101T0100Z.bin",
     "members": [
+     "HRRR 14Z",
      "HRRR 13Z",
      "HRRR 12Z",
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 12Z",
      "RRFS 09Z"
     ],
@@ -21282,7 +21276,7 @@
      "HRRR": 5,
      "RRFS": 2
     },
-    "mean_pov": 6.02
+    "mean_pov": 5.2
    },
    {
     "valid": "2026-11-01T02:00Z",
@@ -21291,11 +21285,11 @@
     "image": "pov/pov_20261101T0200Z.png",
     "data": "pov/pov_20261101T0200Z.bin",
     "members": [
+     "HRRR 14Z",
      "HRRR 13Z",
      "HRRR 12Z",
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 12Z",
      "RRFS 09Z"
     ],
@@ -21303,7 +21297,7 @@
      "HRRR": 5,
      "RRFS": 2
     },
-    "mean_pov": 4.73
+    "mean_pov": 4.23
    },
    {
     "valid": "2026-11-01T03:00Z",
@@ -21312,11 +21306,11 @@
     "image": "pov/pov_20261101T0300Z.png",
     "data": "pov/pov_20261101T0300Z.bin",
     "members": [
+     "HRRR 14Z",
      "HRRR 13Z",
      "HRRR 12Z",
      "HRRR 11Z",
      "HRRR 10Z",
-     "HRRR 09Z",
      "RRFS 12Z",
      "RRFS 09Z"
     ],
@@ -21324,7 +21318,7 @@
      "HRRR": 5,
      "RRFS": 2
     },
-    "mean_pov": 3.4
+    "mean_pov": 3.02
    },
    {
     "valid": "2026-11-01T04:00Z",
@@ -21333,6 +21327,7 @@
     "image": "pov/pov_20261101T0400Z.png",
     "data": "pov/pov_20261101T0400Z.bin",
     "members": [
+     "HRRR 14Z",
      "HRRR 13Z",
      "HRRR 12Z",
      "HRRR 11Z",
@@ -21340,10 +21335,10 @@
      "RRFS 12Z"
     ],
     "by_model": {
-     "HRRR": 4,
+     "HRRR": 5,
      "RRFS": 1
     },
-    "mean_pov": 3.68
+    "mean_pov": 3.77
    },
    {
     "valid": "2026-11-01T05:00Z",
@@ -21352,16 +21347,17 @@
     "image": "pov/pov_20261101T0500Z.png",
     "data": "pov/pov_20261101T0500Z.bin",
     "members": [
+     "HRRR 14Z",
      "HRRR 13Z",
      "HRRR 12Z",
      "HRRR 11Z",
      "RRFS 12Z"
     ],
     "by_model": {
-     "HRRR": 3,
+     "HRRR": 4,
      "RRFS": 1
     },
-    "mean_pov": 3.87
+    "mean_pov": 4.78
    },
    {
     "valid": "2026-11-01T06:00Z",
@@ -21370,15 +21366,16 @@
     "image": "pov/pov_20261101T0600Z.png",
     "data": "pov/pov_20261101T0600Z.bin",
     "members": [
+     "HRRR 14Z",
      "HRRR 13Z",
      "HRRR 12Z",
      "RRFS 12Z"
     ],
     "by_model": {
-     "HRRR": 2,
+     "HRRR": 3,
      "RRFS": 1
     },
-    "mean_pov": 4.41
+    "mean_pov": 5.33
    },
    {
     "valid": "2026-11-01T07:00Z",
@@ -21387,13 +21384,29 @@
     "image": "pov/pov_20261101T0700Z.png",
     "data": "pov/pov_20261101T0700Z.bin",
     "members": [
+     "HRRR 14Z",
      "HRRR 13Z",
+     "HRRR 12Z"
+    ],
+    "by_model": {
+     "HRRR": 3
+    },
+    "mean_pov": 7.57
+   },
+   {
+    "valid": "2026-11-01T08:00Z",
+    "valid_short": "08Z",
+    "valid_label": "08Z Sun 01 Nov",
+    "image": "pov/pov_20261101T0800Z.png",
+    "data": "pov/pov_20261101T0800Z.bin",
+    "members": [
+     "HRRR 14Z",
      "HRRR 12Z"
     ],
     "by_model": {
      "HRRR": 2
     },
-    "mean_pov": 8.16
+    "mean_pov": 10.69
    }
   ],
   "rules": [
@@ -21528,6 +21541,440 @@
  "slow_cursor": 0,
  "cycles": [
   {
+   "id": "2026103115",
+   "model": "hrrr",
+   "label": "15Z",
+   "date": "20261031",
+   "hour": "15",
+   "init": "2026-10-31T15:00Z",
+   "render_version": "2026.10.09-xs",
+   "run_h": 4,
+   "run_h_expected": 18,
+   "complete": false,
+   "frames": [
+    {
+     "fh": 1,
+     "valid": "2026-10-31T16:00Z",
+     "valid_short": "16Z",
+     "valid_label": "16Z Sat 31 Oct",
+     "image": "maps/cloudtype_hrrr_2026103115z_f01.png",
+     "data": "data/cols_hrrr_2026103115z_f01.bin",
+     "counts": {
+      "clear": 23731,
+      "stratiform": 66,
+      "cumulus": 32,
+      "tcu": 0,
+      "anvil_att": 0,
+      "anvil_det": 0,
+      "cirrus": 0
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103115z_f01.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.85,
+      "0": 4.77,
+      "-5": 5.6,
+      "-10": 6.25,
+      "-20": 7.51
+     }
+    },
+    {
+     "fh": 2,
+     "valid": "2026-10-31T17:00Z",
+     "valid_short": "17Z",
+     "valid_label": "17Z Sat 31 Oct",
+     "image": "maps/cloudtype_hrrr_2026103115z_f02.png",
+     "data": "data/cols_hrrr_2026103115z_f02.bin",
+     "counts": {
+      "clear": 23629,
+      "stratiform": 161,
+      "cumulus": 39,
+      "tcu": 0,
+      "anvil_att": 0,
+      "anvil_det": 0,
+      "cirrus": 0
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "stratiform",
+       "top_kft": 3.6,
+       "top_c": 17.3,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "stratiform",
+       "top_kft": 3.6,
+       "top_c": 17.3,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103115z_f02.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.87,
+      "0": 4.76,
+      "-5": 5.59,
+      "-10": 6.24,
+      "-20": 7.53
+     }
+    },
+    {
+     "fh": 3,
+     "valid": "2026-10-31T18:00Z",
+     "valid_short": "18Z",
+     "valid_label": "18Z Sat 31 Oct",
+     "image": "maps/cloudtype_hrrr_2026103115z_f03.png",
+     "data": "data/cols_hrrr_2026103115z_f03.bin",
+     "counts": {
+      "clear": 23497,
+      "stratiform": 239,
+      "cumulus": 93,
+      "tcu": 0,
+      "anvil_att": 0,
+      "anvil_det": 0,
+      "cirrus": 0
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103115z_f03.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.84,
+      "0": 4.74,
+      "-5": 5.56,
+      "-10": 6.25,
+      "-20": 7.59
+     }
+    },
+    {
+     "fh": 4,
+     "valid": "2026-10-31T19:00Z",
+     "valid_short": "19Z",
+     "valid_label": "19Z Sat 31 Oct",
+     "image": "maps/cloudtype_hrrr_2026103115z_f04.png",
+     "data": "data/cols_hrrr_2026103115z_f04.bin",
+     "counts": {
+      "clear": 23036,
+      "stratiform": 457,
+      "cumulus": 336,
+      "tcu": 0,
+      "anvil_att": 0,
+      "anvil_det": 0,
+      "cirrus": 0
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103115z_f04.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.76,
+      "0": 4.66,
+      "-5": 5.5,
+      "-10": 6.22,
+      "-20": 7.58
+     }
+    }
+   ]
+  },
+  {
    "id": "2026103114",
    "model": "hrrr",
    "label": "14Z",
@@ -21535,9 +21982,9 @@
    "hour": "14",
    "init": "2026-10-31T14:00Z",
    "render_version": "2026.10.09-xs",
-   "run_h": 4,
+   "run_h": 18,
    "run_h_expected": 18,
-   "complete": false,
+   "complete": true,
    "frames": [
     {
      "fh": 1,
@@ -21957,6 +22404,1476 @@
       "-5": 5.58,
       "-10": 6.26,
       "-20": 7.58
+     }
+    },
+    {
+     "fh": 5,
+     "valid": "2026-10-31T19:00Z",
+     "valid_short": "19Z",
+     "valid_label": "19Z Sat 31 Oct",
+     "image": "maps/cloudtype_hrrr_2026103114z_f05.png",
+     "data": "data/cols_hrrr_2026103114z_f05.bin",
+     "counts": {
+      "clear": 20157,
+      "stratiform": 1809,
+      "cumulus": 1774,
+      "tcu": 5,
+      "anvil_att": 0,
+      "anvil_det": 0,
+      "cirrus": 84
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103114z_f05.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.7,
+      "0": 4.66,
+      "-5": 5.51,
+      "-10": 6.22,
+      "-20": 7.57
+     }
+    },
+    {
+     "fh": 6,
+     "valid": "2026-10-31T20:00Z",
+     "valid_short": "20Z",
+     "valid_label": "20Z Sat 31 Oct",
+     "image": "maps/cloudtype_hrrr_2026103114z_f06.png",
+     "data": "data/cols_hrrr_2026103114z_f06.bin",
+     "counts": {
+      "clear": 19793,
+      "stratiform": 1613,
+      "cumulus": 2133,
+      "tcu": 9,
+      "anvil_att": 0,
+      "anvil_det": 83,
+      "cirrus": 198
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -5.1
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -9.7
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -2.5
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -2.5
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -3.3
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103114z_f06.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.64,
+      "0": 4.63,
+      "-5": 5.5,
+      "-10": 6.22,
+      "-20": 7.58
+     }
+    },
+    {
+     "fh": 7,
+     "valid": "2026-10-31T21:00Z",
+     "valid_short": "21Z",
+     "valid_label": "21Z Sat 31 Oct",
+     "image": "maps/cloudtype_hrrr_2026103114z_f07.png",
+     "data": "data/cols_hrrr_2026103114z_f07.bin",
+     "counts": {
+      "clear": 18439,
+      "stratiform": 2843,
+      "cumulus": 2085,
+      "tcu": 70,
+      "anvil_att": 11,
+      "anvil_det": 3,
+      "cirrus": 378
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -8.6
+      },
+      "SLC-20": {
+       "key": "cumulus",
+       "top_kft": 6.8,
+       "top_c": 11.2,
+       "iwp": 0.0,
+       "dbz": 13.6
+      },
+      "LZ-1": {
+       "key": "cumulus",
+       "top_kft": 6.8,
+       "top_c": 11.2,
+       "iwp": 0.0,
+       "dbz": 9.8
+      },
+      "SLC-36": {
+       "key": "cumulus",
+       "top_kft": 6.8,
+       "top_c": 11.1,
+       "iwp": 0.0,
+       "dbz": 4.5
+      },
+      "SLC-46": {
+       "key": "cumulus",
+       "top_kft": 6.8,
+       "top_c": 11.1,
+       "iwp": 0.0,
+       "dbz": 4.5
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "cumulus",
+       "top_kft": 8.6,
+       "top_c": 8.8,
+       "iwp": 0.0,
+       "dbz": 10.2
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103114z_f07.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.7,
+      "0": 4.66,
+      "-5": 5.5,
+      "-10": 6.22,
+      "-20": 7.57
+     }
+    },
+    {
+     "fh": 8,
+     "valid": "2026-10-31T22:00Z",
+     "valid_short": "22Z",
+     "valid_label": "22Z Sat 31 Oct",
+     "image": "maps/cloudtype_hrrr_2026103114z_f08.png",
+     "data": "data/cols_hrrr_2026103114z_f08.bin",
+     "counts": {
+      "clear": 15704,
+      "stratiform": 5117,
+      "cumulus": 2113,
+      "tcu": 63,
+      "anvil_att": 37,
+      "anvil_det": 12,
+      "cirrus": 783
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103114z_f08.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.68,
+      "0": 4.61,
+      "-5": 5.45,
+      "-10": 6.18,
+      "-20": 7.54
+     }
+    },
+    {
+     "fh": 9,
+     "valid": "2026-10-31T23:00Z",
+     "valid_short": "23Z",
+     "valid_label": "23Z Sat 31 Oct",
+     "image": "maps/cloudtype_hrrr_2026103114z_f09.png",
+     "data": "data/cols_hrrr_2026103114z_f09.bin",
+     "counts": {
+      "clear": 13044,
+      "stratiform": 6219,
+      "cumulus": 2075,
+      "tcu": 6,
+      "anvil_att": 101,
+      "anvil_det": 19,
+      "cirrus": 2365
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "stratiform",
+       "top_kft": 24.9,
+       "top_c": -20.3,
+       "iwp": 5.1,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "stratiform",
+       "top_kft": 24.9,
+       "top_c": -20.3,
+       "iwp": 5.1,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "stratiform",
+       "top_kft": 24.9,
+       "top_c": -20.3,
+       "iwp": 5.1,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.2,
+       "iwp": 10.2,
+       "dbz": -10.0
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103114z_f09.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.79,
+      "0": 4.66,
+      "-5": 5.45,
+      "-10": 6.17,
+      "-20": 7.54
+     }
+    },
+    {
+     "fh": 10,
+     "valid": "2026-11-01T00:00Z",
+     "valid_short": "00Z",
+     "valid_label": "00Z Sun 01 Nov",
+     "image": "maps/cloudtype_hrrr_2026103114z_f10.png",
+     "data": "data/cols_hrrr_2026103114z_f10.bin",
+     "counts": {
+      "clear": 12249,
+      "stratiform": 6841,
+      "cumulus": 1996,
+      "tcu": 13,
+      "anvil_att": 102,
+      "anvil_det": 0,
+      "cirrus": 2628
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.4,
+       "iwp": 10.2,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.3,
+       "iwp": 15.3,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.3,
+       "iwp": 20.4,
+       "dbz": -7.7
+      },
+      "SLC-20": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.2,
+       "iwp": 35.7,
+       "dbz": -6.2
+      },
+      "LZ-1": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.2,
+       "iwp": 35.7,
+       "dbz": -5.1
+      },
+      "SLC-36": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.2,
+       "iwp": 30.6,
+       "dbz": -5.9
+      },
+      "SLC-46": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.2,
+       "iwp": 30.6,
+       "dbz": -5.9
+      },
+      "KTTS": {
+       "key": "stratiform",
+       "top_kft": 24.9,
+       "top_c": -20.5,
+       "iwp": 5.1,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.2,
+       "iwp": 20.4,
+       "dbz": -7.4
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103114z_f10.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.84,
+      "0": 4.66,
+      "-5": 5.43,
+      "-10": 6.17,
+      "-20": 7.53
+     }
+    },
+    {
+     "fh": 11,
+     "valid": "2026-11-01T01:00Z",
+     "valid_short": "01Z",
+     "valid_label": "01Z Sun 01 Nov",
+     "image": "maps/cloudtype_hrrr_2026103114z_f11.png",
+     "data": "data/cols_hrrr_2026103114z_f11.bin",
+     "counts": {
+      "clear": 11173,
+      "stratiform": 6438,
+      "cumulus": 1738,
+      "tcu": 12,
+      "anvil_att": 292,
+      "anvil_det": 0,
+      "cirrus": 4176
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.4,
+       "iwp": 25.5,
+       "dbz": -7.3
+      },
+      "LC-39B": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.3,
+       "iwp": 20.4,
+       "dbz": -8.5
+      },
+      "SLC-41": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.4,
+       "iwp": 25.5,
+       "dbz": -8.7
+      },
+      "SLC-40": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.3,
+       "iwp": 10.2,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.3,
+       "iwp": 15.3,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103114z_f11.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.83,
+      "0": 4.64,
+      "-5": 5.43,
+      "-10": 6.19,
+      "-20": 7.54
+     }
+    },
+    {
+     "fh": 12,
+     "valid": "2026-11-01T02:00Z",
+     "valid_short": "02Z",
+     "valid_label": "02Z Sun 01 Nov",
+     "image": "maps/cloudtype_hrrr_2026103114z_f12.png",
+     "data": "data/cols_hrrr_2026103114z_f12.bin",
+     "counts": {
+      "clear": 10811,
+      "stratiform": 5435,
+      "cumulus": 1869,
+      "tcu": 4,
+      "anvil_att": 518,
+      "anvil_det": 43,
+      "cirrus": 5149
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103114z_f12.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.78,
+      "0": 4.63,
+      "-5": 5.43,
+      "-10": 6.17,
+      "-20": 7.53
+     }
+    },
+    {
+     "fh": 13,
+     "valid": "2026-11-01T03:00Z",
+     "valid_short": "03Z",
+     "valid_label": "03Z Sun 01 Nov",
+     "image": "maps/cloudtype_hrrr_2026103114z_f13.png",
+     "data": "data/cols_hrrr_2026103114z_f13.bin",
+     "counts": {
+      "clear": 11094,
+      "stratiform": 5922,
+      "cumulus": 1862,
+      "tcu": 2,
+      "anvil_att": 470,
+      "anvil_det": 2290,
+      "cirrus": 2189
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103114z_f13.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.78,
+      "0": 4.62,
+      "-5": 5.41,
+      "-10": 6.17,
+      "-20": 7.51
+     }
+    },
+    {
+     "fh": 14,
+     "valid": "2026-11-01T04:00Z",
+     "valid_short": "04Z",
+     "valid_label": "04Z Sun 01 Nov",
+     "image": "maps/cloudtype_hrrr_2026103114z_f14.png",
+     "data": "data/cols_hrrr_2026103114z_f14.bin",
+     "counts": {
+      "clear": 11456,
+      "stratiform": 5680,
+      "cumulus": 1674,
+      "tcu": 4,
+      "anvil_att": 1162,
+      "anvil_det": 1363,
+      "cirrus": 2490
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.7,
+       "iwp": 20.4,
+       "dbz": -8.6
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103114z_f14.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.73,
+      "0": 4.6,
+      "-5": 5.4,
+      "-10": 6.15,
+      "-20": 7.47
+     }
+    },
+    {
+     "fh": 15,
+     "valid": "2026-11-01T05:00Z",
+     "valid_short": "05Z",
+     "valid_label": "05Z Sun 01 Nov",
+     "image": "maps/cloudtype_hrrr_2026103114z_f15.png",
+     "data": "data/cols_hrrr_2026103114z_f15.bin",
+     "counts": {
+      "clear": 11167,
+      "stratiform": 5832,
+      "cumulus": 1408,
+      "tcu": 75,
+      "anvil_att": 1143,
+      "anvil_det": 1341,
+      "cirrus": 2863
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.9,
+       "iwp": 15.3,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -28.9,
+       "iwp": 15.3,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "stratiform",
+       "top_kft": 24.9,
+       "top_c": -21.2,
+       "iwp": 5.1,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103114z_f15.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.72,
+      "0": 4.61,
+      "-5": 5.42,
+      "-10": 6.17,
+      "-20": 7.45
+     }
+    },
+    {
+     "fh": 16,
+     "valid": "2026-11-01T06:00Z",
+     "valid_short": "06Z",
+     "valid_label": "06Z Sun 01 Nov",
+     "image": "maps/cloudtype_hrrr_2026103114z_f16.png",
+     "data": "data/cols_hrrr_2026103114z_f16.bin",
+     "counts": {
+      "clear": 10570,
+      "stratiform": 5813,
+      "cumulus": 1031,
+      "tcu": 3,
+      "anvil_att": 2057,
+      "anvil_det": 839,
+      "cirrus": 3516
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "stratiform",
+       "top_kft": 28.0,
+       "top_c": -29.2,
+       "iwp": 10.2,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -29.1,
+       "iwp": 91.8,
+       "dbz": -0.8
+      },
+      "SLC-20": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -29.1,
+       "iwp": 86.7,
+       "dbz": -1.0
+      },
+      "LZ-1": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -29.1,
+       "iwp": 132.6,
+       "dbz": 1.5
+      },
+      "SLC-36": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -29.0,
+       "iwp": 91.8,
+       "dbz": -0.2
+      },
+      "SLC-46": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -29.0,
+       "iwp": 91.8,
+       "dbz": -0.2
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "stratiform",
+       "top_kft": 28.1,
+       "top_c": -29.1,
+       "iwp": 61.2,
+       "dbz": -2.7
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103114z_f16.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.74,
+      "0": 4.61,
+      "-5": 5.4,
+      "-10": 6.14,
+      "-20": 7.41
+     }
+    },
+    {
+     "fh": 17,
+     "valid": "2026-11-01T07:00Z",
+     "valid_short": "07Z",
+     "valid_label": "07Z Sun 01 Nov",
+     "image": "maps/cloudtype_hrrr_2026103114z_f17.png",
+     "data": "data/cols_hrrr_2026103114z_f17.bin",
+     "counts": {
+      "clear": 8248,
+      "stratiform": 5886,
+      "cumulus": 1262,
+      "tcu": 11,
+      "anvil_att": 2608,
+      "anvil_det": 895,
+      "cirrus": 4919
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "LC-39B": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-41": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "SLC-40": {
+       "key": "stratiform",
+       "top_kft": 28.0,
+       "top_c": -28.9,
+       "iwp": 5.1,
+       "dbz": -10.0
+      },
+      "SLC-37B": {
+       "key": "stratiform",
+       "top_kft": 28.0,
+       "top_c": -28.9,
+       "iwp": 15.3,
+       "dbz": -10.0
+      },
+      "SLC-20": {
+       "key": "stratiform",
+       "top_kft": 28.0,
+       "top_c": -28.9,
+       "iwp": 5.1,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "stratiform",
+       "top_kft": 28.0,
+       "top_c": -28.9,
+       "iwp": 10.2,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "cirrus",
+       "top_kft": 40.4,
+       "top_c": -59.0,
+       "iwp": 5.1,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "cirrus",
+       "top_kft": 40.4,
+       "top_c": -59.0,
+       "iwp": 5.1,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      },
+      "KXMR": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": -10.0
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103114z_f17.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.73,
+      "0": 4.6,
+      "-5": 5.43,
+      "-10": 6.16,
+      "-20": 7.41
+     }
+    },
+    {
+     "fh": 18,
+     "valid": "2026-11-01T08:00Z",
+     "valid_short": "08Z",
+     "valid_label": "08Z Sun 01 Nov",
+     "image": "maps/cloudtype_hrrr_2026103114z_f18.png",
+     "data": "data/cols_hrrr_2026103114z_f18.bin",
+     "counts": {
+      "clear": 5707,
+      "stratiform": 6933,
+      "cumulus": 1303,
+      "tcu": 1,
+      "anvil_att": 3459,
+      "anvil_det": 957,
+      "cirrus": 5469
+     },
+     "sites": {
+      "LC-39A": {
+       "key": "clear",
+       "top_kft": null,
+       "top_c": null,
+       "iwp": 0.0,
+       "dbz": 1.6
+      },
+      "LC-39B": {
+       "key": "cirrus",
+       "top_kft": 40.3,
+       "top_c": -59.2,
+       "iwp": 5.1,
+       "dbz": 2.6
+      },
+      "SLC-41": {
+       "key": "cumulus",
+       "top_kft": 5.2,
+       "top_c": 13.9,
+       "iwp": 0.0,
+       "dbz": 16.6
+      },
+      "SLC-40": {
+       "key": "cumulus",
+       "top_kft": 35.6,
+       "top_c": -46.7,
+       "iwp": 5.1,
+       "dbz": 16.5
+      },
+      "SLC-37B": {
+       "key": "cirrus",
+       "top_kft": 35.6,
+       "top_c": -46.7,
+       "iwp": 5.1,
+       "dbz": -1.1
+      },
+      "SLC-20": {
+       "key": "cirrus",
+       "top_kft": 35.6,
+       "top_c": -46.7,
+       "iwp": 5.1,
+       "dbz": -10.0
+      },
+      "LZ-1": {
+       "key": "cirrus",
+       "top_kft": 35.6,
+       "top_c": -46.7,
+       "iwp": 5.1,
+       "dbz": -10.0
+      },
+      "SLC-36": {
+       "key": "cirrus",
+       "top_kft": 35.6,
+       "top_c": -46.7,
+       "iwp": 5.1,
+       "dbz": -10.0
+      },
+      "SLC-46": {
+       "key": "cirrus",
+       "top_kft": 35.6,
+       "top_c": -46.7,
+       "iwp": 5.1,
+       "dbz": -10.0
+      },
+      "KTTS": {
+       "key": "cirrus",
+       "top_kft": 40.3,
+       "top_c": -59.2,
+       "iwp": 10.2,
+       "dbz": -1.6
+      },
+      "KXMR": {
+       "key": "cirrus",
+       "top_kft": 35.6,
+       "top_c": -46.7,
+       "iwp": 5.1,
+       "dbz": -10.0
+      }
+     },
+     "xs": "xs/xs_hrrr_2026103114z_f18.xsz",
+     "xs_src": "diagnosed from rain, snow and graupel",
+     "iso": {
+      "5": 3.75,
+      "0": 4.61,
+      "-5": 5.42,
+      "-10": 6.15,
+      "-20": 7.4
      }
     }
    ]
@@ -32726,1924 +34643,20 @@
      }
     }
    ]
-  },
-  {
-   "id": "2026103109",
-   "model": "hrrr",
-   "label": "09Z",
-   "date": "20261031",
-   "hour": "09",
-   "init": "2026-10-31T09:00Z",
-   "render_version": "2026.10.09-xs",
-   "run_h": 18,
-   "run_h_expected": 18,
-   "complete": true,
-   "frames": [
-    {
-     "fh": 1,
-     "valid": "2026-10-31T10:00Z",
-     "valid_short": "10Z",
-     "valid_label": "10Z Sat 31 Oct",
-     "image": "maps/cloudtype_hrrr_2026103109z_f01.png",
-     "data": "data/cols_hrrr_2026103109z_f01.bin",
-     "counts": {
-      "clear": 20882,
-      "stratiform": 1847,
-      "cumulus": 1100,
-      "tcu": 0,
-      "anvil_att": 0,
-      "anvil_det": 0,
-      "cirrus": 0
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-20": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LZ-1": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-36": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-46": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KTTS": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KXMR": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f01.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.85,
-      "0": 4.74,
-      "-5": 5.58,
-      "-10": 6.3,
-      "-20": 7.64
-     }
-    },
-    {
-     "fh": 2,
-     "valid": "2026-10-31T11:00Z",
-     "valid_short": "11Z",
-     "valid_label": "11Z Sat 31 Oct",
-     "image": "maps/cloudtype_hrrr_2026103109z_f02.png",
-     "data": "data/cols_hrrr_2026103109z_f02.bin",
-     "counts": {
-      "clear": 21544,
-      "stratiform": 1184,
-      "cumulus": 1101,
-      "tcu": 0,
-      "anvil_att": 0,
-      "anvil_det": 0,
-      "cirrus": 0
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-20": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LZ-1": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-36": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-46": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KTTS": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KXMR": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f02.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.86,
-      "0": 4.77,
-      "-5": 5.6,
-      "-10": 6.32,
-      "-20": 7.64
-     }
-    },
-    {
-     "fh": 3,
-     "valid": "2026-10-31T12:00Z",
-     "valid_short": "12Z",
-     "valid_label": "12Z Sat 31 Oct",
-     "image": "maps/cloudtype_hrrr_2026103109z_f03.png",
-     "data": "data/cols_hrrr_2026103109z_f03.bin",
-     "counts": {
-      "clear": 21523,
-      "stratiform": 1417,
-      "cumulus": 886,
-      "tcu": 0,
-      "anvil_att": 0,
-      "anvil_det": 0,
-      "cirrus": 3
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-20": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LZ-1": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-36": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-46": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KTTS": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KXMR": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f03.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.81,
-      "0": 4.7,
-      "-5": 5.57,
-      "-10": 6.29,
-      "-20": 7.61
-     }
-    },
-    {
-     "fh": 4,
-     "valid": "2026-10-31T13:00Z",
-     "valid_short": "13Z",
-     "valid_label": "13Z Sat 31 Oct",
-     "image": "maps/cloudtype_hrrr_2026103109z_f04.png",
-     "data": "data/cols_hrrr_2026103109z_f04.bin",
-     "counts": {
-      "clear": 20997,
-      "stratiform": 2083,
-      "cumulus": 731,
-      "tcu": 0,
-      "anvil_att": 0,
-      "anvil_det": 0,
-      "cirrus": 18
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-20": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LZ-1": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-36": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-46": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KTTS": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KXMR": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f04.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.76,
-      "0": 4.65,
-      "-5": 5.55,
-      "-10": 6.27,
-      "-20": 7.6
-     }
-    },
-    {
-     "fh": 5,
-     "valid": "2026-10-31T14:00Z",
-     "valid_short": "14Z",
-     "valid_label": "14Z Sat 31 Oct",
-     "image": "maps/cloudtype_hrrr_2026103109z_f05.png",
-     "data": "data/cols_hrrr_2026103109z_f05.bin",
-     "counts": {
-      "clear": 19514,
-      "stratiform": 3069,
-      "cumulus": 1136,
-      "tcu": 0,
-      "anvil_att": 0,
-      "anvil_det": 0,
-      "cirrus": 110
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-20": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LZ-1": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-36": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-46": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KTTS": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KXMR": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f05.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.83,
-      "0": 4.69,
-      "-5": 5.57,
-      "-10": 6.27,
-      "-20": 7.57
-     }
-    },
-    {
-     "fh": 6,
-     "valid": "2026-10-31T15:00Z",
-     "valid_short": "15Z",
-     "valid_label": "15Z Sat 31 Oct",
-     "image": "maps/cloudtype_hrrr_2026103109z_f06.png",
-     "data": "data/cols_hrrr_2026103109z_f06.bin",
-     "counts": {
-      "clear": 18285,
-      "stratiform": 4210,
-      "cumulus": 1256,
-      "tcu": 3,
-      "anvil_att": 0,
-      "anvil_det": 0,
-      "cirrus": 75
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "stratiform",
-       "top_kft": 5.2,
-       "top_c": 14.7,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -0.7
-      },
-      "SLC-20": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -0.4
-      },
-      "LZ-1": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": 18.8
-      },
-      "SLC-36": {
-       "key": "stratiform",
-       "top_kft": 3.6,
-       "top_c": 17.3,
-       "iwp": 0.0,
-       "dbz": 17.8
-      },
-      "SLC-46": {
-       "key": "stratiform",
-       "top_kft": 3.6,
-       "top_c": 17.3,
-       "iwp": 0.0,
-       "dbz": 17.8
-      },
-      "KTTS": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KXMR": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": 11.1
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f06.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.81,
-      "0": 4.73,
-      "-5": 5.62,
-      "-10": 6.29,
-      "-20": 7.56
-     }
-    },
-    {
-     "fh": 7,
-     "valid": "2026-10-31T16:00Z",
-     "valid_short": "16Z",
-     "valid_label": "16Z Sat 31 Oct",
-     "image": "maps/cloudtype_hrrr_2026103109z_f07.png",
-     "data": "data/cols_hrrr_2026103109z_f07.bin",
-     "counts": {
-      "clear": 17771,
-      "stratiform": 4990,
-      "cumulus": 1061,
-      "tcu": 2,
-      "anvil_att": 0,
-      "anvil_det": 0,
-      "cirrus": 5
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "cumulus",
-       "top_kft": 5.2,
-       "top_c": 14.5,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "cumulus",
-       "top_kft": 28.1,
-       "top_c": -27.3,
-       "iwp": 5.1,
-       "dbz": 21.1
-      },
-      "SLC-41": {
-       "key": "cumulus",
-       "top_kft": 5.2,
-       "top_c": 14.5,
-       "iwp": 0.0,
-       "dbz": 6.9
-      },
-      "SLC-40": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-20": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LZ-1": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-36": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-46": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KTTS": {
-       "key": "cumulus",
-       "top_kft": 28.1,
-       "top_c": -27.3,
-       "iwp": 5.1,
-       "dbz": 22.7
-      },
-      "KXMR": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f07.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.88,
-      "0": 4.74,
-      "-5": 5.58,
-      "-10": 6.27,
-      "-20": 7.55
-     }
-    },
-    {
-     "fh": 8,
-     "valid": "2026-10-31T17:00Z",
-     "valid_short": "17Z",
-     "valid_label": "17Z Sat 31 Oct",
-     "image": "maps/cloudtype_hrrr_2026103109z_f08.png",
-     "data": "data/cols_hrrr_2026103109z_f08.bin",
-     "counts": {
-      "clear": 17214,
-      "stratiform": 5509,
-      "cumulus": 1059,
-      "tcu": 14,
-      "anvil_att": 0,
-      "anvil_det": 0,
-      "cirrus": 33
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.1,
-       "iwp": 10.2,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.1,
-       "iwp": 10.2,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.1,
-       "iwp": 10.2,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.1,
-       "iwp": 15.3,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.1,
-       "iwp": 25.5,
-       "dbz": -9.6
-      },
-      "SLC-20": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.1,
-       "iwp": 30.6,
-       "dbz": -9.1
-      },
-      "LZ-1": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.1,
-       "iwp": 25.5,
-       "dbz": -8.7
-      },
-      "SLC-36": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.1,
-       "iwp": 15.3,
-       "dbz": -10.0
-      },
-      "SLC-46": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.1,
-       "iwp": 15.3,
-       "dbz": -10.0
-      },
-      "KTTS": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KXMR": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.1,
-       "iwp": 15.3,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f08.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.84,
-      "0": 4.7,
-      "-5": 5.52,
-      "-10": 6.23,
-      "-20": 7.56
-     }
-    },
-    {
-     "fh": 9,
-     "valid": "2026-10-31T18:00Z",
-     "valid_short": "18Z",
-     "valid_label": "18Z Sat 31 Oct",
-     "image": "maps/cloudtype_hrrr_2026103109z_f09.png",
-     "data": "data/cols_hrrr_2026103109z_f09.bin",
-     "counts": {
-      "clear": 15558,
-      "stratiform": 6819,
-      "cumulus": 1168,
-      "tcu": 3,
-      "anvil_att": 0,
-      "anvil_det": 0,
-      "cirrus": 281
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "stratiform",
-       "top_kft": 31.7,
-       "top_c": -36.2,
-       "iwp": 10.2,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "stratiform",
-       "top_kft": 31.7,
-       "top_c": -36.2,
-       "iwp": 20.4,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "stratiform",
-       "top_kft": 31.7,
-       "top_c": -36.2,
-       "iwp": 10.2,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "stratiform",
-       "top_kft": 31.7,
-       "top_c": -36.2,
-       "iwp": 10.2,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.1,
-       "iwp": 20.4,
-       "dbz": -10.0
-      },
-      "SLC-20": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.0,
-       "iwp": 25.5,
-       "dbz": -7.6
-      },
-      "LZ-1": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.0,
-       "iwp": 61.2,
-       "dbz": -3.6
-      },
-      "SLC-36": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.0,
-       "iwp": 25.5,
-       "dbz": -8.4
-      },
-      "SLC-46": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.0,
-       "iwp": 25.5,
-       "dbz": -8.4
-      },
-      "KTTS": {
-       "key": "cumulus",
-       "top_kft": 31.7,
-       "top_c": -36.3,
-       "iwp": 142.8,
-       "dbz": -0.8
-      },
-      "KXMR": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.0,
-       "iwp": 10.2,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f09.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.84,
-      "0": 4.68,
-      "-5": 5.49,
-      "-10": 6.22,
-      "-20": 7.57
-     }
-    },
-    {
-     "fh": 10,
-     "valid": "2026-10-31T19:00Z",
-     "valid_short": "19Z",
-     "valid_label": "19Z Sat 31 Oct",
-     "image": "maps/cloudtype_hrrr_2026103109z_f10.png",
-     "data": "data/cols_hrrr_2026103109z_f10.bin",
-     "counts": {
-      "clear": 14118,
-      "stratiform": 7745,
-      "cumulus": 1203,
-      "tcu": 14,
-      "anvil_att": 41,
-      "anvil_det": 31,
-      "cirrus": 677
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-20": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LZ-1": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-36": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.1,
-       "iwp": 5.1,
-       "dbz": -10.0
-      },
-      "SLC-46": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.1,
-       "iwp": 5.1,
-       "dbz": -10.0
-      },
-      "KTTS": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KXMR": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f10.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.82,
-      "0": 4.63,
-      "-5": 5.43,
-      "-10": 6.2,
-      "-20": 7.58
-     }
-    },
-    {
-     "fh": 11,
-     "valid": "2026-10-31T20:00Z",
-     "valid_short": "20Z",
-     "valid_label": "20Z Sat 31 Oct",
-     "image": "maps/cloudtype_hrrr_2026103109z_f11.png",
-     "data": "data/cols_hrrr_2026103109z_f11.bin",
-     "counts": {
-      "clear": 13387,
-      "stratiform": 7671,
-      "cumulus": 1628,
-      "tcu": 0,
-      "anvil_att": 0,
-      "anvil_det": 32,
-      "cirrus": 1111
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-20": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LZ-1": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-36": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-46": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KTTS": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KXMR": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f11.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.82,
-      "0": 4.62,
-      "-5": 5.43,
-      "-10": 6.22,
-      "-20": 7.58
-     }
-    },
-    {
-     "fh": 12,
-     "valid": "2026-10-31T21:00Z",
-     "valid_short": "21Z",
-     "valid_label": "21Z Sat 31 Oct",
-     "image": "maps/cloudtype_hrrr_2026103109z_f12.png",
-     "data": "data/cols_hrrr_2026103109z_f12.bin",
-     "counts": {
-      "clear": 13672,
-      "stratiform": 6036,
-      "cumulus": 1951,
-      "tcu": 1,
-      "anvil_att": 27,
-      "anvil_det": 480,
-      "cirrus": 1662
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.3,
-       "iwp": 20.4,
-       "dbz": -9.2
-      },
-      "LC-39B": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.3,
-       "iwp": 20.4,
-       "dbz": -9.1
-      },
-      "SLC-41": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.3,
-       "iwp": 10.2,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -5.3
-      },
-      "SLC-20": {
-       "key": "cumulus",
-       "top_kft": 3.6,
-       "top_c": 17.2,
-       "iwp": 0.0,
-       "dbz": 6.4
-      },
-      "LZ-1": {
-       "key": "cumulus",
-       "top_kft": 5.2,
-       "top_c": 14.4,
-       "iwp": 0.0,
-       "dbz": 4.6
-      },
-      "SLC-36": {
-       "key": "cumulus",
-       "top_kft": 6.8,
-       "top_c": 11.5,
-       "iwp": 0.0,
-       "dbz": 29.1
-      },
-      "SLC-46": {
-       "key": "cumulus",
-       "top_kft": 6.8,
-       "top_c": 11.5,
-       "iwp": 0.0,
-       "dbz": 29.1
-      },
-      "KTTS": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KXMR": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": 21.2
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f12.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.82,
-      "0": 4.64,
-      "-5": 5.43,
-      "-10": 6.19,
-      "-20": 7.53
-     }
-    },
-    {
-     "fh": 13,
-     "valid": "2026-10-31T22:00Z",
-     "valid_short": "22Z",
-     "valid_label": "22Z Sat 31 Oct",
-     "image": "maps/cloudtype_hrrr_2026103109z_f13.png",
-     "data": "data/cols_hrrr_2026103109z_f13.bin",
-     "counts": {
-      "clear": 12147,
-      "stratiform": 5827,
-      "cumulus": 2470,
-      "tcu": 11,
-      "anvil_att": 786,
-      "anvil_det": 177,
-      "cirrus": 2411
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -46.8,
-       "iwp": 35.7,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -46.8,
-       "iwp": 40.8,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -46.8,
-       "iwp": 25.5,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -46.8,
-       "iwp": 25.5,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "stratiform",
-       "top_kft": 31.6,
-       "top_c": -36.5,
-       "iwp": 5.1,
-       "dbz": -10.0
-      },
-      "SLC-20": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LZ-1": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-36": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-46": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KTTS": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -46.8,
-       "iwp": 81.6,
-       "dbz": -6.5
-      },
-      "KXMR": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f13.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.85,
-      "0": 4.63,
-      "-5": 5.41,
-      "-10": 6.17,
-      "-20": 7.53
-     }
-    },
-    {
-     "fh": 14,
-     "valid": "2026-10-31T23:00Z",
-     "valid_short": "23Z",
-     "valid_label": "23Z Sat 31 Oct",
-     "image": "maps/cloudtype_hrrr_2026103109z_f14.png",
-     "data": "data/cols_hrrr_2026103109z_f14.bin",
-     "counts": {
-      "clear": 9717,
-      "stratiform": 6825,
-      "cumulus": 3214,
-      "tcu": 4,
-      "anvil_att": 731,
-      "anvil_det": 315,
-      "cirrus": 3023
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "stratiform",
-       "top_kft": 31.6,
-       "top_c": -36.4,
-       "iwp": 20.4,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "stratiform",
-       "top_kft": 31.6,
-       "top_c": -36.4,
-       "iwp": 30.6,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "stratiform",
-       "top_kft": 31.6,
-       "top_c": -36.3,
-       "iwp": 20.4,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -47.1,
-       "iwp": 40.8,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "anvil_det",
-       "top_kft": 35.7,
-       "top_c": -47.1,
-       "iwp": 86.7,
-       "dbz": -5.8
-      },
-      "SLC-20": {
-       "key": "anvil_det",
-       "top_kft": 35.7,
-       "top_c": -47.1,
-       "iwp": 219.2,
-       "dbz": -0.4
-      },
-      "LZ-1": {
-       "key": "anvil_det",
-       "top_kft": 35.7,
-       "top_c": -47.1,
-       "iwp": 193.7,
-       "dbz": -0.6
-      },
-      "SLC-36": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -47.1,
-       "iwp": 367.1,
-       "dbz": 2.9
-      },
-      "SLC-46": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -47.1,
-       "iwp": 367.1,
-       "dbz": 2.9
-      },
-      "KTTS": {
-       "key": "anvil_det",
-       "top_kft": 35.7,
-       "top_c": -47.2,
-       "iwp": 117.3,
-       "dbz": -3.8
-      },
-      "KXMR": {
-       "key": "anvil_det",
-       "top_kft": 35.7,
-       "top_c": -47.1,
-       "iwp": 448.7,
-       "dbz": 4.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f14.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.83,
-      "0": 4.62,
-      "-5": 5.4,
-      "-10": 6.14,
-      "-20": 7.46
-     }
-    },
-    {
-     "fh": 15,
-     "valid": "2026-11-01T00:00Z",
-     "valid_short": "00Z",
-     "valid_label": "00Z Sun 01 Nov",
-     "image": "maps/cloudtype_hrrr_2026103109z_f15.png",
-     "data": "data/cols_hrrr_2026103109z_f15.bin",
-     "counts": {
-      "clear": 9674,
-      "stratiform": 7982,
-      "cumulus": 2929,
-      "tcu": 13,
-      "anvil_att": 634,
-      "anvil_det": 142,
-      "cirrus": 2455
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -47.3,
-       "iwp": 20.4,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -47.3,
-       "iwp": 15.3,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -47.3,
-       "iwp": 15.3,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -47.3,
-       "iwp": 20.4,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -47.3,
-       "iwp": 15.3,
-       "dbz": -10.0
-      },
-      "SLC-20": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -47.2,
-       "iwp": 20.4,
-       "dbz": -10.0
-      },
-      "LZ-1": {
-       "key": "stratiform",
-       "top_kft": 31.6,
-       "top_c": -36.4,
-       "iwp": 10.2,
-       "dbz": -10.0
-      },
-      "SLC-36": {
-       "key": "stratiform",
-       "top_kft": 31.6,
-       "top_c": -36.4,
-       "iwp": 5.1,
-       "dbz": -10.0
-      },
-      "SLC-46": {
-       "key": "stratiform",
-       "top_kft": 31.6,
-       "top_c": -36.4,
-       "iwp": 5.1,
-       "dbz": -10.0
-      },
-      "KTTS": {
-       "key": "cirrus",
-       "top_kft": 35.7,
-       "top_c": -47.2,
-       "iwp": 35.7,
-       "dbz": -10.0
-      },
-      "KXMR": {
-       "key": "stratiform",
-       "top_kft": 31.6,
-       "top_c": -36.4,
-       "iwp": 10.2,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f15.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.86,
-      "0": 4.63,
-      "-5": 5.36,
-      "-10": 6.09,
-      "-20": 7.47
-     }
-    },
-    {
-     "fh": 16,
-     "valid": "2026-11-01T01:00Z",
-     "valid_short": "01Z",
-     "valid_label": "01Z Sun 01 Nov",
-     "image": "maps/cloudtype_hrrr_2026103109z_f16.png",
-     "data": "data/cols_hrrr_2026103109z_f16.bin",
-     "counts": {
-      "clear": 9811,
-      "stratiform": 7544,
-      "cumulus": 3301,
-      "tcu": 7,
-      "anvil_att": 277,
-      "anvil_det": 50,
-      "cirrus": 2839
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "stratiform",
-       "top_kft": 24.9,
-       "top_c": -20.8,
-       "iwp": 5.1,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "stratiform",
-       "top_kft": 24.9,
-       "top_c": -20.8,
-       "iwp": 10.2,
-       "dbz": -7.1
-      },
-      "SLC-40": {
-       "key": "stratiform",
-       "top_kft": 24.9,
-       "top_c": -20.8,
-       "iwp": 10.2,
-       "dbz": -7.1
-      },
-      "SLC-37B": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.3,
-       "iwp": 40.8,
-       "dbz": -4.6
-      },
-      "SLC-20": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.3,
-       "iwp": 20.4,
-       "dbz": -7.6
-      },
-      "LZ-1": {
-       "key": "cumulus",
-       "top_kft": 28.1,
-       "top_c": -27.3,
-       "iwp": 35.7,
-       "dbz": -3.8
-      },
-      "SLC-36": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.4,
-       "iwp": 20.4,
-       "dbz": -7.6
-      },
-      "SLC-46": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.4,
-       "iwp": 20.4,
-       "dbz": -7.6
-      },
-      "KTTS": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KXMR": {
-       "key": "stratiform",
-       "top_kft": 24.9,
-       "top_c": -20.7,
-       "iwp": 5.1,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f16.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.76,
-      "0": 4.6,
-      "-5": 5.34,
-      "-10": 6.09,
-      "-20": 7.48
-     }
-    },
-    {
-     "fh": 17,
-     "valid": "2026-11-01T02:00Z",
-     "valid_short": "02Z",
-     "valid_label": "02Z Sun 01 Nov",
-     "image": "maps/cloudtype_hrrr_2026103109z_f17.png",
-     "data": "data/cols_hrrr_2026103109z_f17.bin",
-     "counts": {
-      "clear": 10333,
-      "stratiform": 6913,
-      "cumulus": 3218,
-      "tcu": 9,
-      "anvil_att": 424,
-      "anvil_det": 5,
-      "cirrus": 2927
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.8,
-       "iwp": 5.1,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.7,
-       "iwp": 5.1,
-       "dbz": -10.0
-      },
-      "SLC-20": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.8,
-       "iwp": 5.1,
-       "dbz": -10.0
-      },
-      "LZ-1": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.7,
-       "iwp": 5.1,
-       "dbz": -10.0
-      },
-      "SLC-36": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-46": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KTTS": {
-       "key": "stratiform",
-       "top_kft": 28.1,
-       "top_c": -27.8,
-       "iwp": 5.1,
-       "dbz": -10.0
-      },
-      "KXMR": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f17.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.81,
-      "0": 4.61,
-      "-5": 5.34,
-      "-10": 6.08,
-      "-20": 7.53
-     }
-    },
-    {
-     "fh": 18,
-     "valid": "2026-11-01T03:00Z",
-     "valid_short": "03Z",
-     "valid_label": "03Z Sun 01 Nov",
-     "image": "maps/cloudtype_hrrr_2026103109z_f18.png",
-     "data": "data/cols_hrrr_2026103109z_f18.bin",
-     "counts": {
-      "clear": 10986,
-      "stratiform": 7331,
-      "cumulus": 2581,
-      "tcu": 5,
-      "anvil_att": 171,
-      "anvil_det": 1,
-      "cirrus": 2754
-     },
-     "sites": {
-      "LC-39A": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LC-39B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-41": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-40": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-37B": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-20": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "LZ-1": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-36": {
-       "key": "stratiform",
-       "top_kft": 5.2,
-       "top_c": 14.3,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "SLC-46": {
-       "key": "stratiform",
-       "top_kft": 5.2,
-       "top_c": 14.3,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KTTS": {
-       "key": "clear",
-       "top_kft": null,
-       "top_c": null,
-       "iwp": 0.0,
-       "dbz": -10.0
-      },
-      "KXMR": {
-       "key": "stratiform",
-       "top_kft": 5.2,
-       "top_c": 14.3,
-       "iwp": 0.0,
-       "dbz": -10.0
-      }
-     },
-     "xs": "xs/xs_hrrr_2026103109z_f18.xsz",
-     "xs_src": "diagnosed from rain, snow and graupel",
-     "iso": {
-      "5": 3.82,
-      "0": 4.63,
-      "-5": 5.38,
-      "-10": 6.1,
-      "-20": 7.51
-     }
-    }
-   ]
   }
  ],
  "frames": [
   {
    "fh": 1,
-   "valid": "2026-10-31T15:00Z",
-   "valid_short": "15Z",
-   "valid_label": "15Z Sat 31 Oct",
-   "image": "maps/cloudtype_hrrr_2026103114z_f01.png",
-   "data": "data/cols_hrrr_2026103114z_f01.bin",
+   "valid": "2026-10-31T16:00Z",
+   "valid_short": "16Z",
+   "valid_label": "16Z Sat 31 Oct",
+   "image": "maps/cloudtype_hrrr_2026103115z_f01.png",
+   "data": "data/cols_hrrr_2026103115z_f01.bin",
    "counts": {
-    "clear": 22823,
-    "stratiform": 804,
-    "cumulus": 202,
+    "clear": 23731,
+    "stratiform": 66,
+    "cumulus": 32,
     "tcu": 0,
     "anvil_att": 0,
     "anvil_det": 0,
@@ -34672,9 +34685,9 @@
      "dbz": -10.0
     },
     "SLC-40": {
-     "key": "stratiform",
-     "top_kft": 5.2,
-     "top_c": 14.9,
+     "key": "clear",
+     "top_kft": null,
+     "top_c": null,
      "iwp": 0.0,
      "dbz": -10.0
     },
@@ -34728,27 +34741,27 @@
      "dbz": -10.0
     }
    },
-   "xs": "xs/xs_hrrr_2026103114z_f01.xsz",
+   "xs": "xs/xs_hrrr_2026103115z_f01.xsz",
    "xs_src": "diagnosed from rain, snow and graupel",
    "iso": {
-    "5": 3.76,
-    "0": 4.78,
-    "-5": 5.61,
-    "-10": 6.27,
-    "-20": 7.56
+    "5": 3.85,
+    "0": 4.77,
+    "-5": 5.6,
+    "-10": 6.25,
+    "-20": 7.51
    }
   },
   {
    "fh": 2,
-   "valid": "2026-10-31T16:00Z",
-   "valid_short": "16Z",
-   "valid_label": "16Z Sat 31 Oct",
-   "image": "maps/cloudtype_hrrr_2026103114z_f02.png",
-   "data": "data/cols_hrrr_2026103114z_f02.bin",
+   "valid": "2026-10-31T17:00Z",
+   "valid_short": "17Z",
+   "valid_label": "17Z Sat 31 Oct",
+   "image": "maps/cloudtype_hrrr_2026103115z_f02.png",
+   "data": "data/cols_hrrr_2026103115z_f02.bin",
    "counts": {
-    "clear": 22869,
-    "stratiform": 741,
-    "cumulus": 219,
+    "clear": 23629,
+    "stratiform": 161,
+    "cumulus": 39,
     "tcu": 0,
     "anvil_att": 0,
     "anvil_det": 0,
@@ -34763,9 +34776,9 @@
      "dbz": -10.0
     },
     "LC-39B": {
-     "key": "stratiform",
-     "top_kft": 5.2,
-     "top_c": 14.3,
+     "key": "clear",
+     "top_kft": null,
+     "top_c": null,
      "iwp": 0.0,
      "dbz": -10.0
     },
@@ -34781,79 +34794,79 @@
      "top_kft": null,
      "top_c": null,
      "iwp": 0.0,
-     "dbz": -0.3
+     "dbz": -10.0
     },
     "SLC-37B": {
-     "key": "stratiform",
-     "top_kft": 5.2,
-     "top_c": 14.3,
+     "key": "clear",
+     "top_kft": null,
+     "top_c": null,
      "iwp": 0.0,
      "dbz": -10.0
     },
     "SLC-20": {
-     "key": "stratiform",
-     "top_kft": 5.2,
-     "top_c": 14.4,
+     "key": "clear",
+     "top_kft": null,
+     "top_c": null,
      "iwp": 0.0,
      "dbz": -10.0
     },
     "LZ-1": {
-     "key": "stratiform",
-     "top_kft": 5.2,
-     "top_c": 14.4,
+     "key": "clear",
+     "top_kft": null,
+     "top_c": null,
      "iwp": 0.0,
      "dbz": -10.0
     },
     "SLC-36": {
      "key": "stratiform",
-     "top_kft": 5.2,
-     "top_c": 14.5,
+     "top_kft": 3.6,
+     "top_c": 17.3,
      "iwp": 0.0,
      "dbz": -10.0
     },
     "SLC-46": {
      "key": "stratiform",
-     "top_kft": 5.2,
-     "top_c": 14.5,
+     "top_kft": 3.6,
+     "top_c": 17.3,
      "iwp": 0.0,
      "dbz": -10.0
     },
     "KTTS": {
-     "key": "stratiform",
-     "top_kft": 5.2,
-     "top_c": 14.3,
+     "key": "clear",
+     "top_kft": null,
+     "top_c": null,
      "iwp": 0.0,
      "dbz": -10.0
     },
     "KXMR": {
-     "key": "stratiform",
-     "top_kft": 5.2,
-     "top_c": 14.4,
+     "key": "clear",
+     "top_kft": null,
+     "top_c": null,
      "iwp": 0.0,
      "dbz": -10.0
     }
    },
-   "xs": "xs/xs_hrrr_2026103114z_f02.xsz",
+   "xs": "xs/xs_hrrr_2026103115z_f02.xsz",
    "xs_src": "diagnosed from rain, snow and graupel",
    "iso": {
-    "5": 3.79,
-    "0": 4.78,
-    "-5": 5.61,
-    "-10": 6.27,
-    "-20": 7.54
+    "5": 3.87,
+    "0": 4.76,
+    "-5": 5.59,
+    "-10": 6.24,
+    "-20": 7.53
    }
   },
   {
    "fh": 3,
-   "valid": "2026-10-31T17:00Z",
-   "valid_short": "17Z",
-   "valid_label": "17Z Sat 31 Oct",
-   "image": "maps/cloudtype_hrrr_2026103114z_f03.png",
-   "data": "data/cols_hrrr_2026103114z_f03.bin",
+   "valid": "2026-10-31T18:00Z",
+   "valid_short": "18Z",
+   "valid_label": "18Z Sat 31 Oct",
+   "image": "maps/cloudtype_hrrr_2026103115z_f03.png",
+   "data": "data/cols_hrrr_2026103115z_f03.bin",
    "counts": {
-    "clear": 22196,
-    "stratiform": 1058,
-    "cumulus": 575,
+    "clear": 23497,
+    "stratiform": 239,
+    "cumulus": 93,
     "tcu": 0,
     "anvil_att": 0,
     "anvil_det": 0,
@@ -34889,37 +34902,37 @@
      "dbz": -10.0
     },
     "SLC-37B": {
-     "key": "stratiform",
-     "top_kft": 5.2,
-     "top_c": 14.2,
+     "key": "clear",
+     "top_kft": null,
+     "top_c": null,
      "iwp": 0.0,
      "dbz": -10.0
     },
     "SLC-20": {
-     "key": "stratiform",
-     "top_kft": 5.2,
-     "top_c": 14.2,
+     "key": "clear",
+     "top_kft": null,
+     "top_c": null,
      "iwp": 0.0,
      "dbz": -10.0
     },
     "LZ-1": {
-     "key": "stratiform",
-     "top_kft": 5.2,
-     "top_c": 14.2,
+     "key": "clear",
+     "top_kft": null,
+     "top_c": null,
      "iwp": 0.0,
      "dbz": -10.0
     },
     "SLC-36": {
-     "key": "stratiform",
-     "top_kft": 5.2,
-     "top_c": 14.3,
+     "key": "clear",
+     "top_kft": null,
+     "top_c": null,
      "iwp": 0.0,
      "dbz": -10.0
     },
     "SLC-46": {
-     "key": "stratiform",
-     "top_kft": 5.2,
-     "top_c": 14.3,
+     "key": "clear",
+     "top_kft": null,
+     "top_c": null,
      "iwp": 0.0,
      "dbz": -10.0
     },
@@ -34938,27 +34951,27 @@
      "dbz": -10.0
     }
    },
-   "xs": "xs/xs_hrrr_2026103114z_f03.xsz",
+   "xs": "xs/xs_hrrr_2026103115z_f03.xsz",
    "xs_src": "diagnosed from rain, snow and graupel",
    "iso": {
-    "5": 3.79,
-    "0": 4.79,
-    "-5": 5.61,
-    "-10": 6.26,
-    "-20": 7.55
+    "5": 3.84,
+    "0": 4.74,
+    "-5": 5.56,
+    "-10": 6.25,
+    "-20": 7.59
    }
   },
   {
    "fh": 4,
-   "valid": "2026-10-31T18:00Z",
-   "valid_short": "18Z",
-   "valid_label": "18Z Sat 31 Oct",
-   "image": "maps/cloudtype_hrrr_2026103114z_f04.png",
-   "data": "data/cols_hrrr_2026103114z_f04.bin",
+   "valid": "2026-10-31T19:00Z",
+   "valid_short": "19Z",
+   "valid_label": "19Z Sat 31 Oct",
+   "image": "maps/cloudtype_hrrr_2026103115z_f04.png",
+   "data": "data/cols_hrrr_2026103115z_f04.bin",
    "counts": {
-    "clear": 21377,
-    "stratiform": 1578,
-    "cumulus": 874,
+    "clear": 23036,
+    "stratiform": 457,
+    "cumulus": 336,
     "tcu": 0,
     "anvil_att": 0,
     "anvil_det": 0,
@@ -35043,13 +35056,13 @@
      "dbz": -10.0
     }
    },
-   "xs": "xs/xs_hrrr_2026103114z_f04.xsz",
+   "xs": "xs/xs_hrrr_2026103115z_f04.xsz",
    "xs_src": "diagnosed from rain, snow and graupel",
    "iso": {
     "5": 3.76,
-    "0": 4.72,
-    "-5": 5.58,
-    "-10": 6.26,
+    "0": 4.66,
+    "-5": 5.5,
+    "-10": 6.22,
     "-20": 7.58
    }
   }
